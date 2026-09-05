@@ -58,7 +58,17 @@
   --glass-blur-sm: blur(12px);
 }
 
-/* ─── Global Reset ─── */
+/* ─── Global Reset & Tokens ─── */
+:root {
+  --background: #080c12;
+  --foreground: #e8edf4;
+  --primary: #00d4ff;
+  --secondary: #3b9eff;
+  --destructive: #ef4444;
+  --border: rgba(255, 255, 255, 0.08);
+  --muted-foreground: rgba(232, 237, 244, 0.55);
+}
+
 *, *::before, *::after {
   box-sizing: border-box;
 }
