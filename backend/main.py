@@ -9,6 +9,15 @@ REST API endpoints, and live WebSocket feed.
 """
 from __future__ import annotations
 
+import sys
+from pathlib import Path
+
+_backend_dir = Path(__file__).resolve().parent
+_root_dir = _backend_dir.parent
+for _p in [str(_root_dir), str(_backend_dir)]:
+    if _p not in sys.path:
+        sys.path.insert(0, _p)
+
 import asyncio
 import logging
 from contextlib import asynccontextmanager
