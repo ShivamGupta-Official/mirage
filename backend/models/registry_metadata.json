@@ -1,0 +1,85 @@
+{
+  "timestamp": "2026-09-17T21:01:28.156361+00:00",
+  "dataset_samples": 15000,
+  "features": [
+    "packets_per_sec",
+    "syn_rate",
+    "syn_ack_ratio",
+    "udp_rate",
+    "half_open_connections",
+    "concurrent_connections",
+    "periodicity_score",
+    "inter_arrival_cv",
+    "dns_entropy",
+    "dns_query_len_mean",
+    "unique_subdomain_ratio",
+    "byte_entropy"
+  ],
+  "target_classes": [
+    "benign",
+    "c2_beacon",
+    "dns_tunnel",
+    "slowloris",
+    "syn_flood",
+    "udp_flood"
+  ],
+  "models": [
+    {
+      "id": "model-rf-01",
+      "name": "RandomForest_SignatureEnsemble",
+      "version": "v1.2.0",
+      "type": "Supervised Multi-Class Ensemble",
+      "status": "active_production",
+      "latency_ms": 0.42,
+      "metrics": {
+        "accuracy": 1.0,
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0,
+        "roc_auc": 1.0
+      },
+      "feature_importances": {
+        "concurrent_connections": 0.1179,
+        "packets_per_sec": 0.1113,
+        "inter_arrival_cv": 0.0989,
+        "udp_rate": 0.0982,
+        "half_open_connections": 0.0903,
+        "dns_query_len_mean": 0.087,
+        "periodicity_score": 0.0804,
+        "syn_rate": 0.0761,
+        "unique_subdomain_ratio": 0.0751,
+        "byte_entropy": 0.0582,
+        "syn_ack_ratio": 0.0574,
+        "dns_entropy": 0.0492
+      },
+      "artifact_path": "backend/models/RandomForest_SignatureEnsemble.joblib"
+    },
+    {
+      "id": "model-iso-01",
+      "name": "IsolationForest_NetAnomaly",
+      "version": "v1.1.0",
+      "type": "Unsupervised Outlier Scoring",
+      "status": "active_production",
+      "latency_ms": 0.28,
+      "metrics": {
+        "accuracy": 0.962,
+        "f1": 0.9634,
+        "contamination_ratio": 0.08
+      },
+      "artifact_path": "backend/models/IsolationForest_NetAnomaly.joblib"
+    },
+    {
+      "id": "model-dns-01",
+      "name": "Entropy_DNSTunnel_Classifier",
+      "version": "v1.0.4",
+      "type": "Shannon Entropy + Churn Classifier",
+      "status": "active_production",
+      "latency_ms": 0.15,
+      "metrics": {
+        "f1": 1.0,
+        "entropy_threshold": 3.85
+      },
+      "artifact_path": "backend/models/Entropy_DNSTunnel_Classifier.joblib"
+    }
+  ]
+}
