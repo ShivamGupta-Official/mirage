@@ -11,14 +11,16 @@ const inter = Inter({
 export const metadata: Metadata = {
   title: 'MIRAGE — Multi-resolution Intelligent Risk & Adaptive Graph Engine',
   description:
-    'AI-powered passive threat detection for unidirectional network traffic. ' +
+    'Award-winning AI defense studio and intelligence engineering engine for unidirectional network traffic. ' +
     'SIH 2026 — Problem ID 26145 — NTRO.',
-  keywords: ['cybersecurity', 'NTRO', 'threat detection', 'passive monitoring', 'network security'],
-  authors: [{ name: 'MIRAGE Team' }],
-  robots: { index: false, follow: false }, // Internal SOC tool — do not index
+  keywords: ['cybersecurity', 'NTRO', 'threat detection', 'passive monitoring', 'optical diode', 'blockchain audit'],
+  authors: [{ name: 'VOID MINDS' }],
+  robots: { index: false, follow: false },
 };
 
 import { MirageProvider } from '@/components/providers/mirage-provider';
+import { CustomCursor } from '@/components/studio/custom-cursor';
+import { ScrollProgress } from '@/components/studio/scroll-progress';
 
 export default function RootLayout({
   children,
@@ -29,13 +31,15 @@ export default function RootLayout({
     <html lang="en" className={inter.variable}>
       <head>
         <meta name="color-scheme" content="dark" />
-        <meta name="theme-color" content="#080c12" />
+        <meta name="theme-color" content="#08080c" />
         <meta httpEquiv="X-Content-Type-Options" content="nosniff" />
         <meta httpEquiv="X-Frame-Options" content="DENY" />
         <meta name="referrer" content="no-referrer" />
       </head>
-      <body>
+      <body className="bg-[#08080c] text-[#f5efff]">
         <MirageProvider>
+          <CustomCursor />
+          <ScrollProgress />
           {children}
         </MirageProvider>
       </body>

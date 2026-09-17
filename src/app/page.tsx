@@ -1,786 +1,497 @@
 'use client';
 
 import Link from 'next/link';
-import { useState, useEffect, useReducer } from 'react';
-import {
-  Shield,
-  Eye,
-  Activity,
-  ArrowRight,
-  Flame,
-  Radio,
-  AlertTriangle,
-  Layers,
-  Globe,
-  ExternalLink,
-  ChevronRight,
-  Sparkles,
-  Zap,
-  Menu,
-  X,
-  Play,
-  Square,
-} from 'lucide-react';
-import { useMirage } from '@/components/providers/mirage-provider';
+import { ArrowRight, ArrowUpRight, Shield, Activity, Lock } from 'lucide-react';
+import { StudioNav } from '@/components/studio/studio-nav';
+import { StudioFooter } from '@/components/studio/studio-footer';
+import { Preloader } from '@/components/studio/preloader';
+import { Eyebrow } from '@/components/studio/eyebrow';
+import { Magnetic } from '@/components/studio/magnetic-button';
+import { CountUp } from '@/components/studio/count-up';
+import { ScrollReveal } from '@/components/studio/scroll-reveal';
 import { CyberGlobe } from '@/components/network/cyber-globe';
-import { CinematicFooter } from '@/components/ui/motion-footer';
-import { LiquidGlassButton } from '@/components/ui/liquid-glass-button';
-import { formatBytes, formatNumber } from '@/lib/utils';
-import { SimulationScenario } from '@/types';
+import { STUDIO_PROJECTS, STUDIO_SERVICES, STUDIO_AWARDS } from '@/lib/studio-data';
 
-// Reduced motion accessibility
-function useReducedMotion(): boolean {
-  const [reduced, setReduced] = useReducer((_: boolean, v: boolean) => v, false);
-  useEffect(() => {
-    const mq = window.matchMedia('(prefers-reduced-motion: reduce)');
-    setReduced(mq.matches);
-    const handler = (e: MediaQueryListEvent) => setReduced(e.matches);
-    mq.addEventListener('change', handler);
-    return () => mq.removeEventListener('change', handler);
-  }, []);
-  return reduced;
-}
+/* ────────────────────────────────────────────────────────
+   MIRAGE — Clean, spacious landing page
+   Every section uses generous negative space and big type.
+   All animations are GPU-accelerated (transform3d + opacity).
+   No scroll listeners — purely IntersectionObserver-driven.
+──────────────────────────────────────────────────────── */
 
-// Native lightweight high-performance scroll progress hook
-function useScrollProgress(): number {
-  const [progress, setProgress] = useState(0);
-  useEffect(() => {
-    const onScroll = () => {
-      const scrollHeight = document.documentElement.scrollHeight - window.innerHeight;
-      if (scrollHeight > 0) {
-        setProgress(Math.min(100, Math.max(0, (window.scrollY / scrollHeight) * 100)));
-      }
-    };
-    window.addEventListener('scroll', onScroll, { passive: true });
-    return () => window.removeEventListener('scroll', onScroll);
-  }, []);
-  return progress;
-}
-
-const THREAT_ORIGINS = [
-  { rank: '01', ip: '10.0.0.50', label: 'SYN Flood Cluster', country: 'RU', flag: '🇷🇺', pps: '35,400 pps', severity: 'CRITICAL', status: 'Active Ingress' },
-  { rank: '02', ip: '198.51.100.42', label: 'C2 Command Node', country: 'CN', flag: '🇨🇳', pps: '4,120 flows', severity: 'HIGH', status: 'Beaconing' },
-  { rank: '03', ip: '203.0.113.88', label: 'UDP Reflection Cluster', country: 'US', flag: '🇺🇸', pps: '18,200 pps', severity: 'CRITICAL', status: 'Volumetric' },
-  { rank: '04', ip: '10.0.0.31', label: 'DNS Exfiltration Agent', country: 'DE', flag: '🇩🇪', pps: '1,840 queries', severity: 'MEDIUM', status: 'High Entropy' },
-  { rank: '05', ip: '10.0.0.21', label: 'Compromised Optical Node', country: 'GB', flag: '🇬🇧', pps: '890 flows', severity: 'HIGH', status: 'Anomalous EWMA' },
-  { rank: '06', ip: '192.0.2.14', label: 'Tor Exit Relay', country: 'NL', flag: '🇳🇱', pps: '640 flows', severity: 'LOW', status: 'Monitored' },
-];
-
-const ARCHITECTURAL_TIERS = [
-  {
-    tier: '01',
-    category: 'PHYSICAL ISOLATION',
-    title: 'Hardware Optical Diode TAP',
-    desc: 'Unidirectional optical fiber tap with physical transmit laser absent. Network telemetry flows strictly inbound into the monitoring enclave with absolute physical air gap.',
-    badge: 'HARDWARE RX-ONLY',
-    metric: '0.00 ns',
-    metricLabel: 'Backchannel Return',
-  },
-  {
-    tier: '02',
-    category: 'MICROSECOND RESOLUTION',
-    title: 'L1 Packet Lens (Sliding Entropy)',
-    desc: 'Real-time Shannon Entropy and inter-arrival time distributions calculated over 1–5ms sliding windows. Instantly flags volumetric floods before socket binding.',
-    badge: '1–5ms EVALUATION',
-    metric: '< 1.4 ms',
-    metricLabel: 'Processing Latency',
-  },
-  {
-    tier: '03',
-    category: 'STATISTICAL MOMENTS',
-    title: 'L2 Connection Lens (Adaptive Baseline)',
-    desc: 'Welford algorithm continuously updates online running mean and variance per host. Discovers Slowloris, half-open states, and scans via dynamic Z-score deviations.',
-    badge: 'WELFORD RUNNING MEAN',
-    metric: '99.94%',
-    metricLabel: 'Baseline Accuracy',
-  },
-  {
-    tier: '04',
-    category: 'TEMPORAL GRAPH FUSION',
-    title: 'L3 Session Lens (Campaign Correlator)',
-    desc: 'Directed temporal bipartite graph correlating disparate alert sequences across multiple optical hosts. Maps coordinated multi-host kill chains to MITRE tactics.',
-    badge: 'GRAPH RECONSTRUCTION',
-    metric: '12-Dim',
-    metricLabel: 'Feature Tensor',
-  },
-  {
-    tier: '05',
-    category: 'FORENSIC IMMUTABILITY',
-    title: 'Cryptographic Tamper-Evident Ledger',
-    desc: 'Every anomalous packet batch is Merkle-tree hashed with SHA-256 into an append-only audit chain. Delivers immutable chain of custody for formal review.',
-    badge: 'SHA-256 MERKLE CHAIN',
-    metric: '100%',
-    metricLabel: 'Chain Integrity',
-  },
-];
-
-const SIMULATION_PRESETS: {
-  id: SimulationScenario;
-  name: string;
-  desc: string;
-  category: string;
-  intensity: string;
-}[] = [
-  {
-    id: 'SYN_FLOOD',
-    name: 'SYN Flood Storm',
-    desc: 'Layer 4 volumetric flood designed to exhaust connection state tables.',
-    category: 'VOLUMETRIC',
-    intensity: '35,000 PPS · CRITICAL',
-  },
-  {
-    id: 'UDP_FLOOD',
-    name: 'UDP Amplification',
-    desc: 'High-bandwidth reflection consuming ingress optical tap buffer capacity.',
-    category: 'BANDWIDTH',
-    intensity: '48.2 MBPS · HIGH',
-  },
-  {
-    id: 'C2_BEACON',
-    name: 'C2 Low & Slow Beacon',
-    desc: 'Periodic jittered communication from internal host to external adversary node.',
-    category: 'STEALTH',
-    intensity: '12.4s JITTER · LATENT',
-  },
-  {
-    id: 'DNS_TUNNEL',
-    name: 'DNS Data Exfiltration',
-    desc: 'Subdomain exfiltration encoding base64 payload into recursive queries.',
-    category: 'EXFILTRATION',
-    intensity: '4.88 BITS · ENTROPY',
-  },
-];
-
-export default function LandingPage() {
-  const scrollPercent = useScrollProgress();
-  const reducedMotion = useReducedMotion();
-
-  const {
-    metrics,
-    alerts,
-    hosts,
-    isSimulating,
-    activeScenario,
-    simulation,
-    startSimulation,
-    stopSimulation,
-  } = useMirage();
-
-  const [selectedThreatFilter, setSelectedThreatFilter] = useState<string>('ALL');
-  const [activeThreatOrigin, setActiveThreatOrigin] = useState<number>(0);
-  const [mobileMenuOpen, setMobileMenuOpen] = useState<boolean>(false);
-
-  // Auto-cycle through threat targets in hero
-  useEffect(() => {
-    const timer = setInterval(() => {
-      setActiveThreatOrigin((prev) => (prev + 1) % THREAT_ORIGINS.length);
-    }, 3800);
-    return () => clearInterval(timer);
-  }, []);
-
-  const totalPps = metrics?.packetsPerSec || (isSimulating ? 14200 : 850);
-  const totalBps = metrics?.bytesPerSec || totalPps * 920 * 8;
-
+export default function HomePage() {
   return (
-    <div className="relative w-full bg-[#05070a] min-h-screen font-sans selection:bg-white/20 overflow-x-clip text-[#e4e4e7]">
-      {/* 
-        MAIN CONTENT AREA 
-        Generous negative space, calm luxury dark atmosphere, and clean Liquid Glass aesthetics.
-        The rounded bottom lifts cleanly on scroll to reveal the Cinematic Curtain Footer underneath.
-      */}
-      <main className="relative z-10 w-full bg-[#05070a] border-b border-white/[0.08] shadow-[0_25px_60px_rgba(0,0,0,0.9)] rounded-b-[3rem] overflow-hidden pb-20 sm:pb-32">
-        {/* ── Top Scroll Progress Line (Subtle & Refined) ── */}
-        <div className="fixed top-0 left-0 right-0 h-[2px] z-50 bg-transparent">
-          <div
-            className="h-full bg-gradient-to-r from-white/40 via-cyan-400 to-white/70 transition-all duration-75"
-            style={{ width: `${scrollPercent}%` }}
-          />
-        </div>
+    <div className="relative min-h-screen bg-[#08080c] text-[#f5efff] overflow-x-hidden selection:bg-[#f5efff] selection:text-[#08080c]">
+      {/* ═══ PRELOADER (3 seconds) ═══ */}
+      <Preloader />
 
-        {/* ── Deep Minimalist Atmospheric Glows ── */}
-        <div className="fixed inset-0 pointer-events-none z-0">
-          <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[85vw] max-w-[1000px] h-[600px] bg-blue-900/[0.07] rounded-full blur-[160px]" />
-          <div className="absolute top-[45%] right-0 w-[50vw] max-w-[600px] h-[600px] bg-cyan-900/[0.04] rounded-full blur-[180px]" />
-        </div>
+      {/* ═══ NAVIGATION ═══ */}
+      <StudioNav />
 
-        {/* ── Minimalist Navigation Bar ── */}
-        <nav className="fixed top-0 left-0 right-0 z-40 backdrop-blur-2xl bg-[#05070a]/75 border-b border-white/[0.06] h-20 transition-all">
-          <div className="max-w-6xl mx-auto px-6 sm:px-10 h-full flex items-center justify-between">
-            {/* Logo */}
-            <div className="flex items-center gap-3">
-              <div className="w-9 h-9 rounded-full bg-white/[0.06] border border-white/[0.12] flex items-center justify-center text-white shadow-inner">
-                <Shield size={16} />
-              </div>
-              <div className="flex items-center gap-2.5">
-                <span className="font-semibold tracking-[0.2em] text-sm text-white">
-                  MIRAGE
-                </span>
-                <span className="text-[10px] font-mono text-white/40 border border-white/10 px-2 py-0.5 rounded-full bg-white/[0.02]">
-                  NTRO · 26145
-                </span>
-              </div>
-            </div>
+      {/* ═════════════════════════════════════════════════════
+          1. HERO — Full viewport, titles from different edges
+      ═════════════════════════════════════════════════════ */}
+      <section className="relative min-h-screen flex flex-col justify-center px-6 sm:px-10 md:px-16 lg:px-24 pt-32 pb-24">
+        {/* Soft ambient gradient */}
+        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_25%_15%,rgba(245,239,255,0.03),transparent_55%)]" />
 
-            {/* Desktop Navigation Links (Spacious Negative Space) */}
-            <div className="hidden md:flex items-center gap-10 text-xs font-mono tracking-wider text-white/50">
-              <a href="#footprint" className="hover:text-white transition-colors">THREAT FOOTPRINT</a>
-              <a href="#insights" className="hover:text-white transition-colors">PROJECT INSIGHTS</a>
-              <a href="#soc-dashboard" className="hover:text-white transition-colors">SOC DASHBOARD</a>
-              <a href="#simulation-lab" className="hover:text-white transition-colors flex items-center gap-1.5 text-white/80">
-                <Flame size={13} className="text-amber-400" /> SIMULATION
-              </a>
-            </div>
+        <div className="relative z-10 max-w-[1400px] mx-auto w-full">
+          {/* Eyebrow */}
+          <ScrollReveal direction="fade" delay={200}>
+            <Eyebrow label="// NTRO · PROBLEM STATEMENT 26145 · SIH 2026" tag="active" />
+          </ScrollReveal>
 
-            {/* Desktop Action & Mobile Toggle */}
-            <div className="flex items-center gap-4">
-              <LiquidGlassButton
-                as={Link}
-                href="/dashboard"
-                variant="liquid-light"
-                size="sm"
-                className="hidden sm:inline-flex"
-              >
-                Launch Console <ArrowRight size={13} />
-              </LiquidGlassButton>
+          {/* Main title — each line from a different direction */}
+          <div className="mt-12 sm:mt-16 space-y-1 sm:space-y-2 md:space-y-3">
+            <ScrollReveal direction="left" delay={300} distance={140} duration={1100}>
+              <h1 className="font-editorial text-[3.2rem] sm:text-7xl md:text-[5.5rem] lg:text-[7.5rem] xl:text-[9rem] font-light tracking-tight leading-[0.9] text-[#f5efff]">
+                Multi-Resolution
+              </h1>
+            </ScrollReveal>
 
-              <button
-                onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-                className="md:hidden p-2.5 rounded-full bg-white/[0.05] border border-white/[0.1] text-white hover:bg-white/[0.1] transition-colors"
-                aria-label="Toggle navigation menu"
-              >
-                {mobileMenuOpen ? <X size={18} /> : <Menu size={18} />}
-              </button>
-            </div>
+            <ScrollReveal direction="right" delay={520} distance={140} duration={1100}>
+              <h1 className="font-editorial text-[3.2rem] sm:text-7xl md:text-[5.5rem] lg:text-[7.5rem] xl:text-[9rem] font-light tracking-tight leading-[0.9] italic text-white">
+                Passive Threat
+              </h1>
+            </ScrollReveal>
+
+            <ScrollReveal direction="bottom" delay={740} distance={100} duration={1100}>
+              <h1 className="font-editorial text-[3.2rem] sm:text-7xl md:text-[5.5rem] lg:text-[7.5rem] xl:text-[9rem] font-light tracking-tight leading-[0.9] text-[#f5efff]">
+                Intelligence
+              </h1>
+            </ScrollReveal>
           </div>
 
-          {/* Mobile Drawer */}
-          {mobileMenuOpen && (
-            <div className="md:hidden absolute top-20 left-0 right-0 bg-[#05070a]/95 backdrop-blur-2xl border-b border-white/10 p-6 flex flex-col gap-4 z-50 shadow-2xl animate-in fade-in slide-in-from-top-3 duration-200">
-              <a
-                href="#footprint"
-                onClick={() => setMobileMenuOpen(false)}
-                className="text-xs font-mono text-white/70 hover:text-white py-2.5 border-b border-white/[0.06] flex items-center justify-between"
-              >
-                <span>THREAT FOOTPRINT</span>
-                <ChevronRight size={14} className="text-white/30" />
-              </a>
-              <a
-                href="#insights"
-                onClick={() => setMobileMenuOpen(false)}
-                className="text-xs font-mono text-white/70 hover:text-white py-2.5 border-b border-white/[0.06] flex items-center justify-between"
-              >
-                <span>PROJECT INSIGHTS</span>
-                <ChevronRight size={14} className="text-white/30" />
-              </a>
-              <a
-                href="#soc-dashboard"
-                onClick={() => setMobileMenuOpen(false)}
-                className="text-xs font-mono text-white/70 hover:text-white py-2.5 border-b border-white/[0.06] flex items-center justify-between"
-              >
-                <span>SOC DASHBOARD</span>
-                <ChevronRight size={14} className="text-white/30" />
-              </a>
-              <a
-                href="#simulation-lab"
-                onClick={() => setMobileMenuOpen(false)}
-                className="text-xs font-mono text-white/80 py-2.5 border-b border-white/[0.06] flex items-center justify-between"
-              >
-                <span className="flex items-center gap-2"><Flame size={13} className="text-amber-400" /> SIMULATION LAB</span>
-                <ChevronRight size={14} className="text-white/30" />
-              </a>
-              <div className="pt-2">
-                <LiquidGlassButton
-                  as={Link}
+          {/* Description */}
+          <ScrollReveal direction="fade" delay={950} duration={900}>
+            <p className="mt-12 sm:mt-16 max-w-2xl text-base sm:text-lg md:text-xl text-[#f5efff]/50 font-light leading-[1.7]">
+              Hardware-enforced unidirectional optical tap monitoring.
+              Extracts packet, connection, and session graph invariants
+              with zero physical return channel.
+            </p>
+          </ScrollReveal>
+
+          {/* CTAs */}
+          <ScrollReveal direction="bottom" delay={1150} duration={800}>
+            <div className="mt-10 sm:mt-12 flex flex-wrap gap-4">
+              <Magnetic strength={0.3}>
+                <Link
                   href="/dashboard"
-                  variant="liquid-light"
-                  size="md"
-                  className="w-full text-center font-bold"
-                  onClick={() => setMobileMenuOpen(false)}
+                  data-cursor="Launch"
+                  className="studio-pill-btn studio-pill-btn-primary text-sm sm:text-base py-4 px-9 sm:px-11"
                 >
-                  Enter SOC Command Deck <ArrowRight size={14} />
-                </LiquidGlassButton>
+                  Enter Live SOC Console
+                </Link>
+              </Magnetic>
+              <Magnetic strength={0.3}>
+                <Link
+                  href="/work"
+                  data-cursor="View"
+                  className="studio-pill-btn text-sm sm:text-base py-4 px-9 sm:px-11"
+                >
+                  Explore Architectures
+                </Link>
+              </Magnetic>
+            </div>
+          </ScrollReveal>
+        </div>
+      </section>
+
+      {/* ═════════════════════════════════════════════════════
+          2. LIVE METRICS — Three clean stat cards
+      ═════════════════════════════════════════════════════ */}
+      <section className="px-6 sm:px-10 md:px-16 lg:px-24 pb-24 md:pb-32">
+        <div className="max-w-[1400px] mx-auto grid grid-cols-1 sm:grid-cols-3 gap-5 sm:gap-7">
+          {[
+            { label: 'EVALUATION LATENCY', value: '1.45 ms', note: 'Sub-millisecond Streaming', accent: 'emerald' },
+            { label: 'PHYSICAL RETURN PATH', value: '0.00 ns', note: 'Absolute Zero Backchannel', accent: 'cyan' },
+            { label: 'DETECTION ACCURACY', value: '99.94%', note: 'Welford EWMA Validated', accent: 'emerald' },
+          ].map((stat, i) => (
+            <ScrollReveal key={stat.label} direction="bottom" delay={i * 150}>
+              <div className="rounded-2xl border border-[#f5efff]/[0.06] bg-[#0c0b14]/70 backdrop-blur-sm p-7 sm:p-9">
+                <span className="font-mono text-[10px] sm:text-xs uppercase tracking-[0.2em] text-[#f5efff]/35 block">
+                  {stat.label}
+                </span>
+                <span className="font-mono text-3xl sm:text-4xl md:text-5xl font-bold text-[#f5efff] mt-3 block">
+                  {stat.value}
+                </span>
+                <span className={`text-xs flex items-center gap-2 mt-3 ${stat.accent === 'emerald' ? 'text-emerald-400/80' : 'text-cyan-400/80'}`}>
+                  <span className={`h-1.5 w-1.5 rounded-full ${stat.accent === 'emerald' ? 'bg-emerald-400' : 'bg-cyan-400'} animate-pulse`} />
+                  {stat.note}
+                </span>
+              </div>
+            </ScrollReveal>
+          ))}
+        </div>
+      </section>
+
+      {/* ═════════════════════════════════════════════════════
+          3. SOC DASHBOARD PREVIEW — Optimized Globe
+      ═════════════════════════════════════════════════════ */}
+      <section className="px-6 sm:px-10 md:px-16 lg:px-24 py-24 md:py-36 border-t border-[#f5efff]/[0.05]">
+        <div className="max-w-[1400px] mx-auto">
+          <ScrollReveal direction="fade">
+            <Eyebrow label="// SOVEREIGN DEFENSE TELEMETRY" tag="active" />
+          </ScrollReveal>
+
+          <div className="mt-5 mb-12 sm:mb-16 flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4">
+            <ScrollReveal direction="left" delay={200}>
+              <h2 className="font-editorial text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-light tracking-tight text-[#f5efff] leading-[1.05]">
+                Global Ingress <span className="italic">Threat Radar</span>
+              </h2>
+            </ScrollReveal>
+
+            <ScrollReveal direction="right" delay={350}>
+              <Link
+                href="/dashboard"
+                data-cursor="Launch"
+                className="inline-flex items-center gap-2 font-mono text-xs uppercase tracking-[0.2em] text-[#f5efff]/50 hover:text-white transition-colors whitespace-nowrap"
+              >
+                Open Full Console <ArrowUpRight className="h-3.5 w-3.5" />
+              </Link>
+            </ScrollReveal>
+          </div>
+
+          <ScrollReveal direction="bottom" delay={300} distance={50}>
+            <div className="rounded-3xl border border-[#f5efff]/[0.08] bg-[#09090f] overflow-hidden shadow-[0_20px_60px_rgba(0,0,0,0.6)]">
+              {/* Window bar */}
+              <div className="border-b border-[#f5efff]/[0.06] px-6 py-3.5 flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <span className="h-2 w-2 rounded-full bg-emerald-400 animate-pulse" />
+                  <span className="font-mono text-[10px] sm:text-xs tracking-wider uppercase text-[#f5efff]/50">
+                    LIVE ORBITAL TELEMETRY · WebGL
+                  </span>
+                </div>
+                <span className="font-mono text-[10px] text-[#f5efff]/30 uppercase tracking-widest hidden sm:inline">
+                  60 FPS
+                </span>
+              </div>
+
+              {/* Globe — compact mode strips all HUD overlays */}
+              <div className="h-[320px] sm:h-[420px] md:h-[500px] w-full relative">
+                <CyberGlobe compact />
               </div>
             </div>
-          )}
-        </nav>
+          </ScrollReveal>
+        </div>
+      </section>
 
-        {/* ── Section 1: Hero with Generous Negative Space ── */}
-        <section className="relative min-h-[94vh] flex flex-col items-center justify-center pt-36 sm:pt-44 pb-20 sm:pb-32 px-6 text-center z-10">
-          <div className="max-w-4xl mx-auto flex flex-col items-center w-full">
-            
-            {/* Liquid Glass Target Capsule (Matching Reference Image) */}
-            <div className="relative inline-flex items-center gap-3 px-5 py-2.5 rounded-full bg-white/[0.05] border border-white/[0.15] shadow-[0_12px_32px_-4px_rgba(0,0,0,0.5),_inset_0_1.5px_2px_rgba(255,255,255,0.25)] backdrop-blur-2xl mb-10 transition-all duration-300 max-w-[94vw] overflow-x-auto">
-              <span className="text-base">{THREAT_ORIGINS[activeThreatOrigin].flag}</span>
-              <span className="text-xs font-mono font-medium text-white tracking-wider">
-                {THREAT_ORIGINS[activeThreatOrigin].ip}
-              </span>
-              <span className="text-white/30">·</span>
-              <span className="text-[11px] font-mono text-white/70">
-                {THREAT_ORIGINS[activeThreatOrigin].label}
-              </span>
-              <span className="text-[10px] font-mono text-cyan-400 border border-cyan-500/30 px-2 py-0.5 rounded-full bg-cyan-500/10">
-                {THREAT_ORIGINS[activeThreatOrigin].pps}
-              </span>
-            </div>
+      {/* ═════════════════════════════════════════════════════
+          4. CORE PILLARS — Three spacious cards
+      ═════════════════════════════════════════════════════ */}
+      <section className="px-6 sm:px-10 md:px-16 lg:px-24 py-28 md:py-44 border-t border-[#f5efff]/[0.05]">
+        <div className="max-w-[1400px] mx-auto">
+          <ScrollReveal direction="fade">
+            <Eyebrow label="// CORE ARCHITECTURAL PILLARS" tag="active" />
+          </ScrollReveal>
 
-            {/* Confident, Restrained Typography */}
-            <h1 className="text-4xl sm:text-6xl md:text-7xl lg:text-8xl font-black tracking-tight leading-[1.05] mb-8 text-white max-w-4xl">
-              Multi-Resolution <br />
-              <span className="bg-gradient-to-b from-white via-white/90 to-white/40 bg-clip-text text-transparent">
-                Passive Threat Intelligence
-              </span>
-            </h1>
+          <ScrollReveal direction="right" delay={200}>
+            <h2 className="font-editorial text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-light tracking-tight text-[#f5efff] mt-5 mb-16 sm:mb-24 leading-[1.05]">
+              Built for physical <span className="italic">asymmetry</span>.
+            </h2>
+          </ScrollReveal>
 
-            <p className="text-base sm:text-lg md:text-xl text-white/50 max-w-2xl mx-auto font-normal leading-relaxed mb-12 sm:mb-16 px-4">
-              Hardware-enforced unidirectional optical tap monitoring. Extracts packet, connection,
-              and session graph invariants with zero physical return channel.
-            </p>
-
-            {/* Tactile Liquid Glass Button Pair */}
-            <div className="flex flex-col sm:flex-row items-center justify-center gap-4 sm:gap-6 mb-20 sm:mb-28 w-full px-4">
-              <LiquidGlassButton
-                as={Link}
-                href="/dashboard"
-                variant="liquid-light"
-                size="lg"
-                className="w-full sm:w-auto"
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 sm:gap-8">
+            {[
+              {
+                num: '001',
+                label: 'PHYSICAL LAYER',
+                title: 'Zero-Return Optical TAP',
+                desc: 'Single-strand 9/125 SMF-28 optical fiber with physical transmit laser severed. Packets flow strictly inbound with absolute physical air-gap protection.',
+                Icon: Shield,
+              },
+              {
+                num: '002',
+                label: 'STATISTICAL AI',
+                title: 'Welford EWMA Profiling',
+                desc: 'Online statistical moments adaptively learn legitimate host diurnal behavior without catastrophic forgetting. 4.5σ threshold eliminates false positives.',
+                Icon: Activity,
+              },
+              {
+                num: '003',
+                label: 'IMMUTABLE AUDIT',
+                title: 'SHA-256 Blockchain Ledger',
+                desc: 'Every detection and cyber range run is sealed into an immutable parent-chained block, providing verifiable legal-grade proof of non-repudiation.',
+                Icon: Lock,
+              },
+            ].map((pillar, i) => (
+              <ScrollReveal
+                key={pillar.num}
+                direction={i === 0 ? 'left' : i === 1 ? 'bottom' : 'right'}
+                delay={i * 180}
               >
-                Enter SOC Command Deck <ArrowRight size={16} />
-              </LiquidGlassButton>
+                <div className="group rounded-2xl border border-[#f5efff]/[0.06] bg-[#0b0a13] p-8 sm:p-10 md:p-12 transition-all duration-500 hover:border-[#f5efff]/[0.15] hover:bg-[#0f0e1a] h-full">
+                  <div className="flex items-center justify-between mb-12">
+                    <span className="font-mono text-xs text-[#f5efff]/30 uppercase tracking-[0.2em]">
+                      ({pillar.num}) {pillar.label}
+                    </span>
+                    <pillar.Icon className="h-5 w-5 text-[#f5efff]/20 group-hover:text-[#f5efff]/45 transition-colors duration-500" />
+                  </div>
 
-              <LiquidGlassButton
-                as="a"
-                href="#simulation-lab"
-                variant="liquid-dark"
-                size="lg"
-                className="w-full sm:w-auto"
-              >
-                <Flame size={16} className="text-amber-400" /> Launch Cyber Range
-              </LiquidGlassButton>
-            </div>
+                  <h3 className="font-editorial text-2xl sm:text-3xl md:text-4xl font-light text-[#f5efff] mb-5 leading-tight">
+                    {pillar.title}
+                  </h3>
 
-            {/* Minimalist Metrics Baseline Bar */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 sm:gap-6 w-full max-w-3xl pt-8 border-t border-white/[0.06]">
-              {[
-                { label: 'INGRESS EVALUATION', value: '< 1.45 ms' },
-                { label: 'TEMPORAL LENSES', value: 'L1 · L2 · L3' },
-                { label: 'HARDWARE AIR GAP', value: '100% Unidirectional' },
-                { label: 'AUDIT CHAIN', value: 'SHA-256 Merkle' },
-              ].map((stat, i) => (
-                <div key={i} className="text-center p-3">
-                  <div className="text-lg sm:text-xl font-mono font-semibold text-white mb-1">{stat.value}</div>
-                  <div className="text-[10px] font-mono tracking-widest text-white/40">{stat.label}</div>
+                  <p className="font-sans text-sm sm:text-base text-[#f5efff]/45 leading-[1.7]">
+                    {pillar.desc}
+                  </p>
                 </div>
+              </ScrollReveal>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ═════════════════════════════════════════════════════
+          5. MISSION STATEMENT — Big centered text
+      ═════════════════════════════════════════════════════ */}
+      <section className="px-6 sm:px-10 md:px-16 lg:px-24 py-32 md:py-48 border-t border-[#f5efff]/[0.05] relative overflow-hidden">
+        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(245,239,255,0.025),transparent_55%)]" />
+
+        <div className="max-w-5xl mx-auto text-center relative z-10">
+          <ScrollReveal direction="fade">
+            <Eyebrow label="// SOVEREIGN DEFENSE PHILOSOPHY" tag="active" className="justify-center" />
+          </ScrollReveal>
+
+          <ScrollReveal direction="bottom" delay={200} distance={50}>
+            <h2 className="font-editorial text-3xl sm:text-5xl md:text-6xl lg:text-7xl font-light tracking-tight text-[#f5efff] leading-[1.12] mt-8">
+              We build defense telemetry that thrives where traditional
+              bidirectional tools{' '}
+              <span className="italic underline decoration-1 decoration-[#f5efff]/25 underline-offset-4">
+                collapse
+              </span>
+              .
+            </h2>
+          </ScrollReveal>
+
+          <ScrollReveal direction="fade" delay={400}>
+            <p className="mt-10 sm:mt-14 text-base sm:text-lg md:text-xl text-[#f5efff]/45 font-light leading-[1.8] max-w-3xl mx-auto">
+              Conventional NIDS cannot operate across physical optical diodes
+              because missing TCP handshakes trigger socket memory exhaustion.
+              MIRAGE re-architects detection as an asymmetric, stateless
+              streaming graph problem.
+            </p>
+          </ScrollReveal>
+
+          <ScrollReveal direction="bottom" delay={550}>
+            <div className="mt-10">
+              <Link
+                href="/about"
+                data-cursor="View"
+                className="inline-flex items-center gap-2 font-mono text-xs uppercase tracking-[0.2em] text-[#f5efff]/60 border-b border-[#f5efff]/25 pb-1.5 hover:border-[#f5efff] hover:text-white transition-all group"
+              >
+                <span>Read The Defense Philosophy</span>
+                <ArrowRight className="h-3.5 w-3.5 transition-transform duration-300 group-hover:translate-x-1" />
+              </Link>
+            </div>
+          </ScrollReveal>
+        </div>
+      </section>
+
+      {/* ═════════════════════════════════════════════════════
+          6. CAPABILITIES — Clean numbered list + sticky header
+      ═════════════════════════════════════════════════════ */}
+      <section className="px-6 sm:px-10 md:px-16 lg:px-24 py-28 md:py-44 border-t border-[#f5efff]/[0.05] bg-[#060609]">
+        <div className="max-w-[1400px] mx-auto">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-14 lg:gap-20">
+            {/* Left sticky header */}
+            <div className="lg:col-span-5">
+              <div className="lg:sticky lg:top-32 space-y-5">
+                <ScrollReveal direction="left">
+                  <Eyebrow label="// CAPABILITIES & SERVICES" tag="active" />
+                </ScrollReveal>
+                <ScrollReveal direction="left" delay={200}>
+                  <h2 className="font-editorial text-4xl sm:text-5xl md:text-6xl font-light tracking-tight text-[#f5efff] leading-[1.05]">
+                    Full-spectrum{' '}
+                    <span className="italic">defense</span> modules.
+                  </h2>
+                </ScrollReveal>
+                <ScrollReveal direction="left" delay={300}>
+                  <p className="text-sm sm:text-base text-[#f5efff]/40 max-w-md leading-[1.7] pt-1">
+                    Twelve specialized engineering tiers for monitoring,
+                    analyzing, and sealing high-rate optical network streams.
+                  </p>
+                </ScrollReveal>
+              </div>
+            </div>
+
+            {/* Right scrolling list */}
+            <div className="lg:col-span-7 space-y-3 sm:space-y-4">
+              {STUDIO_SERVICES.map((srv, idx) => (
+                <ScrollReveal key={srv.num} direction="right" delay={Math.min(idx * 50, 400)} distance={35}>
+                  <div className="group rounded-2xl border border-[#f5efff]/[0.05] bg-[#0a0914] p-6 sm:p-8 md:p-9 transition-all duration-400 hover:border-[#f5efff]/[0.15] hover:bg-[#0e0d18]">
+                    <div className="flex items-baseline justify-between mb-2.5">
+                      <span className="font-mono text-[10px] sm:text-xs text-[#f5efff]/30 tracking-[0.15em]">
+                        {srv.num} // {srv.category}
+                      </span>
+                    </div>
+                    <h3 className="font-editorial text-xl sm:text-2xl md:text-3xl font-light text-[#f5efff] group-hover:text-white transition-colors">
+                      {srv.title}
+                    </h3>
+                    <p className="font-sans text-xs sm:text-sm text-[#f5efff]/40 mt-2.5 leading-[1.7]">
+                      {srv.desc}
+                    </p>
+                  </div>
+                </ScrollReveal>
               ))}
             </div>
-
           </div>
-        </section>
+        </div>
+      </section>
 
-        {/* ── Section 2: Platform Threat Geography (Negative Space & 3D Globe) ── */}
-        <section id="footprint" className="py-28 sm:py-40 px-6 sm:px-12 relative z-10 max-w-6xl mx-auto">
-          <div className="flex flex-col md:flex-row md:items-end justify-between mb-12 sm:mb-16 gap-4">
+      {/* ═════════════════════════════════════════════════════
+          7. PROJECTS — Horizontal scroll with snap
+      ═════════════════════════════════════════════════════ */}
+      <section className="px-6 sm:px-10 md:px-16 lg:px-24 py-28 md:py-44 border-t border-[#f5efff]/[0.05] overflow-hidden">
+        <div className="max-w-[1400px] mx-auto">
+          <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-6 mb-14 sm:mb-20">
             <div>
-              <div className="text-[11px] font-mono text-cyan-400 tracking-widest uppercase mb-3 flex items-center gap-2">
-                <Globe size={14} /> PLATFORM THREAT FOOTPRINT
-              </div>
-              <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold tracking-tight text-white">
-                Global Threat Origin Matrix
-              </h2>
-            </div>
-            <div className="text-xs font-mono text-white/40">
-              PHYSICAL RX ENCLAVE · ZERO INJECTION
-            </div>
-          </div>
-
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-stretch">
-            {/* 3D Cyber Globe (Airy & Spacious Container) */}
-            <div className="lg:col-span-7 rounded-3xl border border-white/[0.08] bg-[#080c12]/60 backdrop-blur-2xl p-6 sm:p-8 flex flex-col justify-between overflow-hidden shadow-2xl relative min-h-[420px]">
-              <div className="flex items-center justify-between pb-4 border-b border-white/[0.06]">
-                <span className="text-xs font-mono text-white/60">3D TOPOLOGICAL SENSOR RADAR</span>
-                <span className="text-[11px] font-mono text-cyan-400">● 6 ACTIVE THREAT ARCS</span>
-              </div>
-              
-              <div className="relative w-full h-[300px] sm:h-[380px] flex items-center justify-center my-4">
-                <CyberGlobe className="w-full h-full" />
-              </div>
-
-              <div className="text-[11px] font-mono text-white/40 pt-4 border-t border-white/[0.06] flex items-center justify-between">
-                <span>REVOLVING CYBER GLOBE</span>
-                <span>GEO-LOCATED OPTICAL INGRESS</span>
-              </div>
+              <ScrollReveal direction="fade">
+                <Eyebrow label="// ENGINEERED SYSTEMS" tag="active" />
+              </ScrollReveal>
+              <ScrollReveal direction="left" delay={200}>
+                <h2 className="font-editorial text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-light tracking-tight text-[#f5efff] mt-4 leading-[1.05]">
+                  Selected <span className="italic">implementations</span>.
+                </h2>
+              </ScrollReveal>
             </div>
 
-            {/* Threat Screener List */}
-            <div className="lg:col-span-5 rounded-3xl border border-white/[0.08] bg-[#080c12]/60 backdrop-blur-2xl p-6 sm:p-8 flex flex-col justify-between shadow-2xl space-y-6">
-              <div>
-                <div className="text-xs font-mono text-white/40 uppercase mb-4 tracking-wider">
-                  RANKED INGRESS THREAT VECTORS
-                </div>
-                <div className="space-y-3">
-                  {THREAT_ORIGINS.map((item) => (
-                    <div
-                      key={item.ip}
-                      className="p-3.5 rounded-2xl bg-white/[0.02] border border-white/[0.05] hover:border-white/[0.12] transition-all flex items-center justify-between"
-                    >
-                      <div className="flex items-center gap-3">
-                        <span className="text-sm">{item.flag}</span>
-                        <div>
-                          <div className="text-xs font-mono font-medium text-white">
-                            {item.ip}
-                          </div>
-                          <div className="text-[10px] font-mono text-white/40">
-                            {item.label}
-                          </div>
-                        </div>
-                      </div>
-                      <div className="text-right">
-                        <div className="text-xs font-mono font-medium text-white/80">
-                          {item.pps}
-                        </div>
-                        <div className="text-[9px] font-mono text-amber-400/80">
-                          {item.status}
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              <div className="pt-4 border-t border-white/[0.06] flex items-center justify-between text-xs font-mono text-white/40">
-                <span>PASSIVE TAP BUFFER</span>
-                <Link href="/traffic" className="text-white hover:text-cyan-400 transition-colors flex items-center gap-1.5">
-                  Deep Traffic Tap <ArrowRight size={12} />
-                </Link>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        {/* ── Section 3: The 5 Pillars of Unidirectional Defense ── */}
-        <section id="insights" className="py-28 sm:py-40 px-6 sm:px-12 relative z-10 max-w-5xl mx-auto">
-          <div className="text-center max-w-2xl mx-auto mb-16 sm:mb-24">
-            <div className="text-[11px] font-mono text-cyan-400 tracking-widest uppercase mb-3 flex items-center justify-center gap-2">
-              <Sparkles size={14} /> ARCHITECTURAL BLUEPRINT
-            </div>
-            <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold tracking-tight text-white mb-4">
-              Five Pillars of Unidirectional Defense
-            </h2>
-            <p className="text-sm sm:text-base text-white/50 leading-relaxed">
-              How MIRAGE achieves sub-millisecond entropy detection and multi-host campaign attribution
-              over physically isolated network links.
-            </p>
-          </div>
-
-          {/* Minimalist Dark Obsidian Cards with Ample Negative Space */}
-          <div className="space-y-6 sm:space-y-8">
-            {ARCHITECTURAL_TIERS.map((tier) => (
-              <div
-                key={tier.tier}
-                className="group relative p-8 sm:p-10 rounded-3xl bg-[#080c12]/70 border border-white/[0.08] hover:border-white/[0.18] backdrop-blur-2xl transition-all duration-300 shadow-xl"
+            <ScrollReveal direction="right" delay={300}>
+              <Link
+                href="/work"
+                data-cursor="View"
+                className="inline-flex items-center gap-2 font-mono text-xs uppercase tracking-[0.2em] text-[#f5efff]/50 hover:text-white transition-colors"
               >
-                <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
-                  <div className="space-y-3 max-w-2xl">
-                    <div className="flex items-center gap-3">
-                      <span className="text-[10px] font-mono font-bold px-2.5 py-1 rounded-full bg-white/[0.06] text-white/70 border border-white/[0.1]">
-                        TIER {tier.tier}
+                View All Projects <ArrowUpRight className="h-4 w-4" />
+              </Link>
+            </ScrollReveal>
+          </div>
+
+          {/* Horizontal scroll container */}
+          <div className="flex gap-6 overflow-x-auto pb-8 no-scrollbar snap-x snap-mandatory -mx-6 px-6 sm:-mx-10 sm:px-10 md:-mx-16 md:px-16 lg:-mx-24 lg:px-24">
+            {STUDIO_PROJECTS.map((proj, i) => (
+              <ScrollReveal
+                key={proj.slug}
+                direction="bottom"
+                delay={Math.min(i * 100, 500)}
+                distance={40}
+                className="flex-shrink-0 w-[85vw] sm:w-[460px] md:w-[520px] snap-start"
+              >
+                <div className="group h-full rounded-3xl border border-[#f5efff]/[0.06] bg-[#0b0a13] p-8 sm:p-10 flex flex-col justify-between transition-all duration-500 hover:border-[#f5efff]/[0.15]">
+                  <div>
+                    <div className="flex items-center justify-between border-b border-[#f5efff]/[0.06] pb-4 mb-8">
+                      <span className="font-mono text-xs text-[#f5efff]/35 tracking-widest uppercase">
+                        {proj.code} // {proj.date}
                       </span>
-                      <span className="text-[10px] font-mono tracking-widest text-white/40 uppercase">
-                        {tier.category}
+                      <span className="font-mono text-[10px] text-emerald-400/80 bg-emerald-950/40 border border-emerald-800/25 px-2.5 py-0.5 rounded-full uppercase">
+                        {proj.classification}
                       </span>
                     </div>
 
-                    <h3 className="text-xl sm:text-2xl font-bold text-white tracking-tight">
-                      {tier.title}
+                    <h3 className="font-editorial text-2xl sm:text-3xl md:text-4xl font-light text-[#f5efff] group-hover:text-white transition-colors leading-tight">
+                      {proj.title}
                     </h3>
-
-                    <p className="text-xs sm:text-sm text-white/50 leading-relaxed font-sans">
-                      {tier.desc}
+                    <p className="font-mono text-[10px] sm:text-xs text-[#f5efff]/35 mt-2 uppercase tracking-wider">
+                      {proj.subtitle}
+                    </p>
+                    <p className="font-sans text-sm text-[#f5efff]/45 mt-5 line-clamp-3 leading-[1.7]">
+                      {proj.summary}
                     </p>
                   </div>
 
-                  <div className="flex-shrink-0 flex items-center md:flex-col md:items-end gap-2 md:gap-1 p-4 rounded-2xl bg-white/[0.02] border border-white/[0.06]">
-                    <span className="text-2xl sm:text-3xl font-mono font-bold text-white">
-                      {tier.metric}
-                    </span>
-                    <span className="text-[10px] font-mono uppercase tracking-widest text-white/40">
-                      {tier.metricLabel}
-                    </span>
+                  <div className="mt-10 pt-6 border-t border-[#f5efff]/[0.06]">
+                    <div className="flex flex-wrap gap-2 mb-6">
+                      {proj.techTags.slice(0, 3).map((tag) => (
+                        <span
+                          key={tag}
+                          className="rounded-md border border-[#f5efff]/[0.06] bg-[#f5efff]/[0.03] px-2.5 py-1 font-mono text-[10px] text-[#f5efff]/45"
+                        >
+                          {tag}
+                        </span>
+                      ))}
+                    </div>
+
+                    <Link
+                      href={`/work/${proj.slug}`}
+                      data-cursor="View"
+                      className="inline-flex items-center justify-between w-full font-mono text-xs uppercase tracking-wider text-[#f5efff]/50 group-hover:text-white transition-colors"
+                    >
+                      <span>View Blueprint</span>
+                      <ArrowRight className="h-4 w-4 transition-transform duration-300 group-hover:translate-x-1.5" />
+                    </Link>
                   </div>
                 </div>
-              </div>
+              </ScrollReveal>
             ))}
           </div>
-        </section>
+        </div>
+      </section>
 
-        {/* ── Section 4: Clean Embedded SOC Preview ── */}
-        <section id="soc-dashboard" className="py-28 sm:py-40 px-6 sm:px-12 relative z-10 max-w-6xl mx-auto">
-          <div className="flex flex-col md:flex-row md:items-end justify-between mb-12 sm:mb-16 gap-4">
-            <div>
-              <div className="text-[11px] font-mono text-cyan-400 tracking-widest uppercase mb-3 flex items-center gap-2">
-                <Layers size={14} /> LIVE OPERATIONAL INTERFACE
-              </div>
-              <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold tracking-tight text-white">
-                Embedded SOC Command Console
-              </h2>
-            </div>
-            <Link
-              href="/dashboard"
-              className="text-xs font-mono text-white/70 hover:text-white flex items-center gap-2 transition-colors"
-            >
-              EXPAND FULLSCREEN CONSOLE <ExternalLink size={13} />
-            </Link>
-          </div>
-
-          {/* Clean Hardware Window Frame */}
-          <div className="rounded-3xl border border-white/[0.08] bg-[#070a10]/80 shadow-[0_20px_50px_rgba(0,0,0,0.8)] overflow-hidden backdrop-blur-2xl">
-            {/* Header Bar */}
-            <div className="px-6 py-4 bg-white/[0.02] border-b border-white/[0.06] flex items-center justify-between">
-              <div className="flex items-center gap-2.5">
-                <div className="w-3 h-3 rounded-full bg-white/20" />
-                <div className="w-3 h-3 rounded-full bg-white/20" />
-                <div className="w-3 h-3 rounded-full bg-white/20" />
-                <span className="ml-3 text-xs font-mono text-white/40 hidden sm:inline">
-                  https://mirage-enclave.internal/dashboard
-                </span>
-              </div>
-              <span className="text-[11px] font-mono text-emerald-400/90">● HARDWARE RX ENFORCED</span>
+      {/* ═════════════════════════════════════════════════════
+          8. RECOGNITION & BENCHMARKS
+      ═════════════════════════════════════════════════════ */}
+      <section className="px-6 sm:px-10 md:px-16 lg:px-24 py-28 md:py-44 border-t border-[#f5efff]/[0.05] bg-[#060609]">
+        <div className="max-w-[1400px] mx-auto">
+          {/* Heading + Big Counter */}
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-14 items-center mb-20 sm:mb-28">
+            <div className="lg:col-span-7 space-y-5">
+              <ScrollReveal direction="left">
+                <Eyebrow label="// DEFENSE AUDIT & RECOGNITION" tag="active" />
+              </ScrollReveal>
+              <ScrollReveal direction="left" delay={200}>
+                <h2 className="font-editorial text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-light tracking-tight text-[#f5efff] leading-[1.05]">
+                  Verified by national defense standards.
+                </h2>
+              </ScrollReveal>
+              <ScrollReveal direction="fade" delay={350}>
+                <p className="text-sm sm:text-base text-[#f5efff]/40 max-w-xl leading-[1.7]">
+                  Every model, queue buffer, and cryptographic hash chain
+                  benchmarked under simulated combat and adversary flood
+                  conditions.
+                </p>
+              </ScrollReveal>
             </div>
 
-            {/* Body */}
-            <div className="p-6 sm:p-10 space-y-8">
-              {/* Stat Metric Cards */}
-              <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
-                <div className="p-5 rounded-2xl bg-white/[0.02] border border-white/[0.05]">
-                  <div className="text-[10px] font-mono text-white/40 uppercase mb-2">AGGREGATED INGRESS</div>
-                  <div className="text-xl sm:text-2xl font-mono font-bold text-white mb-1">
-                    {formatBytes(totalBps)}/s
+            <div className="lg:col-span-5">
+              <ScrollReveal direction="right" delay={300}>
+                <div className="rounded-3xl border border-[#f5efff]/[0.08] bg-[#0b0a13] p-10 sm:p-14 text-center">
+                  <div className="font-mono text-6xl sm:text-7xl md:text-8xl font-bold tracking-tighter text-[#f5efff]">
+                    <CountUp end={STUDIO_AWARDS.totalCount} padZero={3} />
                   </div>
-                  <div className="text-[11px] font-mono text-emerald-400">Baseline synchronized</div>
+                  <span className="font-mono text-[10px] sm:text-xs uppercase tracking-[0.2em] text-[#f5efff]/40 mt-3 block">
+                    {STUDIO_AWARDS.label}
+                  </span>
                 </div>
-
-                <div className="p-5 rounded-2xl bg-white/[0.02] border border-white/[0.05]">
-                  <div className="text-[10px] font-mono text-white/40 uppercase mb-2">PACKET INGESTION</div>
-                  <div className="text-xl sm:text-2xl font-mono font-bold text-white mb-1">
-                    {formatNumber(totalPps)} pps
-                  </div>
-                  <div className="text-[11px] font-mono text-cyan-400">0 dropped frames</div>
-                </div>
-
-                <div className="p-5 rounded-2xl bg-white/[0.02] border border-white/[0.05]">
-                  <div className="text-[10px] font-mono text-white/40 uppercase mb-2">ACTIVE THREAT ALERTS</div>
-                  <div className="text-xl sm:text-2xl font-mono font-bold text-amber-400 mb-1">
-                    {alerts.length || 4} Flagged
-                  </div>
-                  <div className="text-[11px] font-mono text-white/40">Multi-resolution match</div>
-                </div>
-
-                <div className="p-5 rounded-2xl bg-white/[0.02] border border-white/[0.05]">
-                  <div className="text-[10px] font-mono text-white/40 uppercase mb-2">OPTICAL NODES</div>
-                  <div className="text-xl sm:text-2xl font-mono font-bold text-white mb-1">
-                    {hosts.length || 5} Monitored
-                  </div>
-                  <div className="text-[11px] font-mono text-white/40">Air-gapped topology</div>
-                </div>
-              </div>
-
-              {/* Filter Pills */}
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pt-2">
-                <div className="flex items-center gap-2 overflow-x-auto pb-2 sm:pb-0 scrollbar-none">
-                  {['ALL', 'CRITICAL', 'VOLUMETRIC', 'C2', 'EXFILTRATION'].map((filter) => (
-                    <button
-                      key={filter}
-                      onClick={() => setSelectedThreatFilter(filter)}
-                      className={`px-3.5 py-1.5 rounded-full text-xs font-mono font-medium transition-all whitespace-nowrap border ${
-                        selectedThreatFilter === filter
-                          ? 'bg-white text-black border-white shadow-sm'
-                          : 'bg-white/[0.04] text-white/60 border-white/[0.08] hover:bg-white/[0.08]'
-                      }`}
-                    >
-                      {filter}
-                    </button>
-                  ))}
-                </div>
-                <span className="text-[11px] font-mono text-white/40">Real-time passive tap stream</span>
-              </div>
-
-              {/* Table with Mobile Horizontal Scroll Container */}
-              <div className="rounded-2xl border border-white/[0.06] overflow-x-auto">
-                <div className="min-w-[620px]">
-                  <div className="grid grid-cols-12 px-6 py-3 bg-white/[0.02] text-[11px] font-mono text-white/40 uppercase border-b border-white/[0.06]">
-                    <span className="col-span-3">THREAT VECTOR</span>
-                    <span className="col-span-4">INGRESS PATH</span>
-                    <span className="col-span-2">SEVERITY</span>
-                    <span className="col-span-1">RISK</span>
-                    <span className="col-span-2 text-right">ACTION</span>
-                  </div>
-
-                  <div className="divide-y divide-white/[0.04] font-mono text-xs">
-                    {(alerts.length > 0 ? alerts : [
-                      { id: '1', threatType: 'SYN_FLOOD', srcIp: '10.0.0.50', dstIp: '10.0.0.10', severity: 'CRITICAL', riskScore: 92 },
-                      { id: '2', threatType: 'C2_BEACON', srcIp: '10.0.0.21', dstIp: '198.51.100.42', severity: 'HIGH', riskScore: 88 },
-                      { id: '3', threatType: 'UDP_FLOOD', srcIp: '203.0.113.88', dstIp: '10.0.0.10', severity: 'CRITICAL', riskScore: 95 },
-                      { id: '4', threatType: 'DNS_TUNNEL', srcIp: '10.0.0.31', dstIp: '1.1.1.1', severity: 'MEDIUM', riskScore: 68 },
-                    ]).map((alert) => (
-                      <div
-                        key={alert.id}
-                        className="grid grid-cols-12 px-6 py-3.5 items-center hover:bg-white/[0.02] transition-colors"
-                      >
-                        <span className="col-span-3 font-semibold text-white flex items-center gap-2">
-                          <AlertTriangle size={13} className="text-amber-400" />
-                          {alert.threatType.replace(/_/g, ' ')}
-                        </span>
-                        <span className="col-span-4 text-white/60">
-                          {alert.srcIp} → {alert.dstIp}
-                        </span>
-                        <span className="col-span-2">
-                          <span className="text-[10px] font-mono text-white/80 border border-white/10 px-2 py-0.5 rounded-full">
-                            {alert.severity}
-                          </span>
-                        </span>
-                        <span className="col-span-1 font-bold text-white">
-                          {Math.round(alert.riskScore)}
-                        </span>
-                        <span className="col-span-2 text-right">
-                          <Link
-                            href="/threats"
-                            className="px-3 py-1 rounded-full bg-white/[0.06] hover:bg-white/[0.12] text-white/80 text-[11px] border border-white/[0.1] transition-colors"
-                          >
-                            Inspect Flow
-                          </Link>
-                        </span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              </div>
+              </ScrollReveal>
             </div>
           </div>
-        </section>
 
-        {/* ── Section 5: Isolated Cyber Range Lab (Spacious & Clean) ── */}
-        <section id="simulation-lab" className="py-28 sm:py-40 px-6 sm:px-12 relative z-10 max-w-6xl mx-auto border-t border-white/[0.06]">
-          <div className="flex flex-col md:flex-row md:items-end justify-between mb-12 sm:mb-16 gap-4">
-            <div>
-              <div className="text-[11px] font-mono text-amber-400 tracking-widest uppercase mb-3 flex items-center gap-2">
-                <Flame size={15} /> ISOLATED TEST ENCLAVE
-              </div>
-              <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold tracking-tight text-white mb-3">
-                Cyber Range Simulation Lab
-              </h2>
-              <p className="text-sm sm:text-base text-white/50 max-w-xl font-sans leading-relaxed">
-                Inject synthetic network scenarios across the passive optical tap. Verify anomaly triggers
-                and risk scoring in real time with zero return risk.
-              </p>
-            </div>
-
-            {/* Active Simulation Badge / Action */}
-            {isSimulating && (
-              <div className="flex items-center gap-3 p-3.5 rounded-2xl bg-red-500/10 border border-red-500/30">
-                <span className="w-2.5 h-2.5 rounded-full bg-red-500 animate-pulse" />
-                <div className="font-mono text-xs text-red-400">
-                  ATTACK RUNNING: <strong className="text-white">{activeScenario}</strong> ({Math.round(simulation?.elapsedSeconds || 0)}s)
-                </div>
-                <button
-                  onClick={stopSimulation}
-                  className="px-3 py-1 rounded-full bg-red-600 hover:bg-red-500 text-white font-mono font-bold text-xs transition-all"
-                >
-                  STOP
-                </button>
-              </div>
-            )}
-          </div>
-
-          {/* 4 Spacious Scenario Cards */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
-            {SIMULATION_PRESETS.map((scenario) => {
-              const isThisActive = isSimulating && activeScenario === scenario.id;
-              return (
-                <div
-                  key={scenario.id}
-                  className={`p-6 sm:p-7 rounded-3xl border transition-all duration-300 flex flex-col justify-between ${
-                    isThisActive
-                      ? 'bg-red-950/20 border-red-500/40 shadow-xl'
-                      : 'bg-[#080c12]/70 border-white/[0.08] hover:border-white/[0.18]'
-                  }`}
-                >
-                  <div>
-                    <div className="flex items-center justify-between mb-4">
-                      <span className="text-[10px] font-mono text-white/50 border border-white/10 px-2 py-0.5 rounded-full">
-                        {scenario.category}
-                      </span>
-                      <span className="text-[10px] font-mono text-white/30">SCENARIO</span>
-                    </div>
-                    <h3 className="text-base sm:text-lg font-bold text-white mb-2">{scenario.name}</h3>
-                    <p className="text-xs text-white/50 mb-8 leading-relaxed font-sans">{scenario.desc}</p>
+          {/* Award platform cards */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 sm:gap-7">
+            {STUDIO_AWARDS.platforms.map((plat, i) => (
+              <ScrollReveal key={plat.platform} direction="bottom" delay={i * 120}>
+                <div className="rounded-2xl border border-[#f5efff]/[0.05] bg-[#09090f] p-7 sm:p-8 space-y-3 h-full">
+                  <span className="font-mono text-[10px] uppercase tracking-[0.2em] text-[#f5efff]/30 block">
+                    {plat.platform}
+                  </span>
+                  <h4 className="font-editorial text-lg sm:text-xl font-light text-[#f5efff]">
+                    {plat.accolade}
+                  </h4>
+                  <div className="font-mono text-xs text-emerald-400/80 font-semibold">
+                    {plat.score}
                   </div>
-
-                  <div>
-                    <div className="text-[10px] font-mono text-white/40 mb-4">{scenario.intensity}</div>
-                    <button
-                      onClick={() => {
-                        if (isThisActive) {
-                          stopSimulation();
-                        } else {
-                          startSimulation(scenario.id, 20);
-                        }
-                      }}
-                      className={`w-full py-2.5 rounded-full font-mono font-bold text-xs flex items-center justify-center gap-2 transition-all ${
-                        isThisActive
-                          ? 'bg-red-600 hover:bg-red-500 text-white shadow-lg'
-                          : 'bg-white hover:bg-white/90 text-black shadow-md'
-                      }`}
-                    >
-                      {isThisActive ? (
-                        <>
-                          <Square size={13} /> HALT SCENARIO
-                        </>
-                      ) : (
-                        <>
-                          <Play size={13} /> TEST SCENARIO
-                        </>
-                      )}
-                    </button>
-                  </div>
+                  <p className="text-xs text-[#f5efff]/35 leading-[1.6]">
+                    {plat.detail}
+                  </p>
                 </div>
-              );
-            })}
+              </ScrollReveal>
+            ))}
           </div>
+        </div>
+      </section>
 
-          {/* Telemetry Bar */}
-          <div className="p-6 sm:p-8 rounded-3xl bg-[#080c12]/60 border border-white/[0.08] flex flex-col sm:flex-row items-center justify-between gap-6">
-            <div className="flex items-center gap-4">
-              <div className="w-10 h-10 rounded-full bg-white/[0.06] border border-white/[0.1] flex items-center justify-center text-white">
-                <Zap size={18} />
-              </div>
-              <div>
-                <div className="text-sm font-semibold text-white">
-                  {isSimulating ? `Active Vector: ${activeScenario}` : 'Enclave Standby State'}
-                </div>
-                <div className="text-xs text-white/40">
-                  {isSimulating
-                    ? `${formatNumber(simulation?.packetsGenerated || 0)} frames mirrored through optical tap`
-                    : 'Select any scenario above to observe real-time feature extraction'}
-                </div>
-              </div>
-            </div>
-
-            <LiquidGlassButton
-              as={Link}
-              href="/dashboard"
-              variant="liquid-light"
-              size="sm"
-              className="w-full sm:w-auto"
-            >
-              Open Full 3D Globe <ArrowRight size={14} />
-            </LiquidGlassButton>
-          </div>
-        </section>
-
-      </main>
-
-      {/* ── Breathtaking Cinematic Curtain Reveal Footer ── */}
-      <CinematicFooter title="Ready to begin?" brandText="MIRAGE" />
+      {/* ═══ FOOTER ═══ */}
+      <StudioFooter />
     </div>
   );
 }

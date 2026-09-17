@@ -93,6 +93,8 @@ interface CyberGlobeProps {
   hosts?: Host[];
   activeScenario?: string | null;
   className?: string;
+  /** Strip HUD overlays for lightweight landing page embed */
+  compact?: boolean;
 }
 
 // Convert Lat/Lon to 3D Cartesian Vector on sphere of radius R
@@ -107,8 +109,8 @@ function latLonToVector3(lat: number, lon: number, radius: number): THREE.Vector
 
 // Generate realistic procedural Earth textures (Day/Continent, Night Lights, Specular)
 function createProceduralEarthTextures() {
-  const width = 2048;
-  const height = 1024;
+  const width = 1024;
+  const height = 512;
 
   // 1. Day / Landmass canvas
   const canvas = document.createElement('canvas');
@@ -244,6 +246,7 @@ export function CyberGlobe({
   hosts = [],
   activeScenario,
   className,
+  compact = false,
 }: CyberGlobeProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const [selectedNode, setSelectedNode] = useState<ThreatNode>(DEFAULT_THREAT_NODES[0]);
@@ -277,7 +280,7 @@ export function CyberGlobe({
     // Renderer
     const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
     renderer.setSize(width, height);
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.5));
     renderer.toneMapping = THREE.ACESFilmicToneMapping;
     renderer.toneMappingExposure = 1.2;
     container.appendChild(renderer.domElement);
@@ -296,7 +299,7 @@ export function CyberGlobe({
 
     // Earth Sphere
     const globeRadius = 4.8;
-    const earthGeometry = new THREE.SphereGeometry(globeRadius, 64, 64);
+    const earthGeometry = new THREE.SphereGeometry(globeRadius, 48, 48);
     const earthTexture = createProceduralEarthTextures();
 
     const earthMaterial = new THREE.MeshStandardMaterial({
@@ -341,29 +344,12 @@ export function CyberGlobe({
     });
 
     const atmosphereMesh = new THREE.Mesh(
-      new THREE.SphereGeometry(globeRadius * 1.15, 48, 48),
+      new THREE.SphereGeometry(globeRadius * 1.15, 32, 32),
       atmosphereMaterial
     );
     scene.add(atmosphereMesh);
 
-    // Space Particles
-    const starCount = 350;
-    const starGeometry = new THREE.BufferGeometry();
-    const starPositions = new Float32Array(starCount * 3);
-    for (let i = 0; i < starCount * 3; i += 3) {
-      starPositions[i] = (Math.random() - 0.5) * 80;
-      starPositions[i + 1] = (Math.random() - 0.5) * 80;
-      starPositions[i + 2] = (Math.random() - 0.5) * 80;
-    }
-    starGeometry.setAttribute('position', new THREE.BufferAttribute(starPositions, 3));
-    const starMaterial = new THREE.PointsMaterial({
-      size: 0.8,
-      color: 0x6bb3ff,
-      transparent: true,
-      opacity: 0.6,
-    });
-    const starPoints = new THREE.Points(starGeometry, starMaterial);
-    scene.add(starPoints);
+
 
     // Orbital Satellite Rings (matching user reference image)
     const orbitalGroup = new THREE.Group();
@@ -528,12 +514,21 @@ export function CyberGlobe({
     window.addEventListener('pointermove', onPointerMove);
     window.addEventListener('pointerup', onPointerUp);
 
+    // Visibility tracking — pause rendering when off-screen
+    let isInView = true;
+    const visObs = new IntersectionObserver(
+      ([entry]) => { isInView = entry.isIntersecting; },
+      { threshold: 0 }
+    );
+    visObs.observe(container);
+
     // Animation Loop
     let animId: number;
     const clock = new THREE.Clock();
 
     const animate = () => {
       animId = requestAnimationFrame(animate);
+      if (!isInView) return; // Skip rendering when off-screen
       const elapsedTime = clock.getElapsedTime();
 
       // Earth rotation
@@ -589,6 +584,7 @@ export function CyberGlobe({
         container.removeChild(renderer.domElement);
       }
       renderer.dispose();
+      visObs.disconnect();
     };
   }, [threatNodes, autoRotate]);
 
@@ -597,6 +593,7 @@ export function CyberGlobe({
       {/* 3D WebGL Canvas Viewport */}
       <div ref={containerRef} className="w-full h-full cursor-grab active:cursor-grabbing" />
 
+      {!compact && (<>
       {/* Sci-Fi HUD Bracket Overlays (Matching Image Aesthetics) */}
       <div className="absolute top-4 left-4 z-10 pointer-events-none">
         <div className="flex items-center gap-2 mb-1">
@@ -757,6 +754,7 @@ export function CyberGlobe({
           </div>
         </div>
       )}
+      </>)}
     </div>
   );
 }
