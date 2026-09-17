@@ -188,6 +188,7 @@ export default function DashboardPage() {
           <CyberGlobe
             alerts={alerts}
             hosts={hosts}
+            threatStream={threatStream}
             activeScenario={isSimulating ? activeScenario : null}
             className="h-[580px]"
           />

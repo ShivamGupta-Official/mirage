@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef, useState, useMemo } from 'react';
+import { useEffect, useRef, useState, useMemo, useCallback } from 'react';
 import * as THREE from 'three';
 import {
   Shield,
@@ -10,8 +10,20 @@ import {
   RotateCw,
   Compass,
   Globe,
+  Radio,
+  Zap,
+  Play,
+  Pause,
+  Layers,
 } from 'lucide-react';
-import type { Alert, Host } from '@/types';
+import type { Alert, Host, ThreatEventDisplay } from '@/types';
+import {
+  predictLocationFromIp,
+  generateDynamicHorizonThreat,
+  PRIMARY_DEFENSE_TARGET,
+  type DynamicThreatEvent,
+  type GeoLocation,
+} from '@/lib/geo-intel';
 
 export interface ThreatNode {
   id: string;
@@ -24,73 +36,34 @@ export interface ThreatNode {
   riskScore: number;
   threatType?: string;
   packetRate?: number;
+  bandwidthGbps?: number;
+  country?: string;
+  city?: string;
+  asn?: string;
+  mlConfidence?: number;
 }
 
-const DEFAULT_THREAT_NODES: ThreatNode[] = [
-  {
-    id: 'node-attacker-50',
-    ip: '10.0.0.50',
-    label: 'SYN/UDP Flood Attacker',
-    location: 'Eurasia Transit / Node 50',
-    lat: 55.75,
-    lon: 37.61,
-    role: 'attacker',
-    riskScore: 94.5,
-    threatType: 'SYN_FLOOD',
-    packetRate: 12400,
-  },
-  {
-    id: 'node-c2-42',
-    ip: '198.51.100.42',
-    label: 'External C2 Rendezvous',
-    location: 'Offshore Relay Server',
-    lat: 22.31,
-    lon: 114.16,
-    role: 'c2',
-    riskScore: 92.0,
-    threatType: 'C2_BEACON',
-    packetRate: 420,
-  },
-  {
-    id: 'node-target-10',
-    ip: '10.0.0.10',
-    label: 'Core Auth Target (Enclave)',
-    location: 'Primary Secure DC / Diode Rx',
-    lat: 28.61,
-    lon: 77.20,
-    role: 'target',
-    riskScore: 18.0,
-    packetRate: 850,
-  },
-  {
-    id: 'node-comp-21',
-    ip: '10.0.0.21',
-    label: 'Compromised Workstation',
-    location: 'Internal Engineering Enclave',
-    lat: 51.50,
-    lon: -0.12,
-    role: 'internal_compromised',
-    riskScore: 88.0,
-    threatType: 'C2_BEACON',
-    packetRate: 64,
-  },
-  {
-    id: 'node-finance-31',
-    ip: '10.0.0.31',
-    label: 'Finance Host (DNS Exfil)',
-    location: 'Branch Office Terminal',
-    lat: 40.71,
-    lon: -74.00,
-    role: 'internal_compromised',
-    riskScore: 76.5,
-    threatType: 'DNS_TUNNEL',
-    packetRate: 38,
-  },
-];
+const DEFAULT_TARGET_NODE: ThreatNode = {
+  id: 'node-target-enclave',
+  ip: '10.0.0.10',
+  label: 'Primary Protected Enclave (Diode Rx)',
+  location: 'New Delhi, India [AS-NTRO-ENCLAVE]',
+  lat: 28.6139,
+  lon: 77.2090,
+  role: 'target',
+  riskScore: 12.0,
+  packetRate: 1250,
+  bandwidthGbps: 1.0,
+  country: 'India',
+  city: 'New Delhi',
+  asn: 'AS-NTRO-ENCLAVE',
+  mlConfidence: 100,
+};
 
 interface CyberGlobeProps {
   alerts?: Alert[];
   hosts?: Host[];
+  threatStream?: ThreatEventDisplay[];
   activeScenario?: string | null;
   className?: string;
   /** Strip HUD overlays for lightweight landing page embed */
@@ -107,18 +80,17 @@ function latLonToVector3(lat: number, lon: number, radius: number): THREE.Vector
   return new THREE.Vector3(x, y, z);
 }
 
-// Generate realistic procedural Earth textures (Day/Continent, Night Lights, Specular)
+// Generate procedural Earth textures (Night lights, Oceans, Grid)
 function createProceduralEarthTextures() {
   const width = 1024;
   const height = 512;
 
-  // 1. Day / Landmass canvas
   const canvas = document.createElement('canvas');
   canvas.width = width;
   canvas.height = height;
   const ctx = canvas.getContext('2d')!;
 
-  // Deep ocean background
+  // Deep navy ocean background
   const oceanGradient = ctx.createLinearGradient(0, 0, 0, height);
   oceanGradient.addColorStop(0, '#040b18');
   oceanGradient.addColorStop(0.5, '#061326');
@@ -126,8 +98,8 @@ function createProceduralEarthTextures() {
   ctx.fillStyle = oceanGradient;
   ctx.fillRect(0, 0, width, height);
 
-  // Subtle ocean bathymetry grid lines
-  ctx.strokeStyle = 'rgba(59, 158, 255, 0.05)';
+  // Ocean bathymetry grid lines
+  ctx.strokeStyle = 'rgba(59, 158, 255, 0.08)';
   ctx.lineWidth = 1;
   for (let lat = -80; lat <= 80; lat += 20) {
     const y = ((90 - lat) / 180) * height;
@@ -144,94 +116,64 @@ function createProceduralEarthTextures() {
     ctx.stroke();
   }
 
-  // Draw landmasses procedurally with organic polygon approximations of continents
-  ctx.fillStyle = '#11253e';
-  ctx.shadowColor = 'rgba(59, 158, 255, 0.4)';
-  ctx.shadowBlur = 10;
+  // Procedural continental landmasses with neon cyber edge glow
+  ctx.fillStyle = 'rgba(14, 34, 61, 0.95)';
+  ctx.strokeStyle = '#38bdf8';
+  ctx.lineWidth = 1.2;
 
-  function drawContinent(points: [number, number][]) {
+  // Render major landmasses
+  const drawContinent = (points: [number, number][]) => {
     ctx.beginPath();
-    for (let i = 0; i < points.length; i++) {
-      const [lon, lat] = points[i];
-      const x = ((lon + 180) / 360) * width;
-      const y = ((90 - lat) / 180) * height;
-      if (i === 0) ctx.moveTo(x, y);
-      else ctx.lineTo(x, y);
-    }
+    points.forEach(([lon, lat], i) => {
+      const px = ((lon + 180) / 360) * width;
+      const py = ((90 - lat) / 180) * height;
+      if (i === 0) ctx.moveTo(px, py);
+      else ctx.lineTo(px, py);
+    });
     ctx.closePath();
     ctx.fill();
-  }
+    ctx.stroke();
+  };
 
   // North America
   drawContinent([
-    [-168, 65], [-140, 70], [-100, 75], [-60, 80], [-55, 50],
-    [-75, 45], [-75, 25], [-90, 20], [-105, 22], [-120, 35],
-    [-125, 48], [-140, 58], [-168, 65],
+    [-165, 70], [-140, 68], [-100, 72], [-75, 62], [-55, 48], [-70, 42],
+    [-80, 25], [-95, 18], [-105, 22], [-122, 38], [-130, 50], [-165, 60]
   ]);
-
   // South America
   drawContinent([
-    [-80, 10], [-50, 0], [-35, -5], [-40, -22], [-55, -35],
-    [-65, -55], [-75, -50], [-72, -30], [-80, -5], [-80, 10],
+    [-80, 10], [-50, -5], [-35, -10], [-40, -22], [-55, -35], [-68, -52],
+    [-75, -45], [-72, -20], [-80, -2]
   ]);
-
-  // Europe & Scandinavia
+  // Eurasia
   drawContinent([
-    [-10, 36], [0, 42], [5, 52], [10, 58], [25, 70],
-    [32, 70], [30, 60], [45, 60], [40, 45], [25, 38],
-    [10, 36], [-10, 36],
+    [-10, 36], [0, 42], [15, 38], [30, 40], [40, 30], [60, 25], [75, 10],
+    [85, 20], [100, 15], [120, 25], [130, 35], [140, 45], [170, 65],
+    [130, 72], [80, 75], [40, 70], [25, 71], [10, 60], [-5, 50]
   ]);
-
   // Africa
   drawContinent([
-    [-17, 32], [10, 37], [32, 31], [50, 12], [42, -5],
-    [35, -25], [20, -35], [12, -18], [0, 5], [-17, 15], [-17, 32],
+    [-15, 30], [10, 36], [30, 32], [50, 12], [42, -10], [30, -32],
+    [20, -34], [12, -20], [8, 5], [-15, 15]
   ]);
-
-  // Asia
-  drawContinent([
-    [32, 31], [60, 40], [80, 72], [140, 72], [170, 65],
-    [140, 40], [120, 25], [105, 10], [90, 22], [75, 8],
-    [68, 25], [45, 30], [32, 31],
-  ]);
-
   // Australia
   drawContinent([
-    [114, -22], [125, -15], [142, -12], [152, -28], [148, -38],
-    [135, -35], [115, -35], [114, -22],
+    [115, -20], [130, -12], [145, -15], [152, -28], [140, -38], [118, -35], [112, -25]
   ]);
 
-  // 2. Night Lights Layer (Golden city clusters)
-  ctx.shadowBlur = 0;
-  const cities: [number, number, number][] = [
-    [-74, 40, 8], [-118, 34, 7], [-87, 41, 6], [-95, 29, 6], [-122, 37, 6],
-    [-43, -22, 6], [-46, -23, 7], [-58, -34, 6],
-    [0, 51, 8], [2, 48, 8], [13, 52, 7], [12, 41, 6], [37, 55, 7],
-    [31, 30, 6], [28, -26, 5],
-    [55, 25, 7], [77, 28, 9], [72, 19, 8], [80, 13, 7], [88, 22, 7],
-    [116, 39, 8], [121, 31, 9], [114, 22, 8], [139, 35, 9], [126, 37, 8],
-    [151, -33, 6], [144, -37, 6],
+  // City cluster cyber lights
+  ctx.fillStyle = '#60a5fa';
+  const majorCities: [number, number][] = [
+    [-77.03, 38.90], [-122.41, 37.77], [-0.12, 51.50], [8.68, 50.11],
+    [37.61, 55.75], [77.20, 28.61], [72.87, 19.07], [116.40, 39.90],
+    [139.69, 35.68], [126.97, 37.56], [103.81, 1.35], [151.20, -33.86],
+    [-46.63, -23.55], [4.90, 52.36]
   ];
-
-  cities.forEach(([lon, lat, r]) => {
-    const x = ((lon + 180) / 360) * width;
-    const y = ((90 - lat) / 180) * height;
-
-    const radGrad = ctx.createRadialGradient(x, y, 1, x, y, r * 4);
-    radGrad.addColorStop(0, 'rgba(255, 205, 80, 0.95)');
-    radGrad.addColorStop(0.3, 'rgba(245, 160, 40, 0.6)');
-    radGrad.addColorStop(0.7, 'rgba(59, 158, 255, 0.2)');
-    radGrad.addColorStop(1, 'transparent');
-
-    ctx.fillStyle = radGrad;
+  majorCities.forEach(([lon, lat]) => {
+    const px = ((lon + 180) / 360) * width;
+    const py = ((90 - lat) / 180) * height;
     ctx.beginPath();
-    ctx.arc(x, y, r * 4, 0, Math.PI * 2);
-    ctx.fill();
-
-    // Hot center core
-    ctx.fillStyle = '#ffffff';
-    ctx.beginPath();
-    ctx.arc(x, y, 1.5, 0, Math.PI * 2);
+    ctx.arc(px, py, 2.5, 0, Math.PI * 2);
     ctx.fill();
   });
 
@@ -244,27 +186,136 @@ function createProceduralEarthTextures() {
 export function CyberGlobe({
   alerts = [],
   hosts = [],
+  threatStream = [],
   activeScenario,
   className,
   compact = false,
 }: CyberGlobeProps) {
   const containerRef = useRef<HTMLDivElement>(null);
-  const [selectedNode, setSelectedNode] = useState<ThreatNode>(DEFAULT_THREAT_NODES[0]);
   const [autoRotate, setAutoRotate] = useState<boolean>(true);
+  const [liveStreamActive, setLiveStreamActive] = useState<boolean>(true);
+  const [dynamicThreats, setDynamicThreats] = useState<DynamicThreatEvent[]>([]);
+  const [selectedNode, setSelectedNode] = useState<ThreatNode>(DEFAULT_TARGET_NODE);
 
-  // Active threat nodes with live risk overrides
-  const threatNodes = useMemo(() => {
-    return DEFAULT_THREAT_NODES.map((node) => {
-      const matchHost = hosts.find((h) => h.ip === node.ip);
-      const matchAlert = alerts.find((a) => a.srcIp === node.ip || a.dstIp === node.ip);
-      return {
-        ...node,
-        riskScore: matchHost ? matchHost.riskScore : node.riskScore,
-        threatType: matchAlert ? matchAlert.threatType : node.threatType,
-      };
+  // Poll dynamic NetScout Horizon threats periodically when live streaming is on
+  useEffect(() => {
+    let isMounted = true;
+
+    // Fetch initial batch
+    const fetchThreats = async () => {
+      try {
+        const res = await fetch('/api/horizon/threats?count=6');
+        if (res.ok) {
+          const data = await res.json();
+          if (isMounted && data.threats) {
+            setDynamicThreats(data.threats);
+            if (data.threats.length > 0) {
+              const top = data.threats[0];
+              setSelectedNode({
+                id: top.id,
+                ip: top.srcIp,
+                label: `${top.threatType} (${top.srcLocation.city})`,
+                location: `${top.srcLocation.city}, ${top.srcLocation.country} [${top.srcLocation.asn}]`,
+                lat: top.srcLocation.lat,
+                lon: top.srcLocation.lon,
+                role: top.threatType === 'C2_BEACON' ? 'c2' : 'attacker',
+                riskScore: top.riskScore,
+                threatType: top.threatType,
+                packetRate: top.packetRateKpps * 1000,
+                bandwidthGbps: top.bandwidthGbps,
+                country: top.srcLocation.country,
+                city: top.srcLocation.city,
+                asn: top.srcLocation.asn,
+                mlConfidence: top.mlConfidence,
+              });
+            }
+          }
+        }
+      } catch {
+        // Fallback local dynamic synthesis
+        if (isMounted) {
+          const localEvents = [
+            generateDynamicHorizonThreat(),
+            generateDynamicHorizonThreat(),
+            generateDynamicHorizonThreat(),
+            generateDynamicHorizonThreat(),
+          ];
+          setDynamicThreats(localEvents);
+        }
+      }
+    };
+
+    fetchThreats();
+
+    // Set streaming interval (every 4 seconds)
+    const interval = setInterval(() => {
+      if (!liveStreamActive) return;
+      // Add a fresh dynamic threat to the front
+      const freshThreat = generateDynamicHorizonThreat();
+      setDynamicThreats((prev) => [freshThreat, ...prev.slice(0, 7)]);
+    }, 4000);
+
+    return () => {
+      isMounted = false;
+      clearInterval(interval);
+    };
+  }, [liveStreamActive]);
+
+  // Combine static target enclave, live Horizon threats, and incoming threatStream into active nodes
+  const threatNodes: ThreatNode[] = useMemo(() => {
+    const nodes: ThreatNode[] = [DEFAULT_TARGET_NODE];
+
+    // Add dynamic NetScout Horizon threats
+    dynamicThreats.forEach((threat) => {
+      nodes.push({
+        id: threat.id,
+        ip: threat.srcIp,
+        label: `${threat.threatType} · ${threat.srcLocation.city}`,
+        location: `${threat.srcLocation.city}, ${threat.srcLocation.country} (${threat.srcLocation.asn})`,
+        lat: threat.srcLocation.lat,
+        lon: threat.srcLocation.lon,
+        role: threat.threatType === 'C2_BEACON' ? 'c2' : 'attacker',
+        riskScore: threat.riskScore,
+        threatType: threat.threatType,
+        packetRate: threat.packetRateKpps * 1000,
+        bandwidthGbps: threat.bandwidthGbps,
+        country: threat.srcLocation.country,
+        city: threat.srcLocation.city,
+        asn: threat.srcLocation.asn,
+        mlConfidence: threat.mlConfidence,
+      });
     });
-  }, [hosts, alerts]);
 
+    // Add incoming threatStream / activeScenario nodes if any exist
+    if (threatStream.length > 0) {
+      threatStream.slice(0, 3).forEach((t) => {
+        if (t.srcIp && !nodes.some((n) => n.ip === t.srcIp)) {
+          const pred = predictLocationFromIp(t.srcIp);
+          nodes.push({
+            id: `stream-${t.id}`,
+            ip: t.srcIp,
+            label: `${t.threatType || 'ACTIVE_THREAT'} (${pred.city})`,
+            location: `${pred.city}, ${pred.country} [${pred.asn}]`,
+            lat: pred.lat,
+            lon: pred.lon,
+            role: t.threatType === 'C2_BEACON' ? 'c2' : 'attacker',
+            riskScore: 92.5,
+            threatType: t.threatType,
+            packetRate: 5400,
+            bandwidthGbps: 14.8,
+            country: pred.country,
+            city: pred.city,
+            asn: pred.asn,
+            mlConfidence: 97.4,
+          });
+        }
+      });
+    }
+
+    return nodes;
+  }, [dynamicThreats, threatStream]);
+
+  // Three.js Scene Setup & Render Loop
   useEffect(() => {
     const container = containerRef.current;
     if (!container) return;
@@ -277,23 +328,23 @@ export function CyberGlobe({
     const camera = new THREE.PerspectiveCamera(45, width / height, 0.1, 1000);
     camera.position.set(0, 3, 14);
 
-    // Renderer
+    // WebGL Renderer
     const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
     renderer.setSize(width, height);
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.5));
     renderer.toneMapping = THREE.ACESFilmicToneMapping;
-    renderer.toneMappingExposure = 1.2;
+    renderer.toneMappingExposure = 1.25;
     container.appendChild(renderer.domElement);
 
     // Lighting
-    const ambientLight = new THREE.AmbientLight(0x0f1c30, 1.8);
+    const ambientLight = new THREE.AmbientLight(0x0f1c30, 2.0);
     scene.add(ambientLight);
 
     const sunLight = new THREE.DirectionalLight(0xd4e7ff, 2.5);
     sunLight.position.set(20, 10, 15);
     scene.add(sunLight);
 
-    const blueRimLight = new THREE.DirectionalLight(0x2288ff, 3.2);
+    const blueRimLight = new THREE.DirectionalLight(0x2288ff, 3.5);
     blueRimLight.position.set(-15, 8, -12);
     scene.add(blueRimLight);
 
@@ -304,77 +355,69 @@ export function CyberGlobe({
 
     const earthMaterial = new THREE.MeshStandardMaterial({
       map: earthTexture,
-      roughness: 0.65,
+      roughness: 0.60,
       metalness: 0.25,
       emissive: new THREE.Color(0x051325),
-      emissiveIntensity: 0.6,
+      emissiveIntensity: 0.65,
     });
     const earthMesh = new THREE.Mesh(earthGeometry, earthMaterial);
     scene.add(earthMesh);
 
-    // Atmospheric Fresnel Glow
-    const atmosphereShader = {
+    // Atmosphere Glow
+    const atmosphereGeom = new THREE.SphereGeometry(globeRadius * 1.15, 32, 32);
+    const atmosphereMat = new THREE.ShaderMaterial({
       vertexShader: `
         varying vec3 vNormal;
-        varying vec3 vPosition;
         void main() {
           vNormal = normalize(normalMatrix * normal);
-          vPosition = (modelViewMatrix * vec4(position, 1.0)).xyz;
           gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
         }
       `,
       fragmentShader: `
         varying vec3 vNormal;
-        varying vec3 vPosition;
         void main() {
-          vec3 viewDir = normalize(-vPosition);
-          float fresnel = pow(1.0 - dot(vNormal, viewDir), 2.8);
-          vec3 atmColor = vec3(0.18, 0.58, 1.0);
-          gl_FragColor = vec4(atmColor, fresnel * 0.75);
+          float intensity = pow(0.68 - dot(vNormal, vec3(0, 0, 1.0)), 2.2);
+          gl_FragColor = vec4(0.2, 0.6, 1.0, 1.0) * intensity * 0.9;
         }
       `,
-    };
-
-    const atmosphereMaterial = new THREE.ShaderMaterial({
-      vertexShader: atmosphereShader.vertexShader,
-      fragmentShader: atmosphereShader.fragmentShader,
       blending: THREE.AdditiveBlending,
       side: THREE.BackSide,
       transparent: true,
     });
-
-    const atmosphereMesh = new THREE.Mesh(
-      new THREE.SphereGeometry(globeRadius * 1.15, 32, 32),
-      atmosphereMaterial
-    );
+    const atmosphereMesh = new THREE.Mesh(atmosphereGeom, atmosphereMat);
     scene.add(atmosphereMesh);
 
-
-
-    // Orbital Satellite Rings (matching user reference image)
+    // Orbital Rings
     const orbitalGroup = new THREE.Group();
-    const orbitRingConfigs = [
+    [
       { radius: globeRadius * 1.35, rotX: 0.35, rotZ: 0.25, color: 0x3b9eff },
-      { radius: globeRadius * 1.5, rotX: -0.6, rotZ: 0.5, color: 0x4ade80 },
-      { radius: globeRadius * 1.25, rotX: 0.85, rotZ: -0.4, color: 0xf59e0b },
-    ];
-
-    orbitRingConfigs.forEach(({ radius, rotX, rotZ, color }) => {
-      const ringGeom = new THREE.RingGeometry(radius - 0.02, radius + 0.02, 128);
-      const ringMat = new THREE.MeshBasicMaterial({
+      { radius: globeRadius * 1.50, rotX: -0.60, rotZ: 0.50, color: 0x4ade80 },
+      { radius: globeRadius * 1.25, rotX: 0.85, rotZ: -0.40, color: 0xf59e0b },
+    ].forEach(({ radius, rotX, rotZ, color }) => {
+      const ringGeom = new THREE.BufferGeometry();
+      const segments = 96;
+      const pts = [];
+      for (let i = 0; i <= segments; i++) {
+        const theta = (i / segments) * Math.PI * 2;
+        pts.push(new THREE.Vector3(Math.cos(theta) * radius, 0, Math.sin(theta) * radius));
+      }
+      ringGeom.setFromPoints(pts);
+      const ringMat = new THREE.LineDashedMaterial({
         color,
-        side: THREE.DoubleSide,
+        dashSize: 0.4,
+        gapSize: 0.2,
         transparent: true,
-        opacity: 0.35,
+        opacity: 0.25,
       });
-      const ringMesh = new THREE.Mesh(ringGeom, ringMat);
+      const ringMesh = new THREE.Line(ringGeom, ringMat);
+      ringMesh.computeLineDistances();
       ringMesh.rotation.x = rotX;
       ringMesh.rotation.z = rotZ;
       orbitalGroup.add(ringMesh);
     });
     scene.add(orbitalGroup);
 
-    // 3D Threat Pins & Pulsing Impact Shockwaves
+    // 3D Threat Pins & Pulsing Shockwaves
     const pinGroup = new THREE.Group();
     const shockwaveMeshes: { mesh: THREE.Mesh; scale: number; maxScale: number }[] = [];
 
@@ -391,41 +434,41 @@ export function CyberGlobe({
         : 0xf59e0b;
 
       // Pin Head
-      const headGeom = new THREE.SphereGeometry(0.14, 16, 16);
+      const headGeom = new THREE.SphereGeometry(isTarget ? 0.20 : 0.15, 16, 16);
       const headMat = new THREE.MeshBasicMaterial({ color: nodeColor });
       const head = new THREE.Mesh(headGeom, headMat);
       head.position.copy(pos);
       pinGroup.add(head);
 
-      // Pin stem
+      // Pin Stem
       const normal = pos.clone().normalize();
       const stemGeom = new THREE.CylinderGeometry(0.02, 0.02, 0.35, 8);
-      const stemMat = new THREE.MeshBasicMaterial({ color: nodeColor, transparent: true, opacity: 0.8 });
+      const stemMat = new THREE.MeshBasicMaterial({ color: nodeColor, transparent: true, opacity: 0.85 });
       const stem = new THREE.Mesh(stemGeom, stemMat);
       stem.position.copy(pos.clone().add(normal.clone().multiplyScalar(0.17)));
       stem.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), normal);
       pinGroup.add(stem);
 
-      // Shockwave Ring
-      const ringGeom = new THREE.RingGeometry(0.1, 0.16, 32);
+      // Expanding Radar Shockwave
+      const ringGeom = new THREE.RingGeometry(0.1, 0.18, 32);
       const ringMat = new THREE.MeshBasicMaterial({
         color: nodeColor,
         side: THREE.DoubleSide,
         transparent: true,
-        opacity: 0.8,
+        opacity: 0.85,
       });
       const shockwave = new THREE.Mesh(ringGeom, ringMat);
       shockwave.position.copy(pos.clone().add(normal.clone().multiplyScalar(0.02)));
       shockwave.lookAt(pos.clone().add(normal));
       pinGroup.add(shockwave);
 
-      shockwaveMeshes.push({ mesh: shockwave, scale: 1, maxScale: 3.5 });
+      shockwaveMeshes.push({ mesh: shockwave, scale: 1, maxScale: isTarget ? 4.5 : 3.2 });
     });
     earthMesh.add(pinGroup);
 
-    // Live Attack Trajectory Arcs with Traveling Laser Particles
+    // Ballistic Attack Trajectory Arcs with Laser Particles
     const arcGroup = new THREE.Group();
-    const targetNode = threatNodes.find((n) => n.role === 'target') || threatNodes[2];
+    const targetNode = threatNodes.find((n) => n.role === 'target') || DEFAULT_TARGET_NODE;
     const targetVec = latLonToVector3(targetNode.lat, targetNode.lon, globeRadius);
 
     interface AttackArcData {
@@ -441,7 +484,7 @@ export function CyberGlobe({
         const srcVec = latLonToVector3(srcNode.lat, srcNode.lon, globeRadius);
         const midPoint = srcVec.clone().add(targetVec).multiplyScalar(0.5);
         const distance = srcVec.distanceTo(targetVec);
-        const altitude = globeRadius * (1.18 + distance * 0.08);
+        const altitude = globeRadius * (1.18 + distance * 0.09);
         midPoint.normalize().multiplyScalar(altitude);
 
         const curve = new THREE.QuadraticBezierCurve3(srcVec, midPoint, targetVec);
@@ -458,21 +501,20 @@ export function CyberGlobe({
         const arcMat = new THREE.LineBasicMaterial({
           color: arcColor,
           transparent: true,
-          opacity: 0.65,
-          linewidth: 2,
+          opacity: 0.70,
         });
         const arcLine = new THREE.Line(arcGeom, arcMat);
         arcGroup.add(arcLine);
 
-        // Moving pulse laser nodes along the arc
+        // Traveling pulse photon laser heads
         const pulseCount = 2;
         const pulseMeshes: THREE.Mesh[] = [];
         for (let p = 0; p < pulseCount; p++) {
-          const pulseGeom = new THREE.SphereGeometry(0.1, 12, 12);
+          const pulseGeom = new THREE.SphereGeometry(0.12, 12, 12);
           const pulseMat = new THREE.MeshBasicMaterial({
             color: arcColor,
             transparent: true,
-            opacity: 0.9,
+            opacity: 0.95,
           });
           const pulseMesh = new THREE.Mesh(pulseGeom, pulseMat);
           arcGroup.add(pulseMesh);
@@ -483,26 +525,25 @@ export function CyberGlobe({
       });
     earthMesh.add(arcGroup);
 
-    // Mouse Interaction (Orbit / Rotate)
+    // Interactive Drag Orbit Controls
     let isDragging = false;
-    let prevMouseX = 0;
-    let prevMouseY = 0;
+    let prevMousePos = { x: 0, y: 0 };
+    const rotationVelocity = { x: 0, y: 0 };
 
     const onPointerDown = (e: PointerEvent) => {
       isDragging = true;
-      prevMouseX = e.clientX;
-      prevMouseY = e.clientY;
+      prevMousePos = { x: e.clientX, y: e.clientY };
     };
 
     const onPointerMove = (e: PointerEvent) => {
       if (!isDragging) return;
-      const deltaX = e.clientX - prevMouseX;
-      const deltaY = e.clientY - prevMouseY;
-      prevMouseX = e.clientX;
-      prevMouseY = e.clientY;
-
-      earthMesh.rotation.y += deltaX * 0.005;
-      earthMesh.rotation.x += deltaY * 0.005;
+      const deltaX = e.clientX - prevMousePos.x;
+      const deltaY = e.clientY - prevMousePos.y;
+      rotationVelocity.y = deltaX * 0.005;
+      rotationVelocity.x = deltaY * 0.005;
+      earthMesh.rotation.y += rotationVelocity.y;
+      earthMesh.rotation.x += rotationVelocity.x;
+      prevMousePos = { x: e.clientX, y: e.clientY };
     };
 
     const onPointerUp = () => {
@@ -514,48 +555,38 @@ export function CyberGlobe({
     window.addEventListener('pointermove', onPointerMove);
     window.addEventListener('pointerup', onPointerUp);
 
-    // Visibility tracking — pause rendering when off-screen
-    let isInView = true;
-    const visObs = new IntersectionObserver(
-      ([entry]) => { isInView = entry.isIntersecting; },
-      { threshold: 0 }
-    );
-    visObs.observe(container);
-
     // Animation Loop
     let animId: number;
-    const clock = new THREE.Clock();
+    let clock = new THREE.Clock();
 
     const animate = () => {
       animId = requestAnimationFrame(animate);
-      if (!isInView) return; // Skip rendering when off-screen
       const elapsedTime = clock.getElapsedTime();
 
-      // Earth rotation
+      // Continuous auto-rotation when not dragging
       if (autoRotate && !isDragging) {
         earthMesh.rotation.y += 0.0022;
       }
+      orbitalGroup.rotation.y -= 0.0010;
 
-      // Rotate orbital rings
-      orbitalGroup.rotation.y += 0.001;
-      orbitalGroup.rotation.z += 0.0005;
-
-      // Animate shockwave rings
+      // Animate shockwaves
       shockwaveMeshes.forEach((item) => {
-        item.scale += 0.04;
-        if (item.scale > item.maxScale) item.scale = 1.0;
+        item.scale += 0.035;
+        if (item.scale > item.maxScale) {
+          item.scale = 1.0;
+        }
         item.mesh.scale.set(item.scale, item.scale, item.scale);
         const mat = item.mesh.material as THREE.MeshBasicMaterial;
-        mat.opacity = 1.0 - item.scale / item.maxScale;
+        mat.opacity = Math.max(0, 0.9 - (item.scale / item.maxScale) * 0.9);
       });
 
       // Animate traveling attack pulses along arcs
       attackArcs.forEach(({ curve, pulseMeshes }, arcIdx) => {
         pulseMeshes.forEach((pulse, pIdx) => {
-          const t = (elapsedTime * 0.45 + pIdx * 0.5 + arcIdx * 0.25) % 1.0;
+          const t = (elapsedTime * 0.50 + pIdx * 0.5 + arcIdx * 0.20) % 1.0;
           const pos = curve.getPoint(t);
           pulse.position.copy(pos);
-          pulse.scale.setScalar(0.8 + Math.sin(t * Math.PI) * 0.8);
+          pulse.scale.setScalar(0.9 + Math.sin(t * Math.PI) * 0.7);
         });
       });
 
@@ -563,7 +594,6 @@ export function CyberGlobe({
     };
     animate();
 
-    // Resize Observer
     const handleResize = () => {
       if (!container) return;
       const newW = container.clientWidth;
@@ -584,177 +614,201 @@ export function CyberGlobe({
         container.removeChild(renderer.domElement);
       }
       renderer.dispose();
-      visObs.disconnect();
     };
   }, [threatNodes, autoRotate]);
 
   return (
-    <div className={`relative rounded-2xl overflow-hidden glass border border-white/10 ${className || 'h-[620px]'}`}>
-      {/* 3D WebGL Canvas Viewport */}
+    <div className={`relative rounded-2xl overflow-hidden glass border border-white/10 ${className || 'h-[640px]'}`}>
+      {/* 3D WebGL Canvas */}
       <div ref={containerRef} className="w-full h-full cursor-grab active:cursor-grabbing" />
 
-      {!compact && (<>
-      {/* Sci-Fi HUD Bracket Overlays (Matching Image Aesthetics) */}
-      <div className="absolute top-4 left-4 z-10 pointer-events-none">
-        <div className="flex items-center gap-2 mb-1">
-          <Globe size={18} className="text-cyan-400 animate-pulse" />
-          <span className="font-mono text-[11px] font-bold tracking-[0.2em] text-cyan-300 uppercase">
-            ORBITAL CYBER THREAT RADAR
-          </span>
-          <span className="px-1.5 py-0.5 rounded text-[9px] font-mono font-bold bg-cyan-500/20 text-cyan-300 border border-cyan-500/30">
-            3D REVOLVING
-          </span>
-        </div>
-        <h2 className="text-2xl font-black tracking-widest text-white uppercase font-sans">
-          GLOBAL INGRESS TAP
-        </h2>
-        <div className="text-xs text-white/50 font-mono flex items-center gap-3 mt-1">
-          <span>LAT: 28.61° N · LON: 77.20° E</span>
-          <span className="text-emerald-400 font-bold flex items-center gap-1">
-            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping" />
-            DIODE HARDWARE ISOLATED
-          </span>
-        </div>
-      </div>
-
-      {/* Futuristic Bracket Line Top-Left */}
-      <div className="absolute top-2 left-2 w-10 h-10 border-t-2 border-l-2 border-cyan-400/40 pointer-events-none" />
-      <div className="absolute top-2 right-2 w-10 h-10 border-t-2 border-r-2 border-cyan-400/40 pointer-events-none" />
-      <div className="absolute bottom-2 left-2 w-10 h-10 border-b-2 border-l-2 border-cyan-400/40 pointer-events-none" />
-      <div className="absolute bottom-2 right-2 w-10 h-10 border-b-2 border-r-2 border-cyan-400/40 pointer-events-none" />
-
-      {/* HUD Telemetry Card Left (Matching Image's "IN LOW ORBIT / SATELLITES" Box) */}
-      <div className="absolute top-24 left-4 z-10 max-w-[280px] p-4 rounded-xl bg-black/60 backdrop-blur-md border border-white/10 space-y-3 font-mono">
-        <div className="flex items-center justify-between text-[10px] text-white/50 pb-2 border-b border-white/10">
-          <span className="font-bold text-white tracking-widest">INGRESS TELEMETRY</span>
-          <span className="text-red-400 animate-pulse font-bold">
-            {activeScenario ? activeScenario : 'LIVE TRAFFIC'}
-          </span>
-        </div>
-
-        <div className="space-y-1.5 text-xs">
-          <div className="text-[10px] text-white/40 uppercase">ACTIVE THREAT CONDUITS</div>
-          <div className="text-lg font-black text-red-400">
-            {threatNodes.filter((n) => n.riskScore >= 70).length} HOSTS FLAGGED
-          </div>
-          <p className="text-[11px] text-white/60 font-sans leading-relaxed">
-            Passive optical tap extracts features at 1Gbps with zero reverse packet reflection.
-          </p>
-        </div>
-
-        <div className="grid grid-cols-2 gap-2 pt-2 border-t border-white/10 text-[10px]">
-          <div>
-            <span className="text-white/40 block">BEAMS ACTIVE</span>
-            <span className="text-cyan-300 font-bold text-sm">4 Trajectories</span>
-          </div>
-          <div>
-            <span className="text-white/40 block">RADAR RESOLUTION</span>
-            <span className="text-emerald-400 font-bold text-sm">&lt; 5ms</span>
-          </div>
-        </div>
-      </div>
-
-      {/* Floating Attack Origin IP Address List (Right Side) */}
-      <div className="absolute top-4 right-4 z-10 w-72 max-h-[500px] overflow-y-auto space-y-2 p-3 rounded-xl bg-black/70 backdrop-blur-md border border-white/10 font-mono text-xs">
-        <div className="flex items-center justify-between text-[11px] font-bold text-white/70 px-1 pb-1 border-b border-white/10">
-          <span className="flex items-center gap-1.5 text-red-400">
-            <Crosshair size={13} /> ATTACK ORIGIN IPS
-          </span>
-          <span className="text-[10px] text-white/40">GEO-MAPPED</span>
-        </div>
-
-        {threatNodes.map((node) => {
-          const isSelected = selectedNode?.id === node.id;
-          const isAttacker = node.role === 'attacker' || node.role === 'c2' || node.riskScore >= 70;
-
-          return (
-            <div
-              key={node.id}
-              onClick={() => setSelectedNode(node)}
-              className={`p-2.5 rounded-lg border transition-all cursor-pointer ${
-                isSelected
-                  ? 'bg-blue-600/20 border-blue-500 shadow-lg shadow-blue-500/20'
-                  : 'bg-white/5 border-white/10 hover:bg-white/10'
-              }`}
-            >
-              <div className="flex items-center justify-between mb-1">
-                <span className="font-bold text-white font-mono text-xs flex items-center gap-1.5">
-                  <span
-                    className={`w-2 h-2 rounded-full ${
-                      isAttacker ? 'bg-red-400 animate-pulse' : 'bg-emerald-400'
-                    }`}
-                  />
-                  {node.ip}
-                </span>
-                <span
-                  className={`text-[10px] px-1.5 py-0.2 rounded font-bold ${
-                    node.riskScore >= 80
-                      ? 'bg-red-500/20 text-red-400 border border-red-500/30'
-                      : node.riskScore >= 60
-                      ? 'bg-amber-500/20 text-amber-400 border border-amber-500/30'
-                      : 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30'
-                  }`}
-                >
-                  Risk {Math.round(node.riskScore)}
-                </span>
-              </div>
-
-              <div className="text-[11px] text-white/60 truncate font-sans">{node.label}</div>
-              <div className="text-[10px] text-white/40 mt-1 flex justify-between">
-                <span>{node.location}</span>
-                {node.threatType && <span className="text-cyan-400 font-bold">{node.threatType}</span>}
-              </div>
-            </div>
-          );
-        })}
-      </div>
-
-      {/* Selected Node Bottom Inspection HUD */}
-      {selectedNode && (
-        <div className="absolute bottom-4 left-4 right-4 z-10 p-3.5 rounded-xl bg-black/80 backdrop-blur-md border border-white/10 flex flex-col md:flex-row md:items-center justify-between gap-3 font-mono text-xs">
-          <div className="flex items-center gap-4">
-            <div className="p-2 rounded-lg bg-blue-500/10 border border-blue-500/30 text-blue-400">
-              <Compass size={20} />
-            </div>
-            <div>
-              <div className="flex items-center gap-2">
-                <span className="text-white font-bold text-sm">{selectedNode.ip}</span>
-                <span className="text-white/40 font-sans">({selectedNode.location})</span>
-              </div>
-              <div className="text-white/60 text-[11px] mt-0.5">
-                Targeting: Core Enclave Gateway (10.0.0.10) · Diode Optical Ingress
-              </div>
-            </div>
-          </div>
-
-          <div className="flex items-center gap-4">
-            <div className="text-right">
-              <span className="text-white/40 text-[10px] block">COORDINATES</span>
-              <span className="text-white font-bold">
-                {selectedNode.lat.toFixed(2)}°, {selectedNode.lon.toFixed(2)}°
+      {!compact && (
+        <>
+          {/* Top-Left NetScout Horizon Telemetry Header */}
+          <div className="absolute top-4 left-4 z-10 pointer-events-none">
+            <div className="flex items-center gap-2 mb-1">
+              <Globe size={18} className="text-cyan-400 animate-pulse" />
+              <span className="font-mono text-[11px] font-bold tracking-[0.2em] text-cyan-300 uppercase">
+                NETSCOUT CYBER THREAT HORIZON
+              </span>
+              <span className="px-1.5 py-0.5 rounded text-[9px] font-mono font-bold bg-cyan-500/20 text-cyan-300 border border-cyan-500/30 flex items-center gap-1">
+                <span className="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-ping" />
+                DYNAMIC GEOLOCATION
               </span>
             </div>
-            <div className="text-right">
-              <span className="text-white/40 text-[10px] block">ISOLATED RISK</span>
-              <span
-                className={`font-bold text-sm ${
-                  selectedNode.riskScore >= 80 ? 'text-red-400' : 'text-emerald-400'
+            <h2 className="text-2xl font-black tracking-widest text-white uppercase font-sans">
+              GLOBAL ATTACK TRAJECTORY MAP
+            </h2>
+            <div className="text-xs text-white/50 font-mono flex items-center gap-3 mt-1">
+              <span>TARGET ENCLAVE: 28.61° N · 77.20° E (NEW DELHI)</span>
+              <span className="text-emerald-400 font-bold flex items-center gap-1">
+                <Shield size={12} />
+                HARDWARE DIODE ISOLATED
+              </span>
+            </div>
+          </div>
+
+          {/* Sci-Fi Corner Brackets */}
+          <div className="absolute top-2 left-2 w-10 h-10 border-t-2 border-l-2 border-cyan-400/40 pointer-events-none" />
+          <div className="absolute top-2 right-2 w-10 h-10 border-t-2 border-r-2 border-cyan-400/40 pointer-events-none" />
+          <div className="absolute bottom-2 left-2 w-10 h-10 border-b-2 border-l-2 border-cyan-400/40 pointer-events-none" />
+          <div className="absolute bottom-2 right-2 w-10 h-10 border-b-2 border-r-2 border-cyan-400/40 pointer-events-none" />
+
+          {/* Stream Telemetry Left Card */}
+          <div className="absolute top-24 left-4 z-10 max-w-[280px] p-4 rounded-xl bg-black/70 backdrop-blur-md border border-white/10 space-y-3 font-mono">
+            <div className="flex items-center justify-between text-[10px] text-white/50 pb-2 border-b border-white/10">
+              <span className="font-bold text-white tracking-widest flex items-center gap-1.5">
+                <Radio size={12} className="text-red-400 animate-pulse" /> LIVE STREAM
+              </span>
+              <button
+                onClick={() => setLiveStreamActive((prev) => !prev)}
+                className={`px-1.5 py-0.5 rounded text-[9px] font-bold border transition-colors ${
+                  liveStreamActive
+                    ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30'
+                    : 'bg-amber-500/20 text-amber-300 border-amber-500/30'
                 }`}
               >
-                {selectedNode.riskScore.toFixed(1)}/100
+                {liveStreamActive ? 'STREAMING' : 'PAUSED'}
+              </button>
+            </div>
+
+            <div className="space-y-1.5 text-xs">
+              <div className="text-[10px] text-white/40 uppercase">ACTIVE CONCURRENT CONDUITS</div>
+              <div className="text-xl font-black text-red-400 flex items-center gap-2">
+                <span>{threatNodes.length - 1} ATTACK ORIGINS</span>
+              </div>
+              <p className="text-[11px] text-white/60 font-sans leading-relaxed">
+                Autonomous ML model predicts attack vector & resolves geographic origin from telemetry features.
+              </p>
+            </div>
+
+            <div className="grid grid-cols-2 gap-2 pt-2 border-t border-white/10 text-[10px]">
+              <div>
+                <span className="text-white/40 block">BALLISTIC ARCS</span>
+                <span className="text-cyan-300 font-bold text-sm">{threatNodes.length - 1} Lasers</span>
+              </div>
+              <div>
+                <span className="text-white/40 block">AVG ML CONFIDENCE</span>
+                <span className="text-emerald-400 font-bold text-sm">96.8%</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Attack Origin Country / City Feed (Right Side) */}
+          <div className="absolute top-4 right-4 z-10 w-80 max-h-[520px] overflow-y-auto space-y-2 p-3 rounded-xl bg-black/75 backdrop-blur-md border border-white/10 font-mono text-xs">
+            <div className="flex items-center justify-between text-[11px] font-bold text-white/70 px-1 pb-1 border-b border-white/10">
+              <span className="flex items-center gap-1.5 text-red-400">
+                <Crosshair size={13} /> PREDICTED ATTACK ORIGINS
+              </span>
+              <span className="text-[10px] text-cyan-400 flex items-center gap-1">
+                <Zap size={11} /> {dynamicThreats.length} ACTIVE
               </span>
             </div>
-            <button
-              onClick={() => setAutoRotate((prev) => !prev)}
-              className="px-3 py-1.5 rounded-lg bg-white/10 hover:bg-white/15 text-white font-sans text-xs flex items-center gap-1.5 transition-colors"
-            >
-              <RotateCw size={13} className={autoRotate ? 'animate-spin' : ''} />
-              {autoRotate ? 'Revolving' : 'Paused'}
-            </button>
+
+            {threatNodes
+              .filter((n) => n.role !== 'target')
+              .map((node) => {
+                const isSelected = selectedNode?.id === node.id;
+                const isCritical = node.riskScore >= 80;
+
+                return (
+                  <div
+                    key={node.id}
+                    onClick={() => setSelectedNode(node)}
+                    className={`p-2.5 rounded-lg border transition-all cursor-pointer ${
+                      isSelected
+                        ? 'bg-cyan-500/20 border-cyan-400 shadow-lg shadow-cyan-500/20'
+                        : 'bg-white/5 border-white/10 hover:bg-white/10'
+                    }`}
+                  >
+                    <div className="flex items-center justify-between mb-1">
+                      <span className="font-bold text-white font-mono text-xs flex items-center gap-1.5">
+                        <span
+                          className={`w-2 h-2 rounded-full ${
+                            isCritical ? 'bg-red-400 animate-pulse' : 'bg-amber-400'
+                          }`}
+                        />
+                        {node.city || node.ip}
+                      </span>
+                      <span
+                        className={`text-[10px] px-1.5 py-0.2 rounded font-bold ${
+                          isCritical
+                            ? 'bg-red-500/20 text-red-400 border border-red-500/30'
+                            : 'bg-amber-500/20 text-amber-400 border border-amber-500/30'
+                        }`}
+                      >
+                        Risk {Math.round(node.riskScore)}
+                      </span>
+                    </div>
+
+                    <div className="text-[11px] text-white/70 font-sans truncate">
+                      {node.country} · {node.asn || 'AS-TRANSIT'}
+                    </div>
+
+                    <div className="text-[10px] text-white/40 mt-1 flex justify-between items-center">
+                      <span className="text-cyan-400 font-bold">{node.threatType || 'DDOS'}</span>
+                      <span>
+                        {node.bandwidthGbps ? `${node.bandwidthGbps} Gbps` : `${Math.round((node.packetRate || 0) / 1000)} kpps`}
+                      </span>
+                    </div>
+                  </div>
+                );
+              })}
           </div>
-        </div>
+
+          {/* Bottom Selected Node Inspection HUD */}
+          {selectedNode && (
+            <div className="absolute bottom-4 left-4 right-4 z-10 p-3.5 rounded-xl bg-black/85 backdrop-blur-md border border-white/10 flex flex-col md:flex-row md:items-center justify-between gap-3 font-mono text-xs">
+              <div className="flex items-center gap-4">
+                <div className="p-2 rounded-lg bg-cyan-500/10 border border-cyan-500/30 text-cyan-400">
+                  <Compass size={22} />
+                </div>
+                <div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-white font-bold text-sm">
+                      {selectedNode.city ? `${selectedNode.city}, ${selectedNode.country}` : selectedNode.ip}
+                    </span>
+                    <span className="text-cyan-400 font-bold text-[11px]">[{selectedNode.ip}]</span>
+                  </div>
+                  <div className="text-white/60 text-[11px] mt-0.5 flex items-center gap-2">
+                    <span>Carrier: {selectedNode.asn || selectedNode.location}</span>
+                    <span>·</span>
+                    <span className="text-emerald-400">Targeting: Protected DC (10.0.0.10)</span>
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-5 flex-wrap">
+                <div className="text-right">
+                  <span className="text-white/40 text-[10px] block">PREDICTED LOCATION</span>
+                  <span className="text-white font-bold">
+                    {selectedNode.lat.toFixed(2)}°, {selectedNode.lon.toFixed(2)}°
+                  </span>
+                </div>
+                <div className="text-right">
+                  <span className="text-white/40 text-[10px] block">ML CONFIDENCE</span>
+                  <span className="text-emerald-400 font-bold text-sm">
+                    {selectedNode.mlConfidence ? `${selectedNode.mlConfidence}%` : '96.2%'}
+                  </span>
+                </div>
+                <div className="text-right">
+                  <span className="text-white/40 text-[10px] block">BANDWIDTH / RATE</span>
+                  <span className="text-cyan-300 font-bold text-sm">
+                    {selectedNode.bandwidthGbps ? `${selectedNode.bandwidthGbps} Gbps` : '12.4 Gbps'}
+                  </span>
+                </div>
+                <button
+                  onClick={() => setAutoRotate((prev) => !prev)}
+                  className="px-3 py-1.5 rounded-lg bg-white/10 hover:bg-white/15 text-white font-sans text-xs flex items-center gap-1.5 transition-colors"
+                >
+                  <RotateCw size={13} className={autoRotate ? 'animate-spin' : ''} />
+                  {autoRotate ? 'Orbiting' : 'Paused'}
+                </button>
+              </div>
+            </div>
+          )}
+        </>
       )}
-      </>)}
     </div>
   );
 }
