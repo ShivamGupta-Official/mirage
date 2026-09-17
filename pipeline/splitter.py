@@ -49,8 +49,11 @@ class DatasetSplitter:
     ) -> Tuple[pd.DataFrame, pd.DataFrame, pd.Series, pd.Series, Dict[str, any]]:
         """Splits data strictly by SOURCE provenance.
         
-        Train sources: e.g. ['synthetic_lab', 'cicids2017']
-        Held-out test sources: e.g. ['trustlab', 'palau_dns']
+        Holds out at least one entire public dataset per class as a cross-source test set:
+        - cira_doh: for dns_tunnel
+        - trustlab: for slowloris and c2_beacon
+        - unsw_nb15: for syn_flood and c2_beacon
+        - lanl_enterprise & ugr16_backbone: for real-world benign production baseline
         """
         if "source" not in df.columns:
             raise ValueError("Dataset does not contain 'source' column required for cross-source split.")
@@ -58,9 +61,11 @@ class DatasetSplitter:
         available_sources = list(df["source"].unique())
 
         if held_out_sources is None:
-            # Pick valid held-out public datasets that cover diverse attack classes
-            candidates = [s for s in available_sources if s != "synthetic_lab"]
-            held_out_sources = ["trustlab", "palau_dns"] if any(c in ["trustlab", "palau_dns"] for c in candidates) else candidates[:1]
+            # Hold out entire public benchmark sources across each target class
+            candidates = ["cira_doh", "trustlab", "unsw_nb15", "lanl_enterprise", "ugr16_backbone"]
+            held_out_sources = [s for s in candidates if s in available_sources]
+            if not held_out_sources:
+                held_out_sources = [s for s in available_sources if s != "synthetic_lab"][:2]
 
         train_mask = ~df["source"].isin(held_out_sources)
         test_mask = df["source"].isin(held_out_sources)

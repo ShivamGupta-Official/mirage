@@ -38,10 +38,18 @@ class BotnetPcapLoader:
         flow_dfs = []
         for pcap in pcap_files:
             try:
-                # Extract flows using NFStream extractor
+                base_lower = os.path.basename(pcap).lower()
+                cur_source = source_name
+                if "isot" in base_lower:
+                    cur_source = "isot"
+                elif "stratosphere" in base_lower or "mcf" in base_lower:
+                    cur_source = "stratosphere"
+                elif "ctu" in base_lower or "neris" in base_lower or "rbot" in base_lower:
+                    cur_source = "ctu13"
+
                 df_flows = self.extractor.extract_pcap_to_flows(pcap, label=botnet_label)
                 if len(df_flows) > 0:
-                    aligned = align_to_canonical_schema(df_flows, source_name=source_name, default_label=botnet_label)
+                    aligned = align_to_canonical_schema(df_flows, source_name=cur_source, default_label=botnet_label)
                     flow_dfs.append(aligned)
             except Exception as e:
                 print(f"[-] Error extracting flows from botnet pcap {pcap}: {e}")

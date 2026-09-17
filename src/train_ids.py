@@ -180,8 +180,9 @@ class NidsTrainer:
         res_random = self.train_and_evaluate_split(X_tr_rnd, X_te_rnd, y_tr_rnd, y_te_rnd, split_name="Random Stratified Split (80/20)")
 
         # 2. SPLIT B: Cross-Source Held-Out Split
+        # Hold out at least one entire public dataset per class
         X_tr_src, X_te_src, y_tr_src, y_te_src, src_info = self.splitter.cross_source_held_out_split(
-            self.df, held_out_sources=["trustlab", "palau_dns"]
+            self.df, held_out_sources=["cira_doh", "trustlab", "unsw_nb15", "lanl_enterprise", "ugr16_backbone"]
         )
         res_cross = self.train_and_evaluate_split(X_tr_src, X_te_src, y_tr_src, y_te_src, split_name="Cross-Source Held-Out Split")
 
