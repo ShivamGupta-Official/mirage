@@ -40,12 +40,35 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 
-# python & database
+# python & virtual environments
+.venv/
 backend/.venv/
+venv/
+env/
+ENV/
 **/__pycache__/
-*.pyc
+*.py[cod]
+*$py.class
 .pytest_cache/
 *.db
 *.sqlite
 *.mp4
+
+# jupyter & notebooks
+.ipynb_checkpoints
+*/.ipynb_checkpoints/*
+
+# machine learning data & checkpoints
+/data/raw/*
+!/data/raw/.gitkeep
+/data/processed/*
+!/data/processed/.gitkeep
+/models/*.pt
+/models/*.pth
+/models/*.ckpt
+/models/*.bin
+/models/*.onnx
+wandb/
+mlruns/
+
 

@@ -1,0 +1,23 @@
+{
+  "project_name": "mirage-ml",
+  "experiment_name": "baseline_threat_detector",
+  "seed": 42,
+  "data": {
+    "raw_dir": "data/raw",
+    "processed_dir": "data/processed",
+    "train_split": 0.8,
+    "val_split": 0.1,
+    "test_split": 0.1
+  },
+  "training": {
+    "batch_size": 64,
+    "epochs": 20,
+    "learning_rate": 0.001,
+    "weight_decay": 1e-4,
+    "early_stopping_patience": 5
+  },
+  "checkpoint": {
+    "save_dir": "models",
+    "save_best_only": true
+  }
+}

@@ -1,0 +1,9 @@
+# Core ML & Deep Learning Stack for MIRAGE
+--extra-index-url https://download.pytorch.org/whl/cpu
+
+numpy
+pandas
+scikit-learn
+matplotlib
+jupyter
+torch
