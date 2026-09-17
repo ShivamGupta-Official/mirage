@@ -39,7 +39,8 @@ export function StudioNav() {
     { num: '01', label: 'Home', href: '/', desc: 'Zero-Return Ingress & 3D Threat Globe' },
     { num: '02', label: 'About', href: '/about', desc: 'Sovereign Defense Architecture & Philosophy' },
     { num: '03', label: 'Work', href: '/work', desc: 'Engineered Systems & Cyber Defense PRJCTs' },
-    { num: '04', label: 'Contact', href: '/contact', desc: 'Classified Enclave Inquiries & Dispatch' },
+    { num: '04', label: 'Weave', href: '/weave', desc: 'Interactive 3D Woven Light Tapestry' },
+    { num: '05', label: 'Contact', href: '/contact', desc: 'Classified Enclave Inquiries & Dispatch' },
   ];
 
   return (

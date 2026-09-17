@@ -11,6 +11,8 @@ import { CountUp } from '@/components/studio/count-up';
 import { ScrollReveal } from '@/components/studio/scroll-reveal';
 import { CyberGlobe } from '@/components/network/cyber-globe';
 import { STUDIO_PROJECTS, STUDIO_SERVICES, STUDIO_AWARDS } from '@/lib/studio-data';
+import { DefenseModulesGrid } from '@/components/studio/defense-modules-grid';
+import { WovenLightHero, WovenCanvas } from '@/components/studio/woven-light-hero';
 
 /* ────────────────────────────────────────────────────────
    MIRAGE — Clean, spacious landing page
@@ -31,9 +33,13 @@ export default function HomePage() {
       {/* ═════════════════════════════════════════════════════
           1. HERO — Full viewport, titles from different edges
       ═════════════════════════════════════════════════════ */}
-      <section className="relative min-h-screen flex flex-col justify-center px-6 sm:px-10 md:px-16 lg:px-24 pt-32 pb-24">
+      <section className="relative min-h-screen flex flex-col justify-center px-6 sm:px-10 md:px-16 lg:px-24 pt-32 pb-24 overflow-hidden">
         {/* Soft ambient gradient */}
         <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_25%_15%,rgba(245,239,255,0.03),transparent_55%)]" />
+        {/* Interactive Three.js Woven Silk Canvas */}
+        <div className="absolute inset-0 z-0 opacity-30 pointer-events-auto">
+          <WovenCanvas />
+        </div>
 
         <div className="relative z-10 max-w-[1400px] mx-auto w-full">
           {/* Eyebrow */}
@@ -290,53 +296,27 @@ export default function HomePage() {
 
       {/* ═════════════════════════════════════════════════════
           6. CAPABILITIES — Clean numbered list + sticky header
+      {/* ═════════════════════════════════════════════════════
+          6. CAPABILITIES — Balanced 3-Column Defense Modules
       ═════════════════════════════════════════════════════ */}
-      <section className="px-6 sm:px-10 md:px-16 lg:px-24 py-28 md:py-44 border-t border-[#f5efff]/[0.05] bg-[#060609]">
+      <section className="px-6 sm:px-10 md:px-16 lg:px-24 py-28 md:py-36 border-t border-[#f5efff]/[0.05] bg-[#060609]">
         <div className="max-w-[1400px] mx-auto">
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-14 lg:gap-20">
-            {/* Left sticky header */}
-            <div className="lg:col-span-5">
-              <div className="lg:sticky lg:top-32 space-y-5">
-                <ScrollReveal direction="left">
-                  <Eyebrow label="// CAPABILITIES & SERVICES" tag="active" />
-                </ScrollReveal>
-                <ScrollReveal direction="left" delay={200}>
-                  <h2 className="font-editorial text-4xl sm:text-5xl md:text-6xl font-light tracking-tight text-[#f5efff] leading-[1.05]">
-                    Full-spectrum{' '}
-                    <span className="italic">defense</span> modules.
-                  </h2>
-                </ScrollReveal>
-                <ScrollReveal direction="left" delay={300}>
-                  <p className="text-sm sm:text-base text-[#f5efff]/40 max-w-md leading-[1.7] pt-1">
-                    Twelve specialized engineering tiers for monitoring,
-                    analyzing, and sealing high-rate optical network streams.
-                  </p>
-                </ScrollReveal>
-              </div>
-            </div>
-
-            {/* Right scrolling list */}
-            <div className="lg:col-span-7 space-y-3 sm:space-y-4">
-              {STUDIO_SERVICES.map((srv, idx) => (
-                <ScrollReveal key={srv.num} direction="right" delay={Math.min(idx * 50, 400)} distance={35}>
-                  <div className="group rounded-2xl border border-[#f5efff]/[0.05] bg-[#0a0914] p-6 sm:p-8 md:p-9 transition-all duration-400 hover:border-[#f5efff]/[0.15] hover:bg-[#0e0d18]">
-                    <div className="flex items-baseline justify-between mb-2.5">
-                      <span className="font-mono text-[10px] sm:text-xs text-[#f5efff]/30 tracking-[0.15em]">
-                        {srv.num} // {srv.category}
-                      </span>
-                    </div>
-                    <h3 className="font-editorial text-xl sm:text-2xl md:text-3xl font-light text-[#f5efff] group-hover:text-white transition-colors">
-                      {srv.title}
-                    </h3>
-                    <p className="font-sans text-xs sm:text-sm text-[#f5efff]/40 mt-2.5 leading-[1.7]">
-                      {srv.desc}
-                    </p>
-                  </div>
-                </ScrollReveal>
-              ))}
-            </div>
-          </div>
+          <DefenseModulesGrid />
         </div>
+      </section>
+
+      {/* ═════════════════════════════════════════════════════
+          WOVEN LIGHT ENCLAVE — Interactive WebGL Particle Hero
+      ═════════════════════════════════════════════════════ */}
+      <section className="relative h-[85vh] sm:h-[90vh] w-full overflow-hidden border-t border-[#f5efff]/[0.06] bg-black">
+        <WovenLightHero
+          showNav={false}
+          className="relative flex h-full w-full flex-col items-center justify-center overflow-hidden bg-black text-white"
+          headline="Woven by Light"
+          subtitle="An interactive tapestry of light and motion, crafted with code and creativity. 50,000 optical photons flowing through the unidirectional MIRAGE sensor enclave."
+          ctaText="Explore the Weave"
+          ctaHref="/weave"
+        />
       </section>
 
       {/* ═════════════════════════════════════════════════════
