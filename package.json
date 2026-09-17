@@ -1,6 +1,7 @@
 {
   "name": "mirage",
   "version": "0.1.0",
+  "homepage": "https://mirage-sooty.vercel.app",
   "private": true,
   "scripts": {
     "dev": "next dev",

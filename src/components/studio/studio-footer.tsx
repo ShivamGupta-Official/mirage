@@ -167,10 +167,16 @@ export function StudioFooter() {
               <p className="text-[#f5efff]">National Technical Research Organisation</p>
               <p>Block-III, Cyber Command Enclave</p>
               <p>New Delhi, India (IST UTC+5:30)</p>
-              <p className="pt-2 text-[10px] text-emerald-400 flex items-center gap-1.5">
+              <a
+                href="https://mirage-sooty.vercel.app"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="pt-2 text-[11px] text-[#f5efff]/70 hover:text-white flex items-center gap-1.5 transition-colors group"
+              >
                 <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse" />
-                Air-Gap Link Active
-              </p>
+                <span>Edge: mirage-sooty.vercel.app</span>
+                <ArrowUpRight className="h-3 w-3 opacity-60 group-hover:opacity-100 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-all" />
+              </a>
             </div>
           </div>
         </div>

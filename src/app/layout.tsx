@@ -9,6 +9,7 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
+  metadataBase: new URL('https://mirage-sooty.vercel.app'),
   title: 'MIRAGE — Multi-resolution Intelligent Risk & Adaptive Graph Engine',
   description:
     'Award-winning AI defense studio and intelligence engineering engine for unidirectional network traffic. ' +
