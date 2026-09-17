@@ -146,7 +146,7 @@ const HeroNav = ({ isReady }: { isReady: boolean }) => {
 };
 
 // --- Three.js Canvas Component ---
-export const WovenCanvas = () => {
+export const WovenCanvas = ({ scale = 2.0 }: { scale?: number }) => {
   const mountRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -166,7 +166,7 @@ export const WovenCanvas = () => {
 
     const isDarkMode = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
 
-    // --- Woven Silk ---
+    // --- Woven Silk (2x scaled geometry) ---
     const particleCount = 50000;
     const positions = new Float32Array(particleCount * 3);
     const originalPositions = new Float32Array(particleCount * 3);
@@ -174,7 +174,9 @@ export const WovenCanvas = () => {
     const velocities = new Float32Array(particleCount * 3);
 
     const geometry = new THREE.BufferGeometry();
-    const torusKnot = new THREE.TorusKnotGeometry(1.5, 0.5, 200, 32);
+    const radius = 1.5 * scale; // 3.0 for 2x scale
+    const tube = 0.5 * scale;   // 1.0 for 2x scale
+    const torusKnot = new THREE.TorusKnotGeometry(radius, tube, 220, 32);
 
     for (let i = 0; i < particleCount; i++) {
       const vertexIndex = i % torusKnot.attributes.position.count;
@@ -204,11 +206,11 @@ export const WovenCanvas = () => {
     geometry.setAttribute('color', new THREE.BufferAttribute(colors, 3));
 
     const material = new THREE.PointsMaterial({
-      size: 0.02,
+      size: 0.024,
       vertexColors: true,
       blending: isDarkMode ? THREE.NormalBlending : THREE.AdditiveBlending,
       transparent: true,
-      opacity: isDarkMode ? 1.0 : 0.8,
+      opacity: isDarkMode ? 1.0 : 0.85,
     });
 
     const points = new THREE.Points(geometry, material);
@@ -222,11 +224,14 @@ export const WovenCanvas = () => {
 
     let animationFrameId: number;
 
+    const mouseReach = 3.2 * scale; // 6.4 for full mouse coverage across 2x canvas
+    const interactionDist = 1.6 * scale; // 3.2 for 2x scale mouse force field
+
     const animate = () => {
       animationFrameId = requestAnimationFrame(animate);
       const elapsedTime = clock.getElapsedTime();
       
-      const mouseWorld = new THREE.Vector3(mouse.x * 3, mouse.y * 3, 0);
+      const mouseWorld = new THREE.Vector3(mouse.x * mouseReach, mouse.y * mouseReach, 0);
 
       for (let i = 0; i < particleCount; i++) {
         const ix = i * 3;
@@ -238,8 +243,8 @@ export const WovenCanvas = () => {
         const velocity = new THREE.Vector3(velocities[ix], velocities[iy], velocities[iz]);
 
         const dist = currentPos.distanceTo(mouseWorld);
-        if (dist < 1.5) {
-          const force = (1.5 - dist) * 0.01;
+        if (dist < interactionDist) {
+          const force = (interactionDist - dist) * 0.01;
           const direction = new THREE.Vector3().subVectors(currentPos, mouseWorld).normalize();
           velocity.add(direction.multiplyScalar(force));
         }

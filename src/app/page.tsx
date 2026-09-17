@@ -36,9 +36,9 @@ export default function HomePage() {
       <section className="relative min-h-screen flex flex-col justify-center px-6 sm:px-10 md:px-16 lg:px-24 pt-32 pb-24 overflow-hidden">
         {/* Soft ambient gradient */}
         <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_25%_15%,rgba(245,239,255,0.03),transparent_55%)]" />
-        {/* Interactive Three.js Woven Silk Canvas */}
-        <div className="absolute inset-0 z-0 opacity-30 pointer-events-auto">
-          <WovenCanvas />
+        {/* Interactive Three.js Woven Silk Canvas (2x Scaled) */}
+        <div className="absolute inset-0 z-0 opacity-45 pointer-events-auto">
+          <WovenCanvas scale={2.0} />
         </div>
 
         <div className="relative z-10 max-w-[1400px] mx-auto w-full">
