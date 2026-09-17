@@ -63,11 +63,16 @@ ENV/
 !/data/raw/.gitkeep
 /data/processed/*
 !/data/processed/.gitkeep
+/data/public/*
+!/data/public/.gitkeep
 /models/*.pt
 /models/*.pth
 /models/*.ckpt
 /models/*.bin
 /models/*.onnx
+/models/*.joblib
+!/models/feature_schema.json
+!/models/.gitkeep
 wandb/
 mlruns/
 
