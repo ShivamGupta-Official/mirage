@@ -1,9 +1,38 @@
-# Core ML & Deep Learning Stack for MIRAGE
+# ==============================================================================
+# MIRAGE AI / ML Complete Development Stack
+# ==============================================================================
 --extra-index-url https://download.pytorch.org/whl/cpu
 
+# Core Numerical & Data Processing
 numpy
 pandas
+scipy
+
+# Machine Learning & Gradient Boosting
 scikit-learn
-matplotlib
-jupyter
+xgboost
+lightgbm
+imbalanced-learn
+
+# Explainable AI (XAI) & Attribution
+shap
+lime
+
+# Deep Learning (PyTorch CPU build)
 torch
+
+# Optimization & Experimentation
+optuna
+tqdm
+
+# Graph Topology & Packet Ingestion
+networkx
+scapy
+
+# Visualization & Reporting
+matplotlib
+seaborn
+
+# Interactive Exploration & Notebooks
+jupyter
+ipykernel
