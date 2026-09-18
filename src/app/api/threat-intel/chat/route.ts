@@ -118,17 +118,16 @@ Detection operates at three layers:
   {
     keywords: ['firewall', 'waf', 'web application firewall'],
     category: 'Web Security',
-    answer: `**Firewalls & WAFs**
-
-• **Network Firewall**: Filters traffic based on IP/port rules (L3-L4). Examples: iptables, pfSense, Palo Alto.
-• **WAF (Web Application Firewall)**: Inspects HTTP/HTTPS traffic for web attacks (L7). Protects against SQLi, XSS, CSRF, path traversal.
-• **Next-Gen Firewall (NGFW)**: Combines traditional firewall + deep packet inspection + application awareness + IPS.
-
-**Key WAF rules to implement:**
-1. SQL Injection patterns: \x60' OR 1=1\x60, \x60UNION SELECT\x60, \x60; DROP TABLE\x60
-2. XSS patterns: \x60<script>\x60, \x60javascript:\x60, \x60onerror=\x60
-3. Path Traversal: \x60../\x60, \x60..\\\x60, \x60%2e%2e\x60
-4. Command Injection: \x60; ls\x60, \x60| cat /etc/passwd\x60, \x60$(whoami)\x60`,
+    answer:
+      '**Firewalls & WAFs**\n\n' +
+      '• **Network Firewall**: Filters traffic based on IP/port rules (L3-L4). Examples: iptables, pfSense, Palo Alto.\n' +
+      '• **WAF (Web Application Firewall)**: Inspects HTTP/HTTPS traffic for web attacks (L7). Protects against SQLi, XSS, CSRF, path traversal.\n' +
+      '• **Next-Gen Firewall (NGFW)**: Combines traditional firewall + deep packet inspection + application awareness + IPS.\n\n' +
+      '**Key WAF rules to implement:**\n' +
+      "1. SQL Injection patterns: `' OR 1=1`, `UNION SELECT`, `; DROP TABLE`\n" +
+      '2. XSS patterns: `<script>`, `javascript:`, `onerror=`\n' +
+      '3. Path Traversal: `../`, `..\\`, `%2e%2e`\n' +
+      '4. Command Injection: `; ls`, `| cat /etc/passwd`, `$(whoami)`',
   },
   {
     keywords: ['owasp', 'top 10', 'web vulnerability', 'sql injection', 'xss', 'cross site', 'csrf', 'injection'],
