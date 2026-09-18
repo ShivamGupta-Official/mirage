@@ -17,7 +17,7 @@ export function StudioFooter() {
   };
 
   return (
-    <footer className="relative border-t border-[#f5efff]/10 bg-[#060609] pt-24 pb-16 text-[#f5efff] overflow-hidden">
+    <footer className="relative border-t border-[#f5efff]/10 bg-[#060609]/75 backdrop-blur-[2px] pt-24 pb-16 text-[#f5efff] overflow-hidden z-10">
       {/* Background radial glow */}
       <div className="pointer-events-none absolute -bottom-40 left-1/2 -translate-x-1/2 h-[500px] w-[800px] rounded-full bg-[#f5efff]/5 blur-[160px]" />
 

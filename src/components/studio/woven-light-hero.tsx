@@ -10,6 +10,8 @@ interface WovenLightHeroProps {
   ctaText?: string;
   ctaHref?: string;
   showNav?: boolean;
+  showCanvas?: boolean;
+  scale?: number;
   className?: string;
 }
 
@@ -20,6 +22,8 @@ export const WovenLightHero: React.FC<WovenLightHeroProps> = ({
   ctaText = "Explore the Weave",
   ctaHref = "/dashboard",
   showNav = true,
+  showCanvas = true,
+  scale = 2.4,
   className = "relative flex min-h-screen w-full flex-col items-center justify-center overflow-hidden bg-black text-white",
 }) => {
   const [isReady, setIsReady] = useState(false);
@@ -47,7 +51,7 @@ export const WovenLightHero: React.FC<WovenLightHeroProps> = ({
 
   return (
     <div className={className}>
-      <WovenCanvas />
+      {showCanvas && <WovenCanvas scale={scale} />}
       {showNav && <HeroNav isReady={isReady} />}
       <div className="relative z-10 text-center px-4 max-w-5xl mx-auto pointer-events-auto">
         <h1
@@ -222,6 +226,12 @@ export const WovenCanvas = ({ scale = 2.0 }: { scale?: number }) => {
     };
     window.addEventListener('mousemove', handleMouseMove);
 
+    let scrollY = 0;
+    const handleScroll = () => {
+      scrollY = window.scrollY;
+    };
+    window.addEventListener('scroll', handleScroll, { passive: true });
+
     let animationFrameId: number;
 
     const mouseReach = 3.2 * scale; // 6.4 for full mouse coverage across 2x canvas
@@ -266,7 +276,9 @@ export const WovenCanvas = ({ scale = 2.0 }: { scale?: number }) => {
       }
       geometry.attributes.position.needsUpdate = true;
 
-      points.rotation.y = elapsedTime * 0.05;
+      // Rotate continuously and react to scroll depth all the way till the very end of the site
+      points.rotation.y = elapsedTime * 0.05 + scrollY * 0.0005;
+      points.rotation.x = scrollY * 0.0004;
       renderer.render(scene, camera);
     };
     animate();
@@ -282,6 +294,7 @@ export const WovenCanvas = ({ scale = 2.0 }: { scale?: number }) => {
       cancelAnimationFrame(animationFrameId);
       window.removeEventListener('resize', handleResize);
       window.removeEventListener('mousemove', handleMouseMove);
+      window.removeEventListener('scroll', handleScroll);
       if (currentMount.contains(renderer.domElement)) {
         currentMount.removeChild(renderer.domElement);
       }

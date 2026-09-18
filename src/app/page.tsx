@@ -27,19 +27,20 @@ export default function HomePage() {
       {/* ═══ PRELOADER (3 seconds) ═══ */}
       <Preloader />
 
+      {/* ═══ PERSISTENT 2X WOVEN SILK CANVAS (ACTIVE TILL VERY END OF THE SITE) ═══ */}
+      <div className="fixed inset-0 z-0 pointer-events-auto opacity-50">
+        <WovenCanvas scale={2.4} />
+      </div>
+
       {/* ═══ NAVIGATION ═══ */}
       <StudioNav />
 
       {/* ═════════════════════════════════════════════════════
           1. HERO — Full viewport, titles from different edges
       ═════════════════════════════════════════════════════ */}
-      <section className="relative min-h-screen flex flex-col justify-center px-6 sm:px-10 md:px-16 lg:px-24 pt-32 pb-24 overflow-hidden">
+      <section className="relative min-h-screen flex flex-col justify-center px-6 sm:px-10 md:px-16 lg:px-24 pt-32 pb-24 overflow-hidden z-10">
         {/* Soft ambient gradient */}
         <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_25%_15%,rgba(245,239,255,0.03),transparent_55%)]" />
-        {/* Interactive Three.js Woven Silk Canvas (2x Scaled) */}
-        <div className="absolute inset-0 z-0 opacity-45 pointer-events-auto">
-          <WovenCanvas scale={2.0} />
-        </div>
 
         <div className="relative z-10 max-w-[1400px] mx-auto w-full">
           {/* Eyebrow */}
@@ -299,25 +300,13 @@ export default function HomePage() {
       {/* ═════════════════════════════════════════════════════
           6. CAPABILITIES — Balanced 3-Column Defense Modules
       ═════════════════════════════════════════════════════ */}
-      <section className="px-6 sm:px-10 md:px-16 lg:px-24 py-28 md:py-36 border-t border-[#f5efff]/[0.05] bg-[#060609]">
+      <section className="px-6 sm:px-10 md:px-16 lg:px-24 py-28 md:py-36 border-t border-[#f5efff]/[0.05] bg-[#060609]/70 backdrop-blur-[2px] relative z-10">
         <div className="max-w-[1400px] mx-auto">
           <DefenseModulesGrid />
         </div>
       </section>
 
-      {/* ═════════════════════════════════════════════════════
-          WOVEN LIGHT ENCLAVE — Interactive WebGL Particle Hero
-      ═════════════════════════════════════════════════════ */}
-      <section className="relative h-[85vh] sm:h-[90vh] w-full overflow-hidden border-t border-[#f5efff]/[0.06] bg-black">
-        <WovenLightHero
-          showNav={false}
-          className="relative flex h-full w-full flex-col items-center justify-center overflow-hidden bg-black text-white"
-          headline="Woven by Light"
-          subtitle="An interactive tapestry of light and motion, crafted with code and creativity. 50,000 optical photons flowing through the unidirectional MIRAGE sensor enclave."
-          ctaText="Explore the Weave"
-          ctaHref="/weave"
-        />
-      </section>
+
 
       {/* ═════════════════════════════════════════════════════
           7. PROJECTS — Horizontal scroll with snap
@@ -410,7 +399,7 @@ export default function HomePage() {
       {/* ═════════════════════════════════════════════════════
           8. RECOGNITION & BENCHMARKS
       ═════════════════════════════════════════════════════ */}
-      <section className="px-6 sm:px-10 md:px-16 lg:px-24 py-28 md:py-44 border-t border-[#f5efff]/[0.05] bg-[#060609]">
+      <section className="px-6 sm:px-10 md:px-16 lg:px-24 py-28 md:py-44 border-t border-[#f5efff]/[0.05] bg-[#060609]/70 backdrop-blur-[2px] relative z-10">
         <div className="max-w-[1400px] mx-auto">
           {/* Heading + Big Counter */}
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-14 items-center mb-20 sm:mb-28">
