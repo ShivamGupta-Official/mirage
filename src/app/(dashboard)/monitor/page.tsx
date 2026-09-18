@@ -86,37 +86,43 @@ export default function LiveMonitorPage() {
         provenance: isSimulating ? 'SIMULATION_ATTACK' : 'OPTICAL_DIODE',
       };
 
+      const currentRate = metrics?.packetsPerSec
+        ? Math.round(metrics.packetsPerSec * (0.92 + Math.random() * 0.16))
+        : isSimulating
+        ? Math.round(11200 * (0.9 + Math.random() * 0.2))
+        : Math.round(280 + Math.random() * 120);
+
       setPacketStream((prev) => [newPkt, ...prev.slice(0, 30)]);
-      setTrafficHistory((prev) => [...prev.slice(1), pps]);
-    }, isSimulating ? 300 : 800);
+      setTrafficHistory((prev) => [...prev.slice(1), currentRate]);
+    }, isSimulating ? 250 : 800);
 
     return () => clearInterval(interval);
-  }, [isSimulating, activeScenario, pps]);
+  }, [isSimulating, activeScenario, metrics?.packetsPerSec]);
 
   return (
     <div className="space-y-6">
-      {/* Top Banner */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 p-4 rounded-xl glass-card border border-white/10">
+      {/* ── Top Studio Header ── */}
+      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-5 p-6 rounded-2xl bg-[#0f0e17]/80 border border-[#f5efff]/[0.08] backdrop-blur-xl">
         <div>
-          <div className="flex items-center gap-2">
-            <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse" />
-            <h1 className="text-xl font-bold text-white tracking-wide">Live Enclave Monitor</h1>
-            <span className="px-2 py-0.5 rounded text-[10px] font-semibold tracking-wider bg-blue-500/10 text-blue-400 border border-blue-500/20">
-              ONE-WAY RX DIODE
-            </span>
+          <div className="eyebrow-label mb-2 flex items-center gap-2">
+            <span className="w-2 h-2 rounded-full bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.8)]" />
+            <span>PASSIVE TAP & HARDWARE DIODE</span>
           </div>
-          <p className="text-xs text-white/50 mt-1">
+          <h1 className="font-editorial text-3xl sm:text-4xl font-light text-[#f5efff] tracking-tight">
+            Live Enclave Monitor
+          </h1>
+          <p className="text-xs sm:text-sm text-[#f5efff]/50 max-w-2xl font-light leading-relaxed mt-1">
             Real-time passive packet tap with zero reverse transmission capability. All ingress is buffered and feature-extracted in hardware isolation.
           </p>
         </div>
 
         <div className="flex items-center gap-3">
-          <div className="text-right">
-            <div className="text-[10px] uppercase font-bold text-white/40 tracking-wider">DIODE STATUS</div>
-            <div className="text-xs font-semibold text-emerald-400">UNIDIRECTIONAL ENFORCED</div>
+          <div className="p-1 rounded-full bg-white/[0.04] border border-[#f5efff]/[0.08] flex items-center gap-2.5 px-3 py-1.5">
+            <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+            <span className="text-xs font-mono text-[#f5efff]">UNIDIRECTIONAL RX ENFORCED</span>
           </div>
-          <div className="p-2 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-emerald-400">
-            <Shield size={20} />
+          <div className="w-9 h-9 rounded-full bg-[#f5efff]/[0.05] border border-[#f5efff]/[0.08] flex items-center justify-center text-emerald-400">
+            <Shield size={18} />
           </div>
         </div>
       </div>
@@ -127,7 +133,7 @@ export default function LiveMonitorPage() {
           label="Packet Rate"
           value={`${pps.toLocaleString()} pps`}
           sublabel="Rolling 1-second window"
-          icon={<Activity size={16} className="text-blue-400" />}
+          icon={<Activity size={16} className="text-[#a29bfe]" />}
           trend={12}
         />
         <MetricCard
@@ -147,7 +153,7 @@ export default function LiveMonitorPage() {
           label="Detection Latency"
           value="1.45 ms"
           sublabel="Multi-engine feature time"
-          icon={<Clock size={16} className="text-purple-400" />}
+          icon={<Clock size={16} className="text-[#f5efff]" />}
           highlight="low"
         />
       </div>
@@ -155,145 +161,163 @@ export default function LiveMonitorPage() {
       {/* Real-time Rate Chart & Hardware Diode Architecture */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Rate Chart */}
-        <div className="lg:col-span-2 p-5 rounded-xl glass-card border border-white/10 space-y-4">
+        <div className="lg:col-span-2 p-6 rounded-2xl bg-[#0f0e17]/80 border border-[#f5efff]/[0.08] backdrop-blur-xl space-y-4">
           <div className="flex items-center justify-between">
             <div>
-              <h2 className="text-sm font-semibold text-white tracking-wide">Ingress Pulse (Rolling 30s)</h2>
-              <p className="text-xs text-white/40">Packet volume emitted across the optical data diode</p>
+              <h2 className="text-sm font-medium text-[#f5efff] tracking-wide">Ingress Pulse (Rolling 30s)</h2>
+              <p className="text-xs text-[#f5efff]/40 font-light">Packet volume emitted across the optical data diode</p>
             </div>
-            <div className="flex items-center gap-2 text-xs text-white/50">
-              <span className="w-2 h-2 rounded-full bg-blue-400" />
+            <div className="flex items-center gap-2 text-xs font-mono text-[#f5efff]/50">
+              <span className="w-2 h-2 rounded-full bg-[#a29bfe]" />
               <span>Throughput</span>
             </div>
           </div>
 
-          {/* Simple Dynamic SVG sparkline graph */}
-          <div className="h-44 w-full flex items-end gap-1.5 pt-6 pb-2 border-b border-white/5">
-            {trafficHistory.map((val, idx) => {
-              const heightPercent = Math.min(100, Math.max(15, (val / 400) * 100));
-              return (
-                <div key={idx} className="flex-1 flex flex-col items-center gap-1 group relative">
-                  <div
-                    className="w-full rounded-t transition-all duration-300 group-hover:brightness-125"
-                    style={{
-                      height: `${heightPercent}%`,
-                      background: 'linear-gradient(180deg, rgba(59,158,255,0.8) 0%, rgba(59,158,255,0.2) 100%)',
-                    }}
-                  />
-                  <span className="text-[9px] text-white/20">{idx * 2}s</span>
-                  {/* Tooltip */}
-                  <div className="absolute -top-8 hidden group-hover:flex px-2 py-0.5 rounded bg-black/80 text-[10px] text-white whitespace-nowrap border border-white/10 z-10">
-                    {val} pps
+          {/* Dynamic Responsive SVG sparkline graph */}
+          {(() => {
+            const minVal = Math.min(...trafficHistory);
+            const peakVal = Math.max(...trafficHistory, 1);
+            // Dynamic scale ceiling so graph scales nicely during attacks (e.g. 15,000 pps) or quiet times (400 pps)
+            const maxScale = Math.max(peakVal * 1.15, 400);
+
+            return (
+              <>
+                <div className="h-44 w-full flex items-end gap-1.5 pt-6 pb-2 border-b border-[#f5efff]/[0.06]">
+                  {trafficHistory.map((val, idx) => {
+                    const heightPercent = Math.min(100, Math.max(8, (val / maxScale) * 100));
+                    const isHigh = val > 1500;
+                    return (
+                      <div key={idx} className="flex-1 flex flex-col items-center gap-1 group relative">
+                        <div
+                          className="w-full rounded-t transition-all duration-300 group-hover:brightness-125"
+                          style={{
+                            height: `${heightPercent}%`,
+                            background: isHigh
+                              ? 'linear-gradient(180deg, rgba(244,63,94,0.85) 0%, rgba(244,63,94,0.2) 100%)'
+                              : 'linear-gradient(180deg, rgba(245,239,255,0.7) 0%, rgba(162,155,254,0.15) 100%)',
+                          }}
+                        />
+                        <span className="text-[9px] font-mono text-[#f5efff]/20">{idx * 2}s</span>
+                        {/* Tooltip */}
+                        <div className="absolute -top-8 hidden group-hover:flex px-2 py-0.5 rounded-full bg-black/95 text-[10px] font-mono text-[#f5efff] whitespace-nowrap border border-[#f5efff]/15 shadow-xl z-10">
+                          {val.toLocaleString()} pps
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+
+                <div className="grid grid-cols-3 text-center pt-2 font-mono">
+                  <div>
+                    <div className="text-[10px] text-[#f5efff]/40 uppercase">MIN VALUE</div>
+                    <div className="text-xs font-medium text-[#f5efff]/80">{minVal.toLocaleString()} pps</div>
+                  </div>
+                  <div>
+                    <div className="text-[10px] text-[#f5efff]/40 uppercase">PEAK INGRESS</div>
+                    <div className={`text-xs font-medium ${peakVal > 1500 ? 'text-rose-400' : 'text-[#f5efff]/80'}`}>
+                      {peakVal.toLocaleString()} pps
+                    </div>
+                  </div>
+                  <div>
+                    <div className="text-[10px] text-[#f5efff]/40 uppercase">BUFFER CAPACITY</div>
+                    <div className={`text-xs font-medium ${peakVal > 5000 ? 'text-amber-400' : 'text-emerald-400'}`}>
+                      {peakVal > 10000 ? '82.4% Free' : peakVal > 2000 ? '94.2% Free' : '99.8% Free'}
+                    </div>
                   </div>
                 </div>
-              );
-            })}
-          </div>
-
-          <div className="grid grid-cols-3 text-center pt-2">
-            <div>
-              <div className="text-[10px] text-white/40">MIN VALUE</div>
-              <div className="text-xs font-semibold text-white/80">120 pps</div>
-            </div>
-            <div>
-              <div className="text-[10px] text-white/40">PEAK INGRESS</div>
-              <div className="text-xs font-semibold text-white/80">384 pps</div>
-            </div>
-            <div>
-              <div className="text-[10px] text-white/40">BUFFER CAPACITY</div>
-              <div className="text-xs font-semibold text-emerald-400">99.8% Free</div>
-            </div>
-          </div>
+              </>
+            );
+          })()}
         </div>
 
         {/* Diode Isolation Verification Card */}
-        <div className="p-5 rounded-xl glass-card border border-white/10 space-y-4">
-          <h2 className="text-sm font-semibold text-white tracking-wide flex items-center gap-2">
-            <Radio size={16} className="text-blue-400" />
+        <div className="p-6 rounded-2xl bg-[#0f0e17]/80 border border-[#f5efff]/[0.08] backdrop-blur-xl space-y-4">
+          <h2 className="text-sm font-medium text-[#f5efff] tracking-wide flex items-center gap-2">
+            <Radio size={16} className="text-[#a29bfe]" />
             Unidirectional Hardware Verification
           </h2>
 
-          <div className="p-3 rounded-lg bg-white/5 border border-white/10 space-y-3">
+          <div className="p-4 rounded-xl bg-[#0f0e17] border border-[#f5efff]/[0.06] space-y-3">
             <div className="flex items-center justify-between text-xs">
-              <span className="text-white/60">Tx Transmit Line</span>
-              <span className="text-red-400 font-mono font-bold">PHYSICALLY CUT</span>
+              <span className="text-[#f5efff]/60">Tx Transmit Line</span>
+              <span className="text-red-400 font-mono font-medium">PHYSICALLY CUT</span>
             </div>
             <div className="flex items-center justify-between text-xs">
-              <span className="text-white/60">Rx Optical Line</span>
-              <span className="text-emerald-400 font-mono font-bold">ACTIVE (0.0 dBm)</span>
+              <span className="text-[#f5efff]/60">Rx Optical Line</span>
+              <span className="text-emerald-400 font-mono font-medium">ACTIVE (0.0 dBm)</span>
             </div>
             <div className="flex items-center justify-between text-xs">
-              <span className="text-white/60">Reverse ACK Propagation</span>
-              <span className="text-amber-400 font-mono font-bold">SUPPRESSED</span>
+              <span className="text-[#f5efff]/60">Reverse ACK Propagation</span>
+              <span className="text-amber-300 font-mono font-medium">SUPPRESSED</span>
             </div>
             <div className="flex items-center justify-between text-xs">
-              <span className="text-white/60">Enclave Isolation</span>
-              <span className="text-emerald-400 font-mono font-bold">AIR-GAPPED LOGIC</span>
+              <span className="text-[#f5efff]/60">Enclave Isolation</span>
+              <span className="text-emerald-400 font-mono font-medium">AIR-GAPPED LOGIC</span>
             </div>
           </div>
 
-          <div className="text-xs text-white/50 leading-relaxed">
+          <div className="text-xs text-[#f5efff]/50 leading-relaxed font-light">
             Unidirectional taps transmit data using single-strand optics. Because no return path exists, the monitoring enclave cannot be port-scanned, exploited, or probed by external attackers.
           </div>
 
-          <div className="p-2.5 rounded-lg bg-blue-500/10 border border-blue-500/20 text-xs text-blue-300 flex items-center gap-2">
-            <Shield size={14} className="flex-shrink-0" />
+          <div className="p-3 rounded-xl bg-[#f5efff]/[0.03] border border-[#f5efff]/[0.06] text-xs text-[#f5efff]/70 flex items-center gap-2 font-mono">
+            <Shield size={14} className="flex-shrink-0 text-[#f5efff]" />
             <span>Cryptographic integrity check active on all frames</span>
           </div>
         </div>
       </div>
 
       {/* Live Packet Stream Inspector */}
-      <div className="p-5 rounded-xl glass-card border border-white/10 space-y-4">
-        <div className="flex items-center justify-between">
+      <div className="p-6 rounded-2xl bg-[#0f0e17]/80 border border-[#f5efff]/[0.08] backdrop-blur-xl space-y-4">
+        <div className="flex items-center justify-between flex-wrap gap-2">
           <div>
-            <h2 className="text-sm font-semibold text-white tracking-wide flex items-center gap-2">
+            <h2 className="text-sm font-medium text-[#f5efff] tracking-wide flex items-center gap-2">
               <Activity size={16} className="text-emerald-400" />
               Live Ingress Telemetry Stream
             </h2>
-            <p className="text-xs text-white/40">Raw frame extraction passing through passive feature extractor</p>
+            <p className="text-xs text-[#f5efff]/40 font-light">Raw frame extraction passing through passive feature extractor</p>
           </div>
-          <span className="text-xs text-white/40 font-mono">
+          <span className="text-xs text-[#f5efff]/40 font-mono">
             Showing {packetStream.length} frames
           </span>
         </div>
 
         <div className="overflow-x-auto">
-          <table className="w-full text-left text-xs text-white/70">
-            <thead className="text-[11px] uppercase tracking-wider text-white/40 border-b border-white/10">
+          <table className="w-full text-left text-xs text-[#f5efff]/70">
+            <thead className="text-[10px] uppercase font-mono tracking-widest text-[#f5efff]/40 border-b border-[#f5efff]/[0.08] bg-[#f5efff]/[0.02]">
               <tr>
-                <th className="py-2.5 px-3">Timestamp</th>
-                <th className="py-2.5 px-3">Source IP</th>
-                <th className="py-2.5 px-3">Destination IP</th>
-                <th className="py-2.5 px-3">Protocol</th>
-                <th className="py-2.5 px-3">Size</th>
-                <th className="py-2.5 px-3">Flags</th>
-                <th className="py-2.5 px-3">Provenance</th>
+                <th className="py-3 px-4 font-medium">Timestamp</th>
+                <th className="py-3 px-4 font-medium">Source IP</th>
+                <th className="py-3 px-4 font-medium">Destination IP</th>
+                <th className="py-3 px-4 font-medium">Protocol</th>
+                <th className="py-3 px-4 font-medium">Size</th>
+                <th className="py-3 px-4 font-medium">Flags</th>
+                <th className="py-3 px-4 font-medium">Provenance</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-white/5 font-mono">
+            <tbody className="divide-y divide-[#f5efff]/[0.04] font-mono">
               {packetStream.map((p) => (
-                <tr key={p.id} className="hover:bg-white/5 transition-colors">
-                  <td className="py-2 px-3 text-white/40">{p.timestamp}</td>
-                  <td className="py-2 px-3 text-white font-medium">{p.src_ip}</td>
-                  <td className="py-2 px-3 text-white/80">{p.dst_ip}</td>
-                  <td className="py-2 px-3">
+                <tr key={p.id} className="hover:bg-[#f5efff]/[0.03] transition-colors">
+                  <td className="py-3 px-4 text-[#f5efff]/40">{p.timestamp}</td>
+                  <td className="py-3 px-4 text-[#f5efff] font-medium">{p.src_ip}</td>
+                  <td className="py-3 px-4 text-[#f5efff]/80">{p.dst_ip}</td>
+                  <td className="py-3 px-4">
                     <span
-                      className={`px-1.5 py-0.5 rounded text-[10px] font-bold ${
+                      className={`px-2 py-0.5 rounded-full text-[10px] font-medium border ${
                         p.protocol === 'TCP'
-                          ? 'bg-blue-500/10 text-blue-400 border border-blue-500/20'
+                          ? 'bg-blue-500/10 text-blue-300 border-blue-500/20'
                           : p.protocol === 'DNS'
-                          ? 'bg-purple-500/10 text-purple-400 border border-purple-500/20'
-                          : 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'
+                          ? 'bg-purple-500/10 text-purple-300 border-purple-500/20'
+                          : 'bg-emerald-500/10 text-emerald-300 border-emerald-500/20'
                       }`}
                     >
                       {p.protocol}
                     </span>
                   </td>
-                  <td className="py-2 px-3 text-white/70">{p.size} B</td>
-                  <td className="py-2 px-3 text-amber-300">{p.flags || '—'}</td>
-                  <td className="py-2 px-3">
-                    <span className="px-1.5 py-0.5 rounded text-[9px] font-semibold bg-white/5 text-white/50 border border-white/10">
+                  <td className="py-3 px-4 text-[#f5efff]/70">{p.size} B</td>
+                  <td className="py-3 px-4 text-amber-300">{p.flags || '—'}</td>
+                  <td className="py-3 px-4">
+                    <span className="px-2 py-0.5 rounded-full text-[9px] font-medium bg-[#f5efff]/[0.05] text-[#f5efff]/60 border border-[#f5efff]/[0.08]">
                       {p.provenance}
                     </span>
                   </td>

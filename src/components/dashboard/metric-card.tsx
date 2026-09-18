@@ -12,10 +12,10 @@ interface MetricCardProps {
   className?: string;
 }
 
-const HIGHLIGHT_STYLES: Record<string, { border: string; glow: string }> = {
-  low:      { border: 'rgba(96,165,250,0.25)',  glow: 'rgba(96,165,250,0.08)' },
-  high:     { border: 'rgba(249,115,22,0.3)',   glow: 'rgba(249,115,22,0.08)' },
-  critical: { border: 'rgba(239,68,68,0.35)',   glow: 'rgba(239,68,68,0.1)'  },
+const HIGHLIGHT_STYLES: Record<string, { border: string; glow: string; text: string }> = {
+  low:      { border: 'rgba(56, 189, 248, 0.3)', glow: 'rgba(56, 189, 248, 0.08)', text: '#38bdf8' },
+  high:     { border: 'rgba(251, 191, 36, 0.35)', glow: 'rgba(251, 191, 36, 0.08)', text: '#fbbf24' },
+  critical: { border: 'rgba(244, 63, 94, 0.4)', glow: 'rgba(244, 63, 94, 0.12)', text: '#f43f5e' },
 };
 
 export function MetricCard({
@@ -31,39 +31,51 @@ export function MetricCard({
 
   return (
     <div
-      className={cn('glass metric-card p-4', className)}
+      className={cn(
+        'group relative p-5 rounded-2xl transition-all duration-300 backdrop-blur-xl',
+        'bg-[#0f0e17]/80 border border-[#f5efff]/[0.08] hover:border-[#f5efff]/[0.22]',
+        'hover:shadow-[0_12px_32px_rgba(0,0,0,0.5)] flex flex-col justify-between',
+        className
+      )}
       style={hl ? {
         borderColor: hl.border,
-        background: `linear-gradient(135deg, rgba(13,21,32,0.7), ${hl.glow})`,
+        background: `linear-gradient(135deg, rgba(15, 14, 23, 0.9), ${hl.glow})`,
       } : undefined}
       role="status"
       aria-label={`${label}: ${value}`}
     >
-      <div className="flex items-center justify-between mb-2">
-        <span className="text-label">{label}</span>
+      {/* Top Header: Monospace Micro-Label + Icon Pill */}
+      <div className="flex items-center justify-between gap-2 mb-2">
+        <span className="font-mono text-[10px] uppercase tracking-[0.2em] text-[#f5efff]/50 font-medium">
+          {label}
+        </span>
         {icon && (
-          <span
-            style={{ color: hl ? (highlight === 'critical' ? '#ef4444' : highlight === 'high' ? '#f97316' : '#60a5fa') : '#3b9eff' }}
+          <div
+            className="w-7 h-7 rounded-lg flex items-center justify-center bg-[#f5efff]/[0.04] border border-[#f5efff]/[0.08] transition-colors group-hover:border-[#f5efff]/20"
+            style={{ color: hl ? hl.text : 'rgba(245, 239, 255, 0.7)' }}
             aria-hidden="true"
           >
             {icon}
-          </span>
+          </div>
         )}
       </div>
+
+      {/* Main Metric Value */}
       <div
-        className="text-mono font-bold"
+        className="font-editorial text-3xl sm:text-4xl font-light tracking-tight my-1"
         style={{
-          fontSize: '1.5rem',
-          color: hl ? (highlight === 'critical' ? '#ef4444' : highlight === 'high' ? '#f97316' : '#60a5fa') : '#e8edf4',
+          color: hl ? hl.text : '#f5efff',
           fontVariantNumeric: 'tabular-nums',
-          lineHeight: 1.2,
         }}
       >
         {value}
       </div>
+
+      {/* Sublabel / Technical Descriptor */}
       {sublabel && (
-        <div className="text-xs mt-1" style={{ color: 'rgba(232,237,244,0.35)' }}>
-          {sublabel}
+        <div className="font-mono text-[11px] text-[#f5efff]/40 flex items-center gap-1.5 mt-1">
+          <span className="w-1 h-1 rounded-full bg-[#f5efff]/25" />
+          <span>{sublabel}</span>
         </div>
       )}
     </div>

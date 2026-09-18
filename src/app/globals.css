@@ -226,3 +226,101 @@ body {
     scroll-behavior: auto !important;
   }
 }
+
+/* ─── Studio Dashboard Utilities & Glass Tokens ─── */
+.glass,
+.glass-card {
+  background: rgba(15, 14, 23, 0.75);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(245, 239, 255, 0.08);
+  border-radius: 1rem;
+}
+
+.glass-sm {
+  background: rgba(15, 14, 23, 0.65);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border: 1px solid rgba(245, 239, 255, 0.06);
+  border-radius: 0.75rem;
+}
+
+.glass-nav {
+  background: rgba(8, 8, 12, 0.85);
+  backdrop-filter: blur(24px) saturate(1.5);
+  -webkit-backdrop-filter: blur(24px) saturate(1.5);
+  border-bottom: 1px solid rgba(245, 239, 255, 0.08);
+}
+
+/* ─── Studio Status Dots & Badges ─── */
+.status-dot {
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+}
+
+.status-dot-pulse {
+  animation: studio-status-pulse 2s ease-in-out infinite;
+}
+
+@keyframes studio-status-pulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.35; transform: scale(0.85); }
+}
+
+.text-label {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: rgba(245, 239, 255, 0.5);
+}
+
+.text-heading-4 {
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-size: 0.875rem;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  color: #f5efff;
+}
+
+.text-mono {
+  font-family: 'IBM Plex Mono', monospace;
+}
+
+/* ─── Metric Card Studio Transition ─── */
+.metric-card {
+  transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.25s ease, box-shadow 0.25s ease;
+}
+
+.metric-card:hover {
+  transform: translateY(-2px);
+  border-color: rgba(245, 239, 255, 0.2);
+  box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.5);
+}
+
+/* ─── Threat Event Stream Animation ─── */
+@keyframes studio-fade-up {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.threat-event-new {
+  animation: studio-fade-up 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.campaign-detected {
+  animation: studio-campaign-pulse 2s ease-in-out infinite;
+}
+
+@keyframes studio-campaign-pulse {
+  0%, 100% {
+    box-shadow: 0 0 0 0 rgba(239, 68, 68, 0);
+  }
+  50% {
+    box-shadow: 0 0 0 6px rgba(239, 68, 68, 0.18);
+  }
+}
+

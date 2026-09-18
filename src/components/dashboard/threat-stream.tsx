@@ -29,7 +29,6 @@ interface ThreatStreamProps {
 
 export function ThreatStream({ events }: ThreatStreamProps) {
   const listRef = useRef<HTMLDivElement>(null);
-  const isNearBottomRef = useRef(true);
 
   // Auto-scroll to top (newest) when new events arrive
   useEffect(() => {
@@ -40,8 +39,8 @@ export function ThreatStream({ events }: ThreatStreamProps) {
 
   return (
     <div
-      className="glass flex flex-col"
-      style={{ height: '420px' }}
+      className="p-5 rounded-2xl bg-[#0f0e17]/80 border border-[#f5efff]/[0.08] backdrop-blur-xl flex flex-col shadow-xl"
+      style={{ maxHeight: '440px' }}
       role="log"
       aria-label="Live threat event stream"
       aria-live="polite"
@@ -49,30 +48,31 @@ export function ThreatStream({ events }: ThreatStreamProps) {
       aria-relevant="additions"
     >
       {/* Header */}
-      <div className="flex items-center justify-between px-4 pt-4 pb-3 border-b" style={{ borderColor: 'rgba(255,255,255,0.05)' }}>
-        <div className="flex items-center gap-2">
-          <Activity size={13} style={{ color: '#3b9eff' }} />
-          <span className="text-heading-4 text-xs">Live Threat Stream</span>
+      <div className="flex items-center justify-between pb-3 border-b border-[#f5efff]/[0.08]">
+        <div className="flex items-center gap-2.5">
+          <Activity size={15} className="text-[#f5efff]/70" />
+          <span className="font-editorial text-lg font-light text-[#f5efff] tracking-wide">
+            Live Threat Stream
+          </span>
         </div>
-        <div className="flex items-center gap-1.5 text-xs" style={{ color: 'rgba(232,237,244,0.4)' }}>
-          <span className="status-dot status-dot-pulse" style={{ background: '#4ade80' }} aria-hidden="true" />
-          <span style={{ fontSize: '10px' }}>{events.length} events</span>
+        <div className="flex items-center gap-2 px-2.5 py-0.5 rounded-full border border-[#f5efff]/10 bg-[#f5efff]/[0.03]">
+          <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 shadow-[0_0_6px_#34d399] animate-pulse" />
+          <span className="font-mono text-[10px] text-[#f5efff]/50 font-medium">{events.length} events</span>
         </div>
       </div>
 
       {/* Events list */}
       <div
         ref={listRef}
-        className="flex-1 overflow-y-auto"
-        style={{ padding: '8px 0' }}
+        className="flex-1 overflow-y-auto no-scrollbar py-2 space-y-1"
       >
         {events.length === 0 ? (
-          <div className="flex flex-col items-center justify-center h-full gap-3">
-            <Activity size={24} style={{ color: 'rgba(232,237,244,0.2)' }} />
-            <div className="text-xs" style={{ color: 'rgba(232,237,244,0.35)', textAlign: 'center' }}>
-              <div style={{ marginBottom: '4px' }}>Monitoring active</div>
-              <div style={{ fontSize: '11px', color: 'rgba(232,237,244,0.25)' }}>
-                Events will appear here as traffic is observed
+          <div className="flex flex-col items-center justify-center h-full gap-3 text-center">
+            <Activity size={24} className="text-[#f5efff]/20" />
+            <div className="text-xs text-[#f5efff]/40 font-mono">
+              <div className="mb-1 text-[#f5efff]/60 font-semibold">Monitoring active</div>
+              <div className="text-[11px] text-[#f5efff]/30">
+                Events will stream into this feed as optical packets are observed
               </div>
             </div>
           </div>
@@ -85,37 +85,32 @@ export function ThreatStream({ events }: ThreatStreamProps) {
               <div
                 key={event.id}
                 className={cn(
-                  'flex items-start gap-2.5 px-4 py-2 threat-event-new transition-all',
+                  'flex items-start gap-3 px-3 py-2 rounded-xl threat-event-new transition-colors',
                   isCampaign && 'campaign-detected',
+                  'hover:bg-[#f5efff]/[0.03] border border-transparent hover:border-[#f5efff]/[0.05]'
                 )}
                 style={{
-                  background: index === 0 ? cfg.bg : 'transparent',
-                  borderLeft: index === 0 ? `2px solid ${cfg.color}` : '2px solid transparent',
-                  borderBottom: '1px solid rgba(255,255,255,0.03)',
-                  animationDelay: `${index * 0}ms`,
+                  background: index === 0 ? cfg.bg : undefined,
+                  borderLeft: index === 0 ? `2px solid ${cfg.color}` : undefined,
                 }}
                 aria-label={`${cfg.label}: ${event.message}`}
               >
                 {/* Time */}
                 <span
-                  className="text-mono flex-shrink-0 mt-0.5"
-                  style={{ fontSize: '10px', color: 'rgba(232,237,244,0.3)', width: '60px' }}
+                  className="font-mono flex-shrink-0 mt-0.5 text-[10px] text-[#f5efff]/40"
+                  style={{ width: '56px' }}
                 >
                   {formatTime(event.timestamp)}
                 </span>
 
                 {/* Severity badge */}
                 <span
-                  className="flex-shrink-0 mt-0.5 text-xs font-bold"
+                  className="flex-shrink-0 mt-0.5 font-mono text-[9px] font-bold px-1.5 py-0.5 rounded-full uppercase tracking-wider text-center"
                   style={{
                     color: cfg.color,
                     background: cfg.bg,
-                    padding: '1px 5px',
-                    borderRadius: '3px',
-                    fontSize: '9px',
-                    letterSpacing: '0.08em',
-                    minWidth: '36px',
-                    textAlign: 'center',
+                    border: `1px solid ${cfg.color}30`,
+                    minWidth: '38px',
                   }}
                 >
                   {cfg.label}
@@ -124,18 +119,18 @@ export function ThreatStream({ events }: ThreatStreamProps) {
                 {/* Message */}
                 <div className="flex-1 min-w-0">
                   <div
-                    className="text-xs"
+                    className="text-xs leading-relaxed"
                     style={{
-                      color: isCampaign ? '#ef4444' : index === 0 ? '#e8edf4' : 'rgba(232,237,244,0.65)',
+                      color: isCampaign ? '#f43f5e' : index === 0 ? '#f5efff' : 'rgba(245, 239, 255, 0.75)',
                       fontWeight: isCampaign ? 700 : index < 3 ? 500 : 400,
                     }}
                   >
                     {event.message}
                   </div>
                   {(event.srcIp || event.dstIp) && (
-                    <div className="text-mono text-xs mt-0.5" style={{ color: 'rgba(232,237,244,0.3)', fontSize: '10px' }}>
+                    <div className="font-mono text-[10px] text-[#f5efff]/35 mt-0.5 flex items-center gap-1.5">
                       {event.srcIp && <span>{event.srcIp}</span>}
-                      {event.srcIp && event.dstIp && <span style={{ margin: '0 4px' }}>→</span>}
+                      {event.srcIp && event.dstIp && <span>→</span>}
                       {event.dstIp && <span>{event.dstIp}</span>}
                     </div>
                   )}

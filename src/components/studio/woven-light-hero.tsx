@@ -162,7 +162,7 @@ export const WovenCanvas = ({ scale = 2.0 }: { scale?: number }) => {
     camera.position.z = 5;
     const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
     renderer.setSize(window.innerWidth, window.innerHeight);
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.5));
     currentMount.appendChild(renderer.domElement);
 
     const mouse = new THREE.Vector2(0, 0);
@@ -170,24 +170,24 @@ export const WovenCanvas = ({ scale = 2.0 }: { scale?: number }) => {
 
     const isDarkMode = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
 
-    // --- Woven Silk (2x scaled geometry) ---
-    const particleCount = 50000;
+    // --- Optimized Woven Silk ---
+    const particleCount = 14000;
     const positions = new Float32Array(particleCount * 3);
     const originalPositions = new Float32Array(particleCount * 3);
     const colors = new Float32Array(particleCount * 3);
     const velocities = new Float32Array(particleCount * 3);
 
     const geometry = new THREE.BufferGeometry();
-    const radius = 1.5 * scale; // 3.0 for 2x scale
-    const tube = 0.5 * scale;   // 1.0 for 2x scale
-    const torusKnot = new THREE.TorusKnotGeometry(radius, tube, 220, 32);
+    const radius = 1.5 * scale;
+    const tube = 0.5 * scale;
+    const torusKnot = new THREE.TorusKnotGeometry(radius, tube, 160, 24);
 
     for (let i = 0; i < particleCount; i++) {
       const vertexIndex = i % torusKnot.attributes.position.count;
       const x = torusKnot.attributes.position.getX(vertexIndex);
       const y = torusKnot.attributes.position.getY(vertexIndex);
       const z = torusKnot.attributes.position.getZ(vertexIndex);
-      
+
       positions[i * 3] = x;
       positions[i * 3 + 1] = y;
       positions[i * 3 + 2] = z;
@@ -196,11 +196,11 @@ export const WovenCanvas = ({ scale = 2.0 }: { scale?: number }) => {
       originalPositions[i * 3 + 2] = z;
 
       const color = new THREE.Color();
-      color.setHSL(Math.random(), 0.8, isDarkMode ? 0.5 : 0.7);
+      color.setHSL((i / particleCount) * 0.7 + 0.5, 0.8, isDarkMode ? 0.55 : 0.7);
       colors[i * 3] = color.r;
       colors[i * 3 + 1] = color.g;
       colors[i * 3 + 2] = color.b;
-      
+
       velocities[i * 3] = 0;
       velocities[i * 3 + 1] = 0;
       velocities[i * 3 + 2] = 0;
@@ -210,19 +210,21 @@ export const WovenCanvas = ({ scale = 2.0 }: { scale?: number }) => {
     geometry.setAttribute('color', new THREE.BufferAttribute(colors, 3));
 
     const material = new THREE.PointsMaterial({
-      size: 0.024,
+      size: 0.028,
       vertexColors: true,
       blending: isDarkMode ? THREE.NormalBlending : THREE.AdditiveBlending,
       transparent: true,
-      opacity: isDarkMode ? 1.0 : 0.85,
+      opacity: isDarkMode ? 0.95 : 0.85,
     });
 
     const points = new THREE.Points(geometry, material);
     scene.add(points);
 
+    let mouseMoved = false;
     const handleMouseMove = (event: MouseEvent) => {
       mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
       mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
+      mouseMoved = true;
     };
     window.addEventListener('mousemove', handleMouseMove);
 
@@ -234,49 +236,50 @@ export const WovenCanvas = ({ scale = 2.0 }: { scale?: number }) => {
 
     let animationFrameId: number;
 
-    const mouseReach = 3.2 * scale; // 6.4 for full mouse coverage across 2x canvas
-    const interactionDist = 1.6 * scale; // 3.2 for 2x scale mouse force field
+    const mouseReach = 3.2 * scale;
+    const interactionDist = 1.6 * scale;
+    const interactionDistSq = interactionDist * interactionDist;
 
     const animate = () => {
       animationFrameId = requestAnimationFrame(animate);
       const elapsedTime = clock.getElapsedTime();
-      
-      const mouseWorld = new THREE.Vector3(mouse.x * mouseReach, mouse.y * mouseReach, 0);
+
+      const mx = mouse.x * mouseReach;
+      const my = mouse.y * mouseReach;
 
       for (let i = 0; i < particleCount; i++) {
         const ix = i * 3;
-        const iy = i * 3 + 1;
-        const iz = i * 3 + 2;
+        const iy = ix + 1;
+        const iz = ix + 2;
 
-        const currentPos = new THREE.Vector3(positions[ix], positions[iy], positions[iz]);
-        const originalPos = new THREE.Vector3(originalPositions[ix], originalPositions[iy], originalPositions[iz]);
-        const velocity = new THREE.Vector3(velocities[ix], velocities[iy], velocities[iz]);
+        if (mouseMoved) {
+          const dx = positions[ix] - mx;
+          const dy = positions[iy] - my;
+          const dz = positions[iz];
+          const distSq = dx * dx + dy * dy + dz * dz;
 
-        const dist = currentPos.distanceTo(mouseWorld);
-        if (dist < interactionDist) {
-          const force = (interactionDist - dist) * 0.01;
-          const direction = new THREE.Vector3().subVectors(currentPos, mouseWorld).normalize();
-          velocity.add(direction.multiplyScalar(force));
+          if (distSq < interactionDistSq && distSq > 0.001) {
+            const dist = Math.sqrt(distSq);
+            const force = (interactionDist - dist) * 0.012;
+            const invDist = force / dist;
+            velocities[ix] += dx * invDist;
+            velocities[iy] += dy * invDist;
+            velocities[iz] += dz * invDist;
+          }
         }
 
-        // Return to original position
-        const returnForce = new THREE.Vector3().subVectors(originalPos, currentPos).multiplyScalar(0.001);
-        velocity.add(returnForce);
-        
-        // Damping
-        velocity.multiplyScalar(0.95);
+        // Return spring force + damping
+        velocities[ix] = (velocities[ix] + (originalPositions[ix] - positions[ix]) * 0.0012) * 0.94;
+        velocities[iy] = (velocities[iy] + (originalPositions[iy] - positions[iy]) * 0.0012) * 0.94;
+        velocities[iz] = (velocities[iz] + (originalPositions[iz] - positions[iz]) * 0.0012) * 0.94;
 
-        positions[ix] += velocity.x;
-        positions[iy] += velocity.y;
-        positions[iz] += velocity.z;
-        
-        velocities[ix] = velocity.x;
-        velocities[iy] = velocity.y;
-        velocities[iz] = velocity.z;
+        positions[ix] += velocities[ix];
+        positions[iy] += velocities[iy];
+        positions[iz] += velocities[iz];
       }
       geometry.attributes.position.needsUpdate = true;
 
-      // Rotate continuously and react to scroll depth all the way till the very end of the site
+      // Rotate continuously and react to scroll depth
       points.rotation.y = elapsedTime * 0.05 + scrollY * 0.0005;
       points.rotation.x = scrollY * 0.0004;
       renderer.render(scene, camera);

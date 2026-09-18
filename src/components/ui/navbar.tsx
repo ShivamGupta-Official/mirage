@@ -54,70 +54,90 @@ export function Navbar({
 
   return (
     <nav
-      className="glass-nav fixed top-0 left-0 right-0 z-50 h-14"
+      className="glass-nav fixed top-0 left-0 right-0 z-50 h-16 border-b border-[#f5efff]/[0.08] bg-[#08080c]/85 backdrop-blur-2xl"
       role="navigation"
       aria-label="Main navigation"
     >
-      <div className="flex items-center h-full px-4 gap-0">
-        {/* Logo */}
+      <div className="flex items-center justify-between h-full px-4 md:px-6 max-w-[1680px] mx-auto gap-4">
+        {/* Left: Brand Logo & Enclave Tag */}
         <Link
           href="/"
-          className="flex items-center gap-2.5 mr-8 flex-shrink-0 group"
+          className="flex items-center gap-3 flex-shrink-0 group focus:outline-none"
           aria-label="MIRAGE — go to home"
         >
-          <div className="relative">
-            <Shield
-              size={20}
-              className="text-accent transition-all duration-300 group-hover:scale-110"
-              style={{ color: '#3b9eff' }}
-            />
-            <div
-              className="absolute inset-0 rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-300"
-              style={{ background: 'radial-gradient(circle, rgba(59,158,255,0.3) 0%, transparent 70%)' }}
-            />
+          <div className="relative flex h-8 w-8 items-center justify-center rounded-lg border border-[#f5efff]/20 bg-[#f5efff]/5 transition-all duration-300 group-hover:border-[#f5efff]/50 group-hover:shadow-[0_0_20px_rgba(245,239,255,0.2)]">
+            <Shield className="h-4 w-4 text-[#f5efff] transition-transform duration-300 group-hover:scale-110" />
+            <span className="absolute -top-1 -right-1 h-2 w-2 rounded-full bg-emerald-400 shadow-[0_0_8px_#34d399] animate-pulse" />
           </div>
-          <span
-            className="font-bold tracking-[0.15em] text-sm text-gradient"
-            style={{ letterSpacing: '0.18em' }}
-          >
-            MIRAGE
-          </span>
+          <div className="flex flex-col">
+            <span className="font-mono text-sm font-bold tracking-[0.2em] text-[#f5efff] group-hover:text-white transition-colors">
+              MIRAGE
+            </span>
+            <span className="font-mono text-[9px] uppercase tracking-widest text-[#f5efff]/45">
+              NTRO // SOC ENCLAVE
+            </span>
+          </div>
         </Link>
 
-        {/* Nav items */}
+        {/* Center: Sleek Pill Nav items */}
         <div
-          className="flex items-center gap-0.5 flex-1 overflow-x-auto no-scrollbar"
+          className="hidden lg:flex items-center gap-1.5 p-1 rounded-full bg-[#f5efff]/[0.03] border border-[#f5efff]/[0.08] overflow-x-auto no-scrollbar"
           role="menubar"
         >
           {NAV_ITEMS.map(({ href, label, icon: Icon }) => {
-            const isActive = pathname === href || pathname.startsWith(href + '/');
+            const isActive = pathname === href || (href !== '/dashboard' && pathname.startsWith(href));
             return (
               <Link
                 key={href}
                 href={href}
                 role="menuitem"
                 className={cn(
-                  'flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-all duration-150 whitespace-nowrap',
+                  'flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-mono transition-all duration-200 whitespace-nowrap',
                   isActive
-                    ? 'text-white bg-white/8 border border-white/10'
-                    : 'text-white/50 hover:text-white/80 hover:bg-white/4',
+                    ? 'bg-[#f5efff]/12 text-[#f5efff] border border-[#f5efff]/25 shadow-[0_0_15px_rgba(245,239,255,0.08)] font-medium'
+                    : 'text-[#f5efff]/50 hover:text-[#f5efff] hover:bg-[#f5efff]/5 border border-transparent',
                 )}
                 aria-current={isActive ? 'page' : undefined}
               >
-                <Icon size={13} className="flex-shrink-0" />
+                <Icon size={12} className={cn('flex-shrink-0', isActive ? 'text-[#f5efff]' : 'text-[#f5efff]/50')} />
                 {label}
               </Link>
             );
           })}
         </div>
 
-        {/* Right side status */}
-        <div className="flex items-center gap-3 ml-6 flex-shrink-0">
+        {/* Mobile/Tablet Fallback Nav Bar */}
+        <div
+          className="flex lg:hidden items-center gap-1 overflow-x-auto no-scrollbar py-1"
+          role="menubar"
+        >
+          {NAV_ITEMS.slice(0, 4).map(({ href, label, icon: Icon }) => {
+            const isActive = pathname === href || (href !== '/dashboard' && pathname.startsWith(href));
+            return (
+              <Link
+                key={href}
+                href={href}
+                role="menuitem"
+                className={cn(
+                  'flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-mono whitespace-nowrap',
+                  isActive
+                    ? 'bg-[#f5efff]/12 text-[#f5efff] border border-[#f5efff]/25'
+                    : 'text-[#f5efff]/50 hover:text-[#f5efff]',
+                )}
+              >
+                <Icon size={11} />
+                {label}
+              </Link>
+            );
+          })}
+        </div>
+
+        {/* Right side status & Controls */}
+        <div className="flex items-center gap-2.5 md:gap-3.5 flex-shrink-0">
           {/* Alert count */}
           {alertCount > 0 && (
             <div
-              className="flex items-center gap-1.5 px-2 py-1 rounded-md text-xs font-medium"
-              style={{ background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.25)', color: '#ef4444' }}
+              className="flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-mono font-semibold bg-rose-500/10 border border-rose-500/25 text-rose-400"
               aria-label={`${alertCount} active alerts`}
             >
               <CircleAlert size={11} />
@@ -127,28 +147,32 @@ export function Navbar({
 
           {/* Sensor status */}
           <div
-            className="flex items-center gap-1.5 text-xs"
+            className="flex items-center gap-2 px-2.5 py-1 rounded-full border border-[#f5efff]/10 bg-[#f5efff]/[0.03]"
             aria-label={`Sensor ${sensorOnline ? 'online' : 'offline'}`}
           >
             <span
-              className="status-dot status-dot-pulse"
-              style={{ background: sensorOnline ? '#4ade80' : '#ef4444' }}
+              className={cn(
+                'h-2 w-2 rounded-full',
+                sensorOnline
+                  ? 'bg-emerald-400 shadow-[0_0_8px_#34d399] animate-pulse'
+                  : 'bg-rose-500 shadow-[0_0_8px_#f43f5e]'
+              )}
               aria-hidden="true"
             />
-            <span className="text-white/40 font-medium tracking-wide" style={{ fontSize: '10px', letterSpacing: '0.1em' }}>
+            <span className="font-mono text-[10px] tracking-[0.15em] text-[#f5efff]/60 font-semibold">
               SENSOR
             </span>
           </div>
 
           {/* WS connection */}
           <div
-            className="flex items-center"
+            className="p-1.5 rounded-full border border-[#f5efff]/10 bg-[#f5efff]/[0.02]"
             aria-label={`WebSocket ${wsConnected ? 'connected' : 'disconnected'}`}
           >
             {wsConnected ? (
-              <Wifi size={13} style={{ color: '#4ade80' }} />
+              <Wifi size={13} className="text-emerald-400" />
             ) : (
-              <WifiOff size={13} style={{ color: '#ef4444' }} />
+              <WifiOff size={13} className="text-[#f5efff]/40" />
             )}
           </div>
 
@@ -156,23 +180,18 @@ export function Navbar({
           <Link
             href="/settings"
             aria-label="Settings"
-            className="p-1.5 rounded-md text-white/30 hover:text-white/60 hover:bg-white/5 transition-all"
+            className="h-8 w-8 flex items-center justify-center rounded-full border border-[#f5efff]/15 bg-[#f5efff]/5 text-[#f5efff]/70 hover:text-[#f5efff] hover:border-[#f5efff]/35 hover:bg-[#f5efff]/10 transition-all duration-300"
           >
-            <Settings size={14} />
+            <Settings size={13} />
           </Link>
 
-          {/* Eye icon — passive monitoring indicator */}
+          {/* One-Way Diode Badge */}
           <div
-            className="flex items-center gap-1 px-2 py-1 rounded-md text-xs"
-            style={{
-              background: 'rgba(59,158,255,0.08)',
-              border: '1px solid rgba(59,158,255,0.15)',
-              color: 'rgba(59,158,255,0.7)',
-            }}
-            title="Passive monitoring active — one-way only"
+            className="flex items-center gap-1.5 px-3 py-1 rounded-full border border-[#f5efff]/15 bg-[#f5efff]/5 text-[#f5efff]/80"
+            title="Passive monitoring active — unidirectional optical diode enforced"
           >
-            <Eye size={11} />
-            <span style={{ fontSize: '9px', letterSpacing: '0.1em', fontWeight: 600 }}>
+            <Eye size={12} className="text-emerald-400" />
+            <span className="font-mono text-[9px] tracking-[0.2em] font-bold uppercase">
               ONE-WAY
             </span>
           </div>

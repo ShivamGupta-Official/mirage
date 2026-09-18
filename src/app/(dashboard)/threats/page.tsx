@@ -212,41 +212,54 @@ export default function ThreatsPage() {
 
   return (
     <div className="space-y-6">
-      {/* Top Banner */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 p-4 rounded-xl glass-card border border-white/10">
+      {/* ── Top Studio Header ── */}
+      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-5 p-6 rounded-2xl bg-[#0f0e17]/80 border border-[#f5efff]/[0.08] backdrop-blur-xl">
         <div>
-          <h1 className="text-xl font-bold text-white tracking-wide flex items-center gap-2">
-            <AlertTriangle className="text-amber-400" size={22} />
-            Threats & Explainable Evidence
+          <div className="eyebrow-label mb-2 flex items-center gap-2">
+            <span className="w-2 h-2 rounded-full bg-amber-400 shadow-[0_0_8px_rgba(251,191,36,0.8)]" />
+            <span>LIVE THREAT TRIAGE & EXPLAINABILITY</span>
+          </div>
+          <h1 className="font-editorial text-3xl sm:text-4xl font-light text-[#f5efff] tracking-tight">
+            Threats & Evidence Cards
           </h1>
-          <p className="text-xs text-white/50 mt-1">
+          <p className="text-xs sm:text-sm text-[#f5efff]/50 max-w-2xl font-light leading-relaxed mt-1">
             Every detection is traceable to raw unidirectional features, adaptive baselines, and mathematical evidence cards.
           </p>
         </div>
 
         {/* Filter Controls */}
-        <div className="flex items-center gap-3">
+        <div className="flex flex-wrap items-center gap-3">
+          {/* Search bar */}
           <div className="relative">
-            <Search size={14} className="absolute left-2.5 top-2.5 text-white/40" />
+            <Search size={14} className="absolute left-3.5 top-3 text-[#f5efff]/40" />
             <input
               type="text"
               placeholder="Search IP, threat..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-8 pr-3 py-1.5 rounded-lg bg-white/5 border border-white/10 text-xs text-white placeholder-white/40 focus:outline-none focus:border-blue-500/50"
+              className="pl-9 pr-4 py-2 rounded-full bg-white/[0.03] border border-[#f5efff]/[0.08] text-xs text-[#f5efff] placeholder-[#f5efff]/30 focus:outline-none focus:border-[#f5efff]/30 transition-colors w-48 sm:w-56"
             />
           </div>
 
-          <select
-            value={filterSeverity}
-            onChange={(e) => setFilterSeverity(e.target.value)}
-            className="px-3 py-1.5 rounded-lg bg-white/5 border border-white/10 text-xs text-white focus:outline-none focus:border-blue-500/50"
-          >
-            <option value="ALL" className="bg-slate-900">All Severities</option>
-            <option value="CRITICAL" className="bg-slate-900">Critical</option>
-            <option value="HIGH" className="bg-slate-900">High</option>
-            <option value="MEDIUM" className="bg-slate-900">Medium</option>
-          </select>
+          {/* Segmented Filter Pills */}
+          <div className="p-1 rounded-full bg-white/[0.04] border border-[#f5efff]/[0.08] inline-flex items-center gap-1">
+            {['ALL', 'CRITICAL', 'HIGH', 'MEDIUM'].map((sev) => {
+              const isSelected = filterSeverity === sev;
+              return (
+                <button
+                  key={sev}
+                  onClick={() => setFilterSeverity(sev)}
+                  className={`px-3 py-1.5 rounded-full text-xs font-mono font-medium transition-all ${
+                    isSelected
+                      ? 'bg-[#f5efff] text-black shadow-md'
+                      : 'text-[#f5efff]/60 hover:text-[#f5efff] hover:bg-white/[0.04]'
+                  }`}
+                >
+                  {sev === 'ALL' ? 'All' : sev.charAt(0) + sev.slice(1).toLowerCase()}
+                </button>
+              );
+            })}
+          </div>
         </div>
       </div>
 
@@ -254,43 +267,46 @@ export default function ThreatsPage() {
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
         {/* Left Side: Alerts List */}
         <div className="lg:col-span-5 space-y-3">
-          <div className="text-xs font-semibold text-white/50 uppercase tracking-wider px-1">
-            Verified Enclave Detections ({filteredAlerts.length})
+          <div className="flex items-center justify-between px-1">
+            <span className="eyebrow-label text-[10px] text-[#f5efff]/40 uppercase tracking-widest">
+              Verified Enclave Detections ({filteredAlerts.length})
+            </span>
+            <span className="text-[10px] font-mono text-[#f5efff]/30">Auto-prioritized</span>
           </div>
 
-          <div className="space-y-2 max-h-[700px] overflow-y-auto pr-1">
+          <div className="space-y-2.5 max-h-[720px] overflow-y-auto pr-1 no-scrollbar">
             {filteredAlerts.map((alert) => {
               const isSelected = selectedAlert?.id === alert.id;
               const sevColors = {
-                CRITICAL: 'bg-red-500/10 text-red-400 border-red-500/30',
-                HIGH: 'bg-orange-500/10 text-orange-400 border-orange-500/30',
-                MEDIUM: 'bg-amber-500/10 text-amber-400 border-amber-500/30',
-                LOW: 'bg-blue-500/10 text-blue-400 border-blue-500/30',
+                CRITICAL: 'bg-red-500/10 text-red-400 border-red-500/20',
+                HIGH: 'bg-amber-500/10 text-amber-300 border-amber-500/20',
+                MEDIUM: 'bg-blue-500/10 text-blue-300 border-blue-500/20',
+                LOW: 'bg-[#f5efff]/10 text-[#f5efff]/70 border-[#f5efff]/20',
               }[alert.severity];
 
               return (
                 <div
                   key={alert.id}
                   onClick={() => setSelectedAlert(alert)}
-                  className={`p-3.5 rounded-xl transition-all duration-150 cursor-pointer border ${
+                  className={`p-4 rounded-2xl transition-all duration-200 cursor-pointer border ${
                     isSelected
-                      ? 'bg-white/10 border-blue-500/50 shadow-lg shadow-blue-500/5'
-                      : 'bg-white/5 border-white/10 hover:bg-white/[0.08] hover:border-white/20'
+                      ? 'bg-[#f5efff]/[0.08] border-[#f5efff]/30 ring-1 ring-[#f5efff]/20 shadow-lg shadow-black/40'
+                      : 'bg-[#0f0e17]/80 border-[#f5efff]/[0.06] hover:bg-[#f5efff]/[0.04] hover:border-[#f5efff]/15'
                   }`}
                 >
                   <div className="flex items-center justify-between mb-2">
-                    <span className={`px-2 py-0.5 rounded text-[10px] font-bold border ${sevColors}`}>
+                    <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-mono font-medium border ${sevColors}`}>
                       {alert.severity}
                     </span>
-                    <span className="text-[11px] text-white/40">{alert.timestamp}</span>
+                    <span className="text-[11px] font-mono text-[#f5efff]/40">{alert.timestamp}</span>
                   </div>
 
-                  <div className="font-semibold text-sm text-white">{alert.threat_type}</div>
-                  <div className="text-xs text-white/50 mt-0.5 truncate">{alert.description}</div>
+                  <div className="font-medium text-sm text-[#f5efff]">{alert.threat_type}</div>
+                  <div className="text-xs text-[#f5efff]/50 mt-1 truncate font-light">{alert.description}</div>
 
-                  <div className="flex items-center justify-between mt-3 pt-2 border-t border-white/5 text-[11px] text-white/40">
-                    <span className="font-mono">Src: {alert.src_ip}</span>
-                    <span className="font-semibold text-white/70">Risk: {alert.risk_score.toFixed(1)}</span>
+                  <div className="flex items-center justify-between mt-3 pt-2.5 border-t border-[#f5efff]/[0.06] text-[11px] font-mono text-[#f5efff]/40">
+                    <span>Src: {alert.src_ip}</span>
+                    <span className="font-medium text-[#f5efff]/80">Risk: {alert.risk_score.toFixed(1)}</span>
                   </div>
                 </div>
               );
@@ -301,33 +317,33 @@ export default function ThreatsPage() {
         {/* Right Side: Explainability Detail & Evidence Cards */}
         <div className="lg:col-span-7">
           {selectedAlert ? (
-            <div className="p-6 rounded-xl glass-card border border-white/10 space-y-6">
+            <div className="p-6 rounded-2xl bg-[#0f0e17]/80 border border-[#f5efff]/[0.08] backdrop-blur-xl space-y-6">
               {/* Header */}
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-white/10">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-5 border-b border-[#f5efff]/[0.08]">
                 <div>
-                  <div className="flex items-center gap-2">
-                    <span className="px-2.5 py-0.5 rounded text-xs font-bold bg-red-500/15 text-red-400 border border-red-500/30">
+                  <div className="flex items-center gap-2.5">
+                    <span className="px-2.5 py-0.5 rounded-full text-[10px] font-mono font-medium bg-red-500/10 text-red-400 border border-red-500/20">
                       {selectedAlert.severity}
                     </span>
-                    <h2 className="text-lg font-bold text-white tracking-wide">
+                    <h2 className="font-editorial text-2xl font-light text-[#f5efff]">
                       {selectedAlert.threat_type}
                     </h2>
                   </div>
-                  <p className="text-xs text-white/60 mt-1 font-mono">
+                  <p className="text-xs text-[#f5efff]/50 mt-1 font-mono">
                     ID: {selectedAlert.id} · Engine: {selectedAlert.detection_engine} · Model: {selectedAlert.model_version || 'v2.1'}
                   </p>
                 </div>
 
-                <div className="flex items-center gap-3">
+                <div className="flex items-center gap-4">
                   <div className="text-right">
-                    <div className="text-[10px] text-white/40 uppercase">CONFIDENCE</div>
-                    <div className="text-base font-bold text-emerald-400 font-mono">
+                    <div className="text-[10px] text-[#f5efff]/40 uppercase font-mono tracking-wider">CONFIDENCE</div>
+                    <div className="font-editorial text-2xl font-light text-emerald-300">
                       {(selectedAlert.confidence * 100).toFixed(0)}%
                     </div>
                   </div>
                   <div className="text-right">
-                    <div className="text-[10px] text-white/40 uppercase">RISK SCORE</div>
-                    <div className="text-base font-bold text-red-400 font-mono">
+                    <div className="text-[10px] text-[#f5efff]/40 uppercase font-mono tracking-wider">RISK SCORE</div>
+                    <div className="font-editorial text-2xl font-light text-red-400">
                       {selectedAlert.risk_score.toFixed(1)}/100
                     </div>
                   </div>
@@ -335,23 +351,23 @@ export default function ThreatsPage() {
               </div>
 
               {/* Endpoint Context */}
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 p-3.5 rounded-lg bg-white/5 border border-white/10 text-xs">
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 p-4 rounded-xl bg-[#0f0e17] border border-[#f5efff]/[0.06] text-xs">
                 <div>
-                  <span className="text-white/40 block text-[10px]">SOURCE HOST</span>
-                  <span className="text-white font-mono font-medium">{selectedAlert.src_ip}</span>
+                  <span className="text-[#f5efff]/40 block text-[10px] font-mono uppercase tracking-wider">SOURCE HOST</span>
+                  <span className="text-[#f5efff] font-mono font-medium">{selectedAlert.src_ip}</span>
                 </div>
                 <div>
-                  <span className="text-white/40 block text-[10px]">DESTINATION</span>
-                  <span className="text-white font-mono font-medium">{selectedAlert.dst_ip}</span>
+                  <span className="text-[#f5efff]/40 block text-[10px] font-mono uppercase tracking-wider">DESTINATION</span>
+                  <span className="text-[#f5efff] font-mono font-medium">{selectedAlert.dst_ip}</span>
                 </div>
                 <div>
-                  <span className="text-white/40 block text-[10px]">VERIFIED HASH</span>
-                  <span className="text-blue-400 font-mono font-medium truncate block">
+                  <span className="text-[#f5efff]/40 block text-[10px] font-mono uppercase tracking-wider">VERIFIED HASH</span>
+                  <span className="text-[#a29bfe] font-mono font-medium truncate block">
                     #{selectedAlert.evidence_hash || 'SHA256-OK'}
                   </span>
                 </div>
                 <div>
-                  <span className="text-white/40 block text-[10px]">TAMPER AUDIT</span>
+                  <span className="text-[#f5efff]/40 block text-[10px] font-mono uppercase tracking-wider">TAMPER AUDIT</span>
                   <span className="text-emerald-400 font-medium flex items-center gap-1">
                     <CheckCircle2 size={12} /> Immutable
                   </span>
@@ -361,49 +377,49 @@ export default function ThreatsPage() {
               {/* "WHY WE FLAGGED THIS" Section */}
               <div className="space-y-3">
                 <div className="flex items-center justify-between">
-                  <h3 className="text-xs font-bold text-white tracking-wider uppercase flex items-center gap-1.5">
-                    <Fingerprint size={14} className="text-blue-400" />
+                  <h3 className="text-xs font-mono font-semibold text-[#f5efff] tracking-wider uppercase flex items-center gap-2">
+                    <Fingerprint size={14} className="text-[#a29bfe]" />
                     Why We Flagged This (Evidence Decomposition)
                   </h3>
-                  <span className="text-[11px] text-white/40">
+                  <span className="text-[11px] font-mono text-[#f5efff]/40">
                     Feature contributions sum to 100%
                   </span>
                 </div>
 
-                <div className="space-y-2.5">
+                <div className="space-y-3">
                   {selectedAlert.evidence && selectedAlert.evidence.length > 0 ? (
                     selectedAlert.evidence.map((ev, idx) => {
                       const contributionPct = Math.round(ev.contribution * 100);
                       return (
                         <div
                           key={idx}
-                          className="p-3.5 rounded-lg bg-white/5 border border-white/10 space-y-2"
+                          className="p-4 rounded-xl bg-[#0f0e17] border border-[#f5efff]/[0.06] space-y-2.5"
                         >
                           <div className="flex items-center justify-between text-xs">
-                            <span className="font-mono font-semibold text-white/90">
+                            <span className="font-mono font-medium text-[#f5efff]">
                               {ev.feature_name}
                             </span>
-                            <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-blue-500/10 text-blue-400 border border-blue-500/20 font-mono">
+                            <span className="px-2.5 py-0.5 rounded-full text-[10px] font-mono font-medium bg-[#f5efff]/[0.06] text-[#a29bfe] border border-[#f5efff]/[0.1]">
                               +{contributionPct}% contribution
                             </span>
                           </div>
 
-                          <div className="text-xs text-white/70 leading-relaxed">
+                          <div className="text-xs text-[#f5efff]/70 leading-relaxed font-light">
                             {ev.explanation}
                           </div>
 
-                          <div className="grid grid-cols-3 gap-2 pt-2 border-t border-white/5 text-[11px] font-mono">
+                          <div className="grid grid-cols-3 gap-2 pt-2.5 border-t border-[#f5efff]/[0.04] text-[11px] font-mono">
                             <div>
-                              <span className="text-white/30 text-[9px] block">OBSERVED</span>
-                              <span className="text-red-400 font-bold">{ev.observed_value}</span>
+                              <span className="text-[#f5efff]/30 text-[9px] uppercase block">OBSERVED</span>
+                              <span className="text-red-400 font-medium">{ev.observed_value}</span>
                             </div>
                             <div>
-                              <span className="text-white/30 text-[9px] block">BASELINE</span>
-                              <span className="text-white/60">{ev.baseline_value}</span>
+                              <span className="text-[#f5efff]/30 text-[9px] uppercase block">BASELINE</span>
+                              <span className="text-[#f5efff]/60">{ev.baseline_value}</span>
                             </div>
                             <div>
-                              <span className="text-white/30 text-[9px] block">DEVIATION</span>
-                              <span className="text-amber-400 font-bold">
+                              <span className="text-[#f5efff]/30 text-[9px] uppercase block">DEVIATION</span>
+                              <span className="text-amber-300 font-medium">
                                 {ev.deviation > 0 ? `+${ev.deviation.toFixed(1)}σ` : `${ev.deviation.toFixed(1)}σ`}
                               </span>
                             </div>
@@ -412,7 +428,7 @@ export default function ThreatsPage() {
                       );
                     })
                   ) : (
-                    <div className="p-4 text-center text-xs text-white/40">
+                    <div className="p-6 text-center text-xs text-[#f5efff]/40 font-mono">
                       No decomposed features available for this event.
                     </div>
                   )}
@@ -420,17 +436,17 @@ export default function ThreatsPage() {
               </div>
 
               {/* Action Banner */}
-              <div className="p-3 rounded-lg bg-blue-500/10 border border-blue-500/20 flex items-center justify-between">
-                <div className="text-xs text-blue-300">
-                  <span className="font-semibold">Unidirectional Enclave Notice:</span> No active block signals are transmitted outward. Security teams can isolate the host manually at the switch layer.
+              <div className="p-4 rounded-xl bg-[#f5efff]/[0.03] border border-[#f5efff]/[0.08] flex items-center justify-between flex-wrap gap-3">
+                <div className="text-xs text-[#f5efff]/70 font-light max-w-xl">
+                  <span className="font-medium text-[#f5efff]">Unidirectional Enclave Notice:</span> No active block signals are transmitted outward. Security teams can isolate the host manually at the switch layer.
                 </div>
-                <button className="px-3 py-1.5 rounded-md bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold transition-colors flex-shrink-0">
+                <button className="px-4 py-2 rounded-full bg-[#f5efff] text-black hover:bg-white text-xs font-mono font-medium transition-all shadow-md flex-shrink-0">
                   Export Evidence Bundle
                 </button>
               </div>
             </div>
           ) : (
-            <div className="p-12 text-center text-white/40 glass-card rounded-xl">
+            <div className="p-16 text-center text-[#f5efff]/40 rounded-2xl bg-[#0f0e17]/80 border border-[#f5efff]/[0.08] font-mono text-xs">
               Select an alert from the left to inspect explainable evidence cards.
             </div>
           )}

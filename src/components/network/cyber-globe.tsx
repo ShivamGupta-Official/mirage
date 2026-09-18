@@ -90,16 +90,16 @@ function createProceduralEarthTextures() {
   canvas.height = height;
   const ctx = canvas.getContext('2d')!;
 
-  // Deep navy ocean background
+  // Seamless studio dark ocean background
   const oceanGradient = ctx.createLinearGradient(0, 0, 0, height);
-  oceanGradient.addColorStop(0, '#040b18');
-  oceanGradient.addColorStop(0.5, '#061326');
-  oceanGradient.addColorStop(1, '#030812');
+  oceanGradient.addColorStop(0, '#06060a');
+  oceanGradient.addColorStop(0.5, '#0a0a14');
+  oceanGradient.addColorStop(1, '#06060a');
   ctx.fillStyle = oceanGradient;
   ctx.fillRect(0, 0, width, height);
 
-  // Ocean bathymetry grid lines
-  ctx.strokeStyle = 'rgba(59, 158, 255, 0.08)';
+  // Subtle bathymetry grid lines
+  ctx.strokeStyle = 'rgba(245, 239, 255, 0.04)';
   ctx.lineWidth = 1;
   for (let lat = -80; lat <= 80; lat += 20) {
     const y = ((90 - lat) / 180) * height;
@@ -116,9 +116,9 @@ function createProceduralEarthTextures() {
     ctx.stroke();
   }
 
-  // Procedural continental landmasses with neon cyber edge glow
-  ctx.fillStyle = 'rgba(14, 34, 61, 0.95)';
-  ctx.strokeStyle = '#38bdf8';
+  // Procedural continental landmasses with refined studio lavender/cyan edges
+  ctx.fillStyle = 'rgba(18, 17, 29, 0.96)';
+  ctx.strokeStyle = 'rgba(56, 189, 248, 0.7)';
   ctx.lineWidth = 1.2;
 
   // Render major landmasses
@@ -162,7 +162,7 @@ function createProceduralEarthTextures() {
   ]);
 
   // City cluster cyber lights
-  ctx.fillStyle = '#60a5fa';
+  ctx.fillStyle = '#f5efff';
   const majorCities: [number, number][] = [
     [-77.03, 38.90], [-122.41, 37.77], [-0.12, 51.50], [8.68, 50.11],
     [37.61, 55.75], [77.20, 28.61], [72.87, 19.07], [116.40, 39.90],
@@ -173,7 +173,7 @@ function createProceduralEarthTextures() {
     const px = ((lon + 180) / 360) * width;
     const py = ((90 - lat) / 180) * height;
     ctx.beginPath();
-    ctx.arc(px, py, 2.5, 0, Math.PI * 2);
+    ctx.arc(px, py, 2.0, 0, Math.PI * 2);
     ctx.fill();
   });
 
@@ -193,6 +193,7 @@ export function CyberGlobe({
 }: CyberGlobeProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const [autoRotate, setAutoRotate] = useState<boolean>(true);
+  const autoRotateRef = useRef(true);
   const [liveStreamActive, setLiveStreamActive] = useState<boolean>(true);
   const [dynamicThreats, setDynamicThreats] = useState<DynamicThreatEvent[]>([]);
   const [selectedNode, setSelectedNode] = useState<ThreatNode>(DEFAULT_TARGET_NODE);
@@ -315,8 +316,13 @@ export function CyberGlobe({
     return nodes;
   }, [dynamicThreats, threatStream]);
 
+  // Only create the 3D scene ONCE when threats first arrive (avoids re-creating every 4s)
+  const hasAttackers = threatNodes.length > 1;
+
   // Three.js Scene Setup & Render Loop
   useEffect(() => {
+    if (!hasAttackers) return; // Wait for initial threat data
+
     const container = containerRef.current;
     if (!container) return;
 
@@ -326,7 +332,7 @@ export function CyberGlobe({
     // Scene & Camera
     const scene = new THREE.Scene();
     const camera = new THREE.PerspectiveCamera(45, width / height, 0.1, 1000);
-    camera.position.set(0, 3, 14);
+    camera.position.set(0, 0.5, 16);
 
     // WebGL Renderer
     const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
@@ -350,7 +356,7 @@ export function CyberGlobe({
 
     // Earth Sphere
     const globeRadius = 4.8;
-    const earthGeometry = new THREE.SphereGeometry(globeRadius, 48, 48);
+    const earthGeometry = new THREE.SphereGeometry(globeRadius, 40, 40);
     const earthTexture = createProceduralEarthTextures();
 
     const earthMaterial = new THREE.MeshStandardMaterial({
@@ -364,7 +370,7 @@ export function CyberGlobe({
     scene.add(earthMesh);
 
     // Atmosphere Glow
-    const atmosphereGeom = new THREE.SphereGeometry(globeRadius * 1.15, 32, 32);
+    const atmosphereGeom = new THREE.SphereGeometry(globeRadius * 1.15, 24, 24);
     const atmosphereMat = new THREE.ShaderMaterial({
       vertexShader: `
         varying vec3 vNormal;
@@ -488,7 +494,7 @@ export function CyberGlobe({
         midPoint.normalize().multiplyScalar(altitude);
 
         const curve = new THREE.QuadraticBezierCurve3(srcVec, midPoint, targetVec);
-        const points = curve.getPoints(64);
+        const points = curve.getPoints(48);
         const arcGeom = new THREE.BufferGeometry().setFromPoints(points);
 
         const arcColor =
@@ -564,8 +570,8 @@ export function CyberGlobe({
       const elapsedTime = clock.getElapsedTime();
 
       // Continuous auto-rotation when not dragging
-      if (autoRotate && !isDragging) {
-        earthMesh.rotation.y += 0.0022;
+      if (autoRotateRef.current && !isDragging) {
+        earthMesh.rotation.y += 0.0018;
       }
       orbitalGroup.rotation.y -= 0.0010;
 
@@ -615,93 +621,71 @@ export function CyberGlobe({
       }
       renderer.dispose();
     };
-  }, [threatNodes, autoRotate]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [hasAttackers]);
 
   return (
-    <div className={`relative rounded-2xl overflow-hidden glass border border-white/10 ${className || 'h-[640px]'}`}>
+    <div className={`relative overflow-hidden bg-[#090910] ${className || 'h-[640px]'}`}>
       {/* 3D WebGL Canvas */}
       <div ref={containerRef} className="w-full h-full cursor-grab active:cursor-grabbing" />
 
       {!compact && (
         <>
-          {/* Top-Left NetScout Horizon Telemetry Header */}
+          {/* Top-Left NetScout Horizon Telemetry Header - Minimal, Clean */}
           <div className="absolute top-4 left-4 z-10 pointer-events-none">
             <div className="flex items-center gap-2 mb-1">
-              <Globe size={18} className="text-cyan-400 animate-pulse" />
-              <span className="font-mono text-[11px] font-bold tracking-[0.2em] text-cyan-300 uppercase">
-                NETSCOUT CYBER THREAT HORIZON
+              <Globe size={14} className="text-[#f5efff]/70 animate-pulse" />
+              <span className="font-mono text-[9px] font-medium tracking-[0.2em] text-[#f5efff]/60 uppercase">
+                NETSCOUT THREAT HORIZON
               </span>
-              <span className="px-1.5 py-0.5 rounded text-[9px] font-mono font-bold bg-cyan-500/20 text-cyan-300 border border-cyan-500/30 flex items-center gap-1">
-                <span className="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-ping" />
-                DYNAMIC GEOLOCATION
+              <span className="px-2 py-0.5 rounded-full text-[8px] font-mono font-medium bg-emerald-500/10 text-emerald-300 border border-emerald-500/20 flex items-center gap-1">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping" />
+                LIVE
               </span>
             </div>
-            <h2 className="text-2xl font-black tracking-widest text-white uppercase font-sans">
-              GLOBAL ATTACK TRAJECTORY MAP
+            <h2 className="text-lg sm:text-xl font-editorial font-light tracking-wide text-[#f5efff] uppercase">
+              GLOBAL ATTACK TRAJECTORY
             </h2>
-            <div className="text-xs text-white/50 font-mono flex items-center gap-3 mt-1">
-              <span>TARGET ENCLAVE: 28.61° N · 77.20° E (NEW DELHI)</span>
-              <span className="text-emerald-400 font-bold flex items-center gap-1">
-                <Shield size={12} />
-                HARDWARE DIODE ISOLATED
+            <div className="text-[10px] text-[#f5efff]/45 font-mono flex items-center gap-2 mt-0.5">
+              <span>ENCLAVE: 28.61° N · 77.20° E</span>
+              <span>·</span>
+              <span className="text-emerald-400 font-medium flex items-center gap-1">
+                <Shield size={10} />
+                OPTICAL DIODE ISOLATED
               </span>
             </div>
           </div>
 
-          {/* Sci-Fi Corner Brackets */}
-          <div className="absolute top-2 left-2 w-10 h-10 border-t-2 border-l-2 border-cyan-400/40 pointer-events-none" />
-          <div className="absolute top-2 right-2 w-10 h-10 border-t-2 border-r-2 border-cyan-400/40 pointer-events-none" />
-          <div className="absolute bottom-2 left-2 w-10 h-10 border-b-2 border-l-2 border-cyan-400/40 pointer-events-none" />
-          <div className="absolute bottom-2 right-2 w-10 h-10 border-b-2 border-r-2 border-cyan-400/40 pointer-events-none" />
-
-          {/* Stream Telemetry Left Card */}
-          <div className="absolute top-24 left-4 z-10 max-w-[280px] p-4 rounded-xl bg-black/70 backdrop-blur-md border border-white/10 space-y-3 font-mono">
-            <div className="flex items-center justify-between text-[10px] text-white/50 pb-2 border-b border-white/10">
-              <span className="font-bold text-white tracking-widest flex items-center gap-1.5">
-                <Radio size={12} className="text-red-400 animate-pulse" /> LIVE STREAM
-              </span>
-              <button
-                onClick={() => setLiveStreamActive((prev) => !prev)}
-                className={`px-1.5 py-0.5 rounded text-[9px] font-bold border transition-colors ${
-                  liveStreamActive
-                    ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30'
-                    : 'bg-amber-500/20 text-amber-300 border-amber-500/30'
-                }`}
-              >
-                {liveStreamActive ? 'STREAMING' : 'PAUSED'}
-              </button>
-            </div>
-
-            <div className="space-y-1.5 text-xs">
-              <div className="text-[10px] text-white/40 uppercase">ACTIVE CONCURRENT CONDUITS</div>
-              <div className="text-xl font-black text-red-400 flex items-center gap-2">
-                <span>{threatNodes.length - 1} ATTACK ORIGINS</span>
-              </div>
-              <p className="text-[11px] text-white/60 font-sans leading-relaxed">
-                Autonomous ML model predicts attack vector & resolves geographic origin from telemetry features.
-              </p>
-            </div>
-
-            <div className="grid grid-cols-2 gap-2 pt-2 border-t border-white/10 text-[10px]">
-              <div>
-                <span className="text-white/40 block">BALLISTIC ARCS</span>
-                <span className="text-cyan-300 font-bold text-sm">{threatNodes.length - 1} Lasers</span>
-              </div>
-              <div>
-                <span className="text-white/40 block">AVG ML CONFIDENCE</span>
-                <span className="text-emerald-400 font-bold text-sm">96.8%</span>
-              </div>
-            </div>
+          {/* Floating Controls & Stream Status (Top Left underneath header) */}
+          <div className="absolute top-20 left-4 z-10 flex items-center gap-2">
+            <button
+              onClick={() => setLiveStreamActive((prev) => !prev)}
+              className={`px-2.5 py-1 rounded-full text-[10px] font-mono font-medium border backdrop-blur-md transition-colors flex items-center gap-1.5 ${
+                liveStreamActive
+                  ? 'bg-emerald-500/10 text-emerald-300 border-emerald-500/25 hover:bg-emerald-500/20'
+                  : 'bg-amber-500/10 text-amber-300 border-amber-500/25 hover:bg-amber-500/20'
+              }`}
+            >
+              <Radio size={10} className={liveStreamActive ? 'text-emerald-400 animate-pulse' : 'text-amber-400'} />
+              <span>{liveStreamActive ? `${threatNodes.length - 1} Attacks Streaming` : 'Stream Paused'}</span>
+            </button>
+            <button
+              onClick={() => setAutoRotate((prev) => { const next = !prev; autoRotateRef.current = next; return next; })}
+              className="px-2.5 py-1 rounded-full text-[10px] font-mono font-medium border border-[#f5efff]/10 bg-[#0c0b16]/70 backdrop-blur-md text-[#f5efff]/70 hover:text-[#f5efff] hover:bg-[#0c0b16]/90 transition-colors flex items-center gap-1.5"
+            >
+              <RotateCw size={10} className={autoRotate ? 'animate-spin' : ''} />
+              <span>{autoRotate ? 'Rotating' : 'Static'}</span>
+            </button>
           </div>
 
           {/* Attack Origin Country / City Feed (Right Side) */}
-          <div className="absolute top-4 right-4 z-10 w-80 max-h-[520px] overflow-y-auto space-y-2 p-3 rounded-xl bg-black/75 backdrop-blur-md border border-white/10 font-mono text-xs">
-            <div className="flex items-center justify-between text-[11px] font-bold text-white/70 px-1 pb-1 border-b border-white/10">
-              <span className="flex items-center gap-1.5 text-red-400">
+          <div className="absolute top-4 right-4 z-10 w-64 max-h-[420px] overflow-y-auto space-y-1.5 p-2.5 rounded-xl bg-[#0c0b16]/80 backdrop-blur-xl border border-[#f5efff]/[0.06] font-mono text-xs shadow-2xl no-scrollbar">
+            <div className="flex items-center justify-between text-[11px] font-semibold text-[#f5efff]/70 px-1 pb-2 border-b border-[#f5efff]/[0.08]">
+              <span className="flex items-center gap-1.5 text-rose-400">
                 <Crosshair size={13} /> PREDICTED ATTACK ORIGINS
               </span>
-              <span className="text-[10px] text-cyan-400 flex items-center gap-1">
-                <Zap size={11} /> {dynamicThreats.length} ACTIVE
+              <span className="text-[10px] text-[#f5efff]/50 px-2 py-0.5 rounded-full bg-[#f5efff]/5 border border-[#f5efff]/10 flex items-center gap-1">
+                <Zap size={10} className="text-emerald-400" /> {dynamicThreats.length} ACTIVE
               </span>
             </div>
 
@@ -715,38 +699,38 @@ export function CyberGlobe({
                   <div
                     key={node.id}
                     onClick={() => setSelectedNode(node)}
-                    className={`p-2.5 rounded-lg border transition-all cursor-pointer ${
+                    className={`p-2.5 rounded-xl border transition-all duration-200 cursor-pointer ${
                       isSelected
-                        ? 'bg-cyan-500/20 border-cyan-400 shadow-lg shadow-cyan-500/20'
-                        : 'bg-white/5 border-white/10 hover:bg-white/10'
+                        ? 'bg-[#f5efff]/10 border-[#f5efff]/30 shadow-[0_0_20px_rgba(245,239,255,0.08)]'
+                        : 'bg-[#f5efff]/[0.02] border-[#f5efff]/[0.06] hover:bg-[#f5efff]/[0.06] hover:border-[#f5efff]/[0.15]'
                     }`}
                   >
                     <div className="flex items-center justify-between mb-1">
-                      <span className="font-bold text-white font-mono text-xs flex items-center gap-1.5">
+                      <span className="font-semibold text-[#f5efff] font-mono text-xs flex items-center gap-1.5">
                         <span
-                          className={`w-2 h-2 rounded-full ${
-                            isCritical ? 'bg-red-400 animate-pulse' : 'bg-amber-400'
+                          className={`w-1.5 h-1.5 rounded-full ${
+                            isCritical ? 'bg-rose-400 animate-pulse shadow-[0_0_6px_#f43f5e]' : 'bg-amber-400'
                           }`}
                         />
                         {node.city || node.ip}
                       </span>
                       <span
-                        className={`text-[10px] px-1.5 py-0.2 rounded font-bold ${
+                        className={`text-[9px] px-2 py-0.5 rounded-full font-bold uppercase tracking-wider ${
                           isCritical
-                            ? 'bg-red-500/20 text-red-400 border border-red-500/30'
-                            : 'bg-amber-500/20 text-amber-400 border border-amber-500/30'
+                            ? 'bg-rose-500/15 text-rose-400 border border-rose-500/25'
+                            : 'bg-amber-500/15 text-amber-400 border border-amber-500/25'
                         }`}
                       >
                         Risk {Math.round(node.riskScore)}
                       </span>
                     </div>
 
-                    <div className="text-[11px] text-white/70 font-sans truncate">
+                    <div className="text-[11px] text-[#f5efff]/60 font-sans truncate">
                       {node.country} · {node.asn || 'AS-TRANSIT'}
                     </div>
 
-                    <div className="text-[10px] text-white/40 mt-1 flex justify-between items-center">
-                      <span className="text-cyan-400 font-bold">{node.threatType || 'DDOS'}</span>
+                    <div className="text-[10px] text-[#f5efff]/40 mt-1 flex justify-between items-center font-mono">
+                      <span className="text-[#f5efff]/80 font-medium">{node.threatType || 'DDOS'}</span>
                       <span>
                         {node.bandwidthGbps ? `${node.bandwidthGbps} Gbps` : `${Math.round((node.packetRate || 0) / 1000)} kpps`}
                       </span>
@@ -758,51 +742,51 @@ export function CyberGlobe({
 
           {/* Bottom Selected Node Inspection HUD */}
           {selectedNode && (
-            <div className="absolute bottom-4 left-4 right-4 z-10 p-3.5 rounded-xl bg-black/85 backdrop-blur-md border border-white/10 flex flex-col md:flex-row md:items-center justify-between gap-3 font-mono text-xs">
+            <div className="absolute bottom-4 left-4 right-4 z-10 p-3 rounded-xl bg-[#0c0b16]/85 backdrop-blur-xl border border-[#f5efff]/[0.08] flex flex-col md:flex-row md:items-center justify-between gap-3 font-mono text-xs shadow-2xl">
               <div className="flex items-center gap-4">
-                <div className="p-2 rounded-lg bg-cyan-500/10 border border-cyan-500/30 text-cyan-400">
-                  <Compass size={22} />
+                <div className="p-2.5 rounded-xl bg-[#f5efff]/5 border border-[#f5efff]/10 text-[#f5efff]/80">
+                  <Compass size={20} />
                 </div>
                 <div>
                   <div className="flex items-center gap-2">
-                    <span className="text-white font-bold text-sm">
+                    <span className="text-[#f5efff] font-editorial text-lg sm:text-xl font-light">
                       {selectedNode.city ? `${selectedNode.city}, ${selectedNode.country}` : selectedNode.ip}
                     </span>
-                    <span className="text-cyan-400 font-bold text-[11px]">[{selectedNode.ip}]</span>
+                    <span className="text-[#f5efff]/60 font-mono text-[11px]">[{selectedNode.ip}]</span>
                   </div>
-                  <div className="text-white/60 text-[11px] mt-0.5 flex items-center gap-2">
+                  <div className="text-[#f5efff]/50 text-[11px] mt-0.5 flex items-center gap-2 font-mono">
                     <span>Carrier: {selectedNode.asn || selectedNode.location}</span>
                     <span>·</span>
-                    <span className="text-emerald-400">Targeting: Protected DC (10.0.0.10)</span>
+                    <span className="text-emerald-400">Targeting: Protected Enclave (10.0.0.10)</span>
                   </div>
                 </div>
               </div>
 
-              <div className="flex items-center gap-5 flex-wrap">
+              <div className="flex items-center gap-6 flex-wrap">
                 <div className="text-right">
-                  <span className="text-white/40 text-[10px] block">PREDICTED LOCATION</span>
-                  <span className="text-white font-bold">
+                  <span className="text-[#f5efff]/40 text-[10px] block uppercase tracking-wider">PREDICTED LOCATION</span>
+                  <span className="text-[#f5efff] font-mono font-medium">
                     {selectedNode.lat.toFixed(2)}°, {selectedNode.lon.toFixed(2)}°
                   </span>
                 </div>
                 <div className="text-right">
-                  <span className="text-white/40 text-[10px] block">ML CONFIDENCE</span>
-                  <span className="text-emerald-400 font-bold text-sm">
+                  <span className="text-[#f5efff]/40 text-[10px] block uppercase tracking-wider">ML CONFIDENCE</span>
+                  <span className="text-emerald-400 font-editorial text-lg">
                     {selectedNode.mlConfidence ? `${selectedNode.mlConfidence}%` : '96.2%'}
                   </span>
                 </div>
                 <div className="text-right">
-                  <span className="text-white/40 text-[10px] block">BANDWIDTH / RATE</span>
-                  <span className="text-cyan-300 font-bold text-sm">
+                  <span className="text-[#f5efff]/40 text-[10px] block uppercase tracking-wider">BANDWIDTH / RATE</span>
+                  <span className="text-[#f5efff] font-editorial text-lg">
                     {selectedNode.bandwidthGbps ? `${selectedNode.bandwidthGbps} Gbps` : '12.4 Gbps'}
                   </span>
                 </div>
                 <button
-                  onClick={() => setAutoRotate((prev) => !prev)}
-                  className="px-3 py-1.5 rounded-lg bg-white/10 hover:bg-white/15 text-white font-sans text-xs flex items-center gap-1.5 transition-colors"
+                  onClick={() => setAutoRotate((prev) => { const next = !prev; autoRotateRef.current = next; return next; })}
+                  className="px-3.5 py-1.5 rounded-full border border-[#f5efff]/15 bg-[#f5efff]/5 hover:bg-[#f5efff]/10 text-[#f5efff] text-xs font-mono flex items-center gap-2 transition-all duration-300"
                 >
-                  <RotateCw size={13} className={autoRotate ? 'animate-spin' : ''} />
-                  {autoRotate ? 'Orbiting' : 'Paused'}
+                  <RotateCw size={12} className={autoRotate ? 'animate-spin' : ''} />
+                  <span>{autoRotate ? 'Orbiting' : 'Paused'}</span>
                 </button>
               </div>
             </div>

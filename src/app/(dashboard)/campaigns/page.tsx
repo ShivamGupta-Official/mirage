@@ -81,65 +81,69 @@ export default function CampaignsPage() {
 
   return (
     <div className="space-y-6">
-      {/* Top Banner */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 p-4 rounded-xl glass-card border border-white/10">
+      {/* ── Top Studio Header ── */}
+      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-5 p-6 rounded-2xl bg-[#0f0e17]/80 border border-[#f5efff]/[0.08] backdrop-blur-xl">
         <div>
-          <h1 className="text-xl font-bold text-white tracking-wide flex items-center gap-2">
-            <GitBranch className="text-purple-400" size={22} />
-            Attack Campaigns & Temporal Graph
+          <div className="eyebrow-label mb-2 flex items-center gap-2">
+            <span className="w-2 h-2 rounded-full bg-purple-400 shadow-[0_0_8px_rgba(192,132,252,0.8)]" />
+            <span>MULTI-STAGE CORRELATION & ATTACK GRAPH</span>
+          </div>
+          <h1 className="font-editorial text-3xl sm:text-4xl font-light text-[#f5efff] tracking-tight">
+            Attack Campaigns & Graph
           </h1>
-          <p className="text-xs text-white/50 mt-1">
+          <p className="text-xs sm:text-sm text-[#f5efff]/50 max-w-2xl font-light leading-relaxed mt-1">
             Correlates discrete passive detections into coordinated, multi-stage attack campaigns across the network.
           </p>
         </div>
 
-        <div className="flex items-center gap-2">
-          <span className="px-2.5 py-1 rounded-lg text-xs font-bold bg-red-500/10 text-red-400 border border-red-500/20">
-            1 ACTIVE CAMPAIGN
-          </span>
+        <div className="flex items-center gap-3">
+          <div className="p-1 rounded-full bg-white/[0.04] border border-[#f5efff]/[0.08] flex items-center gap-2 px-3 py-1.5">
+            <span className="w-2 h-2 rounded-full bg-red-400 shadow-[0_0_8px_rgba(244,63,94,0.8)] animate-pulse" />
+            <span className="text-xs font-mono text-[#f5efff]">1 ACTIVE APT CAMPAIGN</span>
+          </div>
         </div>
       </div>
 
       {/* Campaign Summary Card */}
-      <div className="p-5 rounded-xl glass-card border border-white/10 space-y-4">
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 pb-3 border-b border-white/10">
+      <div className="p-6 rounded-2xl bg-[#0f0e17]/80 border border-[#f5efff]/[0.08] backdrop-blur-xl space-y-4">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-4 border-b border-[#f5efff]/[0.08]">
           <div>
-            <div className="flex items-center gap-2">
-              <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-red-500/10 text-red-400 border border-red-500/20">
+            <div className="flex items-center gap-2.5">
+              <span className="px-2.5 py-0.5 rounded-full text-[10px] font-mono font-medium bg-red-500/10 text-red-400 border border-red-500/20">
                 {selectedCampaign.severity}
               </span>
-              <h2 className="text-base font-bold text-white font-mono tracking-wide">
+              <h2 className="font-editorial text-2xl font-light text-[#f5efff]">
                 {selectedCampaign.title}
               </h2>
             </div>
-            <p className="text-xs text-white/60 mt-1">
+            <p className="text-xs text-[#f5efff]/60 mt-1 font-light leading-relaxed">
               {selectedCampaign.description}
             </p>
           </div>
 
-          <div className="flex items-center gap-4 text-xs font-mono">
+          <div className="flex items-center gap-5 text-xs font-mono">
             <div>
-              <div className="text-[10px] text-white/40 uppercase">CONFIDENCE</div>
-              <div className="text-sm font-bold text-emerald-400">{(selectedCampaign.confidence * 100).toFixed(0)}%</div>
+              <div className="text-[10px] text-[#f5efff]/40 uppercase tracking-wider">CONFIDENCE</div>
+              <div className="font-editorial text-2xl font-light text-emerald-300">{(selectedCampaign.confidence * 100).toFixed(0)}%</div>
             </div>
             <div>
-              <div className="text-[10px] text-white/40 uppercase">RISK SCORE</div>
-              <div className="text-sm font-bold text-red-400">{selectedCampaign.risk_score.toFixed(1)}/100</div>
+              <div className="text-[10px] text-[#f5efff]/40 uppercase tracking-wider">RISK SCORE</div>
+              <div className="font-editorial text-2xl font-light text-red-400">{selectedCampaign.risk_score.toFixed(1)}/100</div>
             </div>
             <div>
-              <div className="text-[10px] text-white/40 uppercase">DURATION</div>
-              <div className="text-sm font-bold text-white">{selectedCampaign.duration}</div>
+              <div className="text-[10px] text-[#f5efff]/40 uppercase tracking-wider">DURATION</div>
+              <div className="font-editorial text-2xl font-light text-[#f5efff]">{selectedCampaign.duration}</div>
             </div>
           </div>
         </div>
 
         {/* Threat Types Badges */}
         <div className="flex flex-wrap items-center gap-2 pt-1 text-xs">
-          <span className="text-white/40 text-[11px] font-semibold">TACTICS DETECTED:</span>
+          <span className="text-[#f5efff]/40 text-[10px] font-mono uppercase tracking-wider">TACTICS DETECTED:</span>
           {selectedCampaign.threat_types.map((type) => (
             <span
               key={type}
-              className="px-2 py-0.5 rounded text-[11px] font-mono font-semibold bg-white/5 text-white/80 border border-white/10"
+              className="px-2.5 py-0.5 rounded-full text-[10px] font-mono font-medium bg-[#f5efff]/[0.05] text-[#f5efff]/80 border border-[#f5efff]/[0.08]"
             >
               {type}
             </span>
@@ -150,13 +154,13 @@ export default function CampaignsPage() {
       {/* Interactive Visual Graph Canvas */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
         {/* Visual Graph Viewport */}
-        <div className="lg:col-span-8 p-5 rounded-xl glass-card border border-white/10 space-y-3">
+        <div className="lg:col-span-8 p-6 rounded-2xl bg-[#0f0e17]/80 border border-[#f5efff]/[0.08] backdrop-blur-xl space-y-4">
           <div className="flex items-center justify-between">
-            <h3 className="text-xs font-bold text-white uppercase tracking-wider flex items-center gap-2">
-              <Layers size={14} className="text-blue-400" />
+            <h3 className="text-sm font-medium text-[#f5efff] tracking-wide flex items-center gap-2">
+              <Layers size={15} className="text-[#a29bfe]" />
               Temporal Attack Graph Topology
             </h3>
-            <span className="text-[11px] text-white/40">Click any node to inspect telemetry</span>
+            <span className="text-[10px] font-mono uppercase tracking-wider text-[#f5efff]/40">Click any node to inspect</span>
           </div>
 
           {/* SVG Graph Viewport */}
@@ -268,46 +272,46 @@ export default function CampaignsPage() {
         {/* Selected Node Inspector */}
         <div className="lg:col-span-4">
           {selectedNode ? (
-            <div className="p-5 rounded-xl glass-card border border-white/10 space-y-4">
-              <div className="pb-3 border-b border-white/10">
-                <span className="text-[10px] text-white/40 uppercase font-semibold">GRAPH NODE INSPECTION</span>
-                <h4 className="text-base font-bold text-white font-mono mt-0.5">{selectedNode.label}</h4>
-                <div className="text-xs text-white/60 font-mono mt-0.5">ID: {selectedNode.id}</div>
+            <div className="p-6 rounded-2xl bg-[#0f0e17]/80 border border-[#f5efff]/[0.08] backdrop-blur-xl space-y-4">
+              <div className="pb-3.5 border-b border-[#f5efff]/[0.08]">
+                <div className="eyebrow-label text-[10px] text-[#f5efff]/40 uppercase tracking-wider">GRAPH NODE INSPECTION</div>
+                <h4 className="font-editorial text-xl font-light text-[#f5efff] mt-1">{selectedNode.label}</h4>
+                <div className="text-xs text-[#f5efff]/50 font-mono mt-0.5">ID: {selectedNode.id}</div>
               </div>
 
               <div className="grid grid-cols-2 gap-3 text-xs font-mono">
-                <div className="p-2.5 rounded-lg bg-white/5 border border-white/10">
-                  <span className="text-white/40 block text-[9px]">NODE ROLE</span>
-                  <span className="text-white font-bold uppercase">{selectedNode.type}</span>
+                <div className="p-3 rounded-xl bg-[#0f0e17] border border-[#f5efff]/[0.06]">
+                  <span className="text-[#f5efff]/40 block text-[9px] uppercase tracking-wider">NODE ROLE</span>
+                  <span className="text-[#f5efff] font-medium uppercase mt-0.5 block">{selectedNode.type}</span>
                 </div>
-                <div className="p-2.5 rounded-lg bg-white/5 border border-white/10">
-                  <span className="text-white/40 block text-[9px]">ISOLATED RISK</span>
-                  <span className="text-red-400 font-bold">{selectedNode.risk.toFixed(1)}/100</span>
+                <div className="p-3 rounded-xl bg-[#0f0e17] border border-[#f5efff]/[0.06]">
+                  <span className="text-[#f5efff]/40 block text-[9px] uppercase tracking-wider">ISOLATED RISK</span>
+                  <span className="text-red-400 font-medium mt-0.5 block">{selectedNode.risk.toFixed(1)}/100</span>
                 </div>
               </div>
 
-              <div className="space-y-2 text-xs text-white/70">
-                <div className="text-[11px] font-bold text-white uppercase tracking-wider">
+              <div className="space-y-2 text-xs">
+                <div className="text-[10px] font-mono uppercase tracking-wider text-[#f5efff]/50">
                   Associated Graph Edges:
                 </div>
                 {selectedCampaign.edges
                   .filter((e) => e.source === selectedNode.id || e.target === selectedNode.id)
                   .map((e) => (
-                    <div key={e.id} className="p-2 rounded bg-white/5 border border-white/10 font-mono text-[11px]">
-                      <span className="text-blue-400 font-bold">{e.relationship}</span>
-                      <div className="text-white/40 text-[10px] mt-0.5">
+                    <div key={e.id} className="p-2.5 rounded-xl bg-[#0f0e17] border border-[#f5efff]/[0.06] font-mono text-[11px]">
+                      <span className="text-[#a29bfe] font-medium">{e.relationship}</span>
+                      <div className="text-[#f5efff]/40 text-[10px] mt-0.5">
                         {e.source} → {e.target}
                       </div>
                     </div>
                   ))}
               </div>
 
-              <div className="p-3 rounded-lg bg-white/5 border border-white/10 text-xs text-white/50 leading-relaxed">
+              <div className="p-3.5 rounded-xl bg-[#f5efff]/[0.03] border border-[#f5efff]/[0.06] text-xs text-[#f5efff]/50 leading-relaxed font-light">
                 MIRAGE groups hosts by shared command-and-control external IPs, common timing distributions, and synchronized volume spikes.
               </div>
             </div>
           ) : (
-            <div className="p-12 text-center text-white/40 glass-card rounded-xl">
+            <div className="p-16 text-center text-[#f5efff]/40 rounded-2xl bg-[#0f0e17]/80 border border-[#f5efff]/[0.08] font-mono text-xs">
               Click a graph node to inspect edge relationships.
             </div>
           )}

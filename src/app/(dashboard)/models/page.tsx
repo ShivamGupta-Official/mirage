@@ -98,141 +98,143 @@ export default function ModelsPage() {
   return (
     <div className="space-y-6">
       {/* ── Top Header Strip ── */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 p-5 rounded-2xl bg-white/[0.02] border border-white/10 backdrop-blur-md">
+      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-5 p-6 rounded-2xl bg-[#0f0e17]/80 border border-[#f5efff]/[0.08] backdrop-blur-xl">
         <div>
-          <div className="flex items-center gap-3 mb-1">
-            <Cpu className="text-purple-400" size={22} />
-            <h1 className="text-xl font-bold text-white tracking-wide">
-              AI & ML Model Registry
-            </h1>
-            <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-purple-500/10 text-purple-300 border border-purple-500/20 font-bold">
-              CICIDS 78-FEATURE CANONICAL
-            </span>
+          <div className="eyebrow-label mb-2 flex items-center gap-2">
+            <span className="w-2 h-2 rounded-full bg-purple-400 shadow-[0_0_8px_rgba(192,132,252,0.8)]" />
+            <span>ENCLAVE MODEL REGISTRY & TELEMETRY</span>
           </div>
-          <p className="text-xs text-white/50">
+          <h1 className="font-editorial text-3xl sm:text-4xl font-light text-[#f5efff] tracking-tight">
+            AI & ML Model Registry
+          </h1>
+          <p className="text-xs sm:text-sm text-[#f5efff]/50 max-w-2xl font-light leading-relaxed mt-1">
             Cryptographically signed model checkpoints · Dual-split cross-source validation telemetry · Live inference bench.
           </p>
         </div>
 
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-4">
           <div className="text-right">
-            <span className="text-[10px] font-mono text-white/40 block">CANONICAL FEATURES</span>
-            <span className="text-sm font-mono font-bold text-cyan-300">77 Numerical + 1 Target</span>
+            <span className="text-[10px] font-mono text-[#f5efff]/40 block uppercase tracking-wider">CANONICAL FEATURES</span>
+            <span className="font-editorial text-2xl font-light text-[#a29bfe]">77 Numerical + 1 Target</span>
           </div>
-          <div className="h-8 w-px bg-white/10" />
+          <div className="h-8 w-px bg-[#f5efff]/10" />
           <div className="text-right">
-            <span className="text-[10px] font-mono text-white/40 block">SPLIT STRATEGY</span>
-            <span className="text-sm font-mono font-bold text-emerald-400">Strict Source Held-Out</span>
+            <span className="text-[10px] font-mono text-[#f5efff]/40 block uppercase tracking-wider">SPLIT STRATEGY</span>
+            <span className="font-editorial text-2xl font-light text-emerald-300">Strict Source Held-Out</span>
           </div>
         </div>
       </div>
 
-      {/* ── Segmented Navigation ── */}
-      <div className="flex items-center gap-2 border-b border-white/10 pb-2">
-        <button
-          onClick={() => setActiveTab('models')}
-          className={cn(
-            'px-3.5 py-1.5 rounded-lg text-xs font-mono font-semibold transition-all flex items-center gap-2',
-            activeTab === 'models'
-              ? 'bg-purple-500/20 text-purple-300 border border-purple-500/40 shadow-sm'
-              : 'text-white/50 hover:text-white hover:bg-white/5'
-          )}
-        >
-          <Layers size={14} /> Production Model Checkpoints ({PRODUCTION_MODELS.length})
-        </button>
-        <button
-          onClick={() => setActiveTab('gap')}
-          className={cn(
-            'px-3.5 py-1.5 rounded-lg text-xs font-mono font-semibold transition-all flex items-center gap-2',
-            activeTab === 'gap'
-              ? 'bg-amber-500/20 text-amber-300 border border-amber-500/40 shadow-sm'
-              : 'text-white/50 hover:text-white hover:bg-white/5'
-          )}
-        >
-          <GitCompare size={14} /> Dual-Split Generalization Gap Matrix
-        </button>
-        <button
-          onClick={() => setActiveTab('bench')}
-          className={cn(
-            'px-3.5 py-1.5 rounded-lg text-xs font-mono font-semibold transition-all flex items-center gap-2',
-            activeTab === 'bench'
-              ? 'bg-cyan-500/20 text-cyan-300 border border-cyan-500/40 shadow-sm'
-              : 'text-white/50 hover:text-white hover:bg-white/5'
-          )}
-        >
-          <Sliders size={14} /> Live Inference Bench & Playground
-        </button>
+      {/* ── Segmented Navigation Tabs ── */}
+      <div className="flex items-center justify-start overflow-x-auto pb-1 no-scrollbar">
+        <div className="p-1.5 rounded-full bg-white/[0.04] border border-[#f5efff]/[0.08] inline-flex items-center gap-1.5">
+          <button
+            onClick={() => setActiveTab('models')}
+            className={cn(
+              'px-4 py-2 rounded-full text-xs font-mono font-medium transition-all flex items-center gap-2',
+              activeTab === 'models'
+                ? 'bg-[#f5efff] text-black shadow-md'
+                : 'text-[#f5efff]/60 hover:text-[#f5efff] hover:bg-white/[0.04]'
+            )}
+          >
+            <Layers size={13} /> Production Models ({PRODUCTION_MODELS.length})
+          </button>
+          <button
+            onClick={() => setActiveTab('gap')}
+            className={cn(
+              'px-4 py-2 rounded-full text-xs font-mono font-medium transition-all flex items-center gap-2',
+              activeTab === 'gap'
+                ? 'bg-[#f5efff] text-black shadow-md'
+                : 'text-[#f5efff]/60 hover:text-[#f5efff] hover:bg-white/[0.04]'
+            )}
+          >
+            <GitCompare size={13} /> Dual-Split Generalization Gap
+          </button>
+          <button
+            onClick={() => setActiveTab('bench')}
+            className={cn(
+              'px-4 py-2 rounded-full text-xs font-mono font-medium transition-all flex items-center gap-2',
+              activeTab === 'bench'
+                ? 'bg-[#f5efff] text-black shadow-md'
+                : 'text-[#f5efff]/60 hover:text-[#f5efff] hover:bg-white/[0.04]'
+            )}
+          >
+            <Sliders size={13} /> Live Inference Bench
+          </button>
+        </div>
       </div>
 
       {/* ── Tab 1: Production Models ── */}
       {activeTab === 'models' && (
-        <div className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+        <div className="space-y-5">
+          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
             {PRODUCTION_MODELS.map((m) => (
               <div
                 key={m.id}
-                className="p-5 rounded-2xl bg-white/[0.02] border border-white/10 hover:border-white/20 transition-all flex flex-col justify-between"
+                className="p-6 rounded-2xl bg-[#0f0e17]/80 border border-[#f5efff]/[0.08] backdrop-blur-xl hover:border-[#f5efff]/20 transition-all flex flex-col justify-between"
               >
                 <div>
                   <div className="flex items-start justify-between gap-2 mb-3">
                     <div>
-                      <span className="text-[10px] font-mono text-purple-400 font-bold block mb-0.5">
+                      <span className="eyebrow-label text-[10px] text-[#a29bfe] uppercase tracking-wider block mb-1">
                         {m.version}
                       </span>
-                      <h3 className="text-sm font-bold text-white tracking-wide">{m.name}</h3>
+                      <h3 className="font-editorial text-xl font-light text-[#f5efff]">{m.name}</h3>
                     </div>
-                    <span className="text-[9px] font-mono font-bold px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                    <span className="text-[10px] font-mono font-medium px-2.5 py-0.5 rounded-full bg-emerald-500/10 text-emerald-300 border border-emerald-500/20">
                       {m.status}
                     </span>
                   </div>
 
-                  <p className="text-xs text-white/60 mb-4 leading-relaxed font-sans">
+                  <p className="text-xs text-[#f5efff]/60 mb-4 leading-relaxed font-light">
                     {m.description}
                   </p>
 
-                  <div className="space-y-1.5 font-mono text-xs border-t border-white/[0.06] pt-3 mb-4">
-                    <div className="flex justify-between text-white/50">
+                  <div className="space-y-2 font-mono text-xs border-t border-[#f5efff]/[0.06] pt-3.5 mb-4">
+                    <div className="flex justify-between text-[#f5efff]/50">
                       <span>Architecture:</span>
-                      <span className="text-white/90 truncate max-w-[170px]">{m.model_type}</span>
+                      <span className="text-[#f5efff]/90 truncate max-w-[170px]">{m.model_type}</span>
                     </div>
-                    <div className="flex justify-between text-white/50">
+                    <div className="flex justify-between text-[#f5efff]/50">
                       <span>Feature Schema:</span>
-                      <span className="text-cyan-300">{m.features_count} Canonical Feats</span>
+                      <span className="text-[#a29bfe]">{m.features_count} Canonical Feats</span>
                     </div>
-                    <div className="flex justify-between text-white/50">
+                    <div className="flex justify-between text-[#f5efff]/50">
                       <span>Random Split F1:</span>
-                      <span className="text-emerald-400 font-bold">{(m.random_f1 * 100).toFixed(1)}%</span>
+                      <span className="text-emerald-300 font-medium">{(m.random_f1 * 100).toFixed(1)}%</span>
                     </div>
-                    <div className="flex justify-between text-white/50">
+                    <div className="flex justify-between text-[#f5efff]/50">
                       <span>Held-Out Split F1:</span>
-                      <span className="text-amber-400 font-bold">{(m.held_out_f1 * 100).toFixed(1)}%</span>
+                      <span className="text-amber-300 font-medium">{(m.held_out_f1 * 100).toFixed(1)}%</span>
                     </div>
-                    <div className="flex justify-between text-white/50">
+                    <div className="flex justify-between text-[#f5efff]/50">
                       <span>Generalization Δ:</span>
-                      <span className="text-rose-400 font-bold">+{m.delta_gap.toFixed(3)}</span>
+                      <span className="text-rose-400 font-medium">+{m.delta_gap.toFixed(3)}</span>
                     </div>
                   </div>
                 </div>
 
-                <div className="pt-3 border-t border-white/[0.06] flex items-center justify-between text-[11px] font-mono text-white/40">
+                <div className="pt-3.5 border-t border-[#f5efff]/[0.06] flex items-center justify-between text-[11px] font-mono text-[#f5efff]/40">
                   <span>{m.file_path}</span>
-                  <span className="text-white/60">{m.file_size_mb}</span>
+                  <span className="text-[#f5efff]/60">{m.file_size_mb}</span>
                 </div>
               </div>
             ))}
           </div>
 
-          <div className="p-4 rounded-xl bg-white/[0.02] border border-white/10 flex items-center justify-between flex-wrap gap-3">
+          <div className="p-5 rounded-2xl bg-[#0f0e17]/80 border border-[#f5efff]/[0.08] backdrop-blur-xl flex items-center justify-between flex-wrap gap-3">
             <div className="flex items-center gap-3">
-              <FileCode className="text-cyan-400" size={18} />
+              <div className="w-8 h-8 rounded-lg bg-[#f5efff]/[0.05] border border-[#f5efff]/[0.08] flex items-center justify-center">
+                <FileCode className="text-[#f5efff]" size={16} />
+              </div>
               <div>
-                <h4 className="text-xs font-bold text-white">models/feature_schema.json</h4>
-                <p className="text-[11px] text-white/50">
+                <h4 className="text-xs font-mono font-medium text-[#f5efff]">models/feature_schema.json</h4>
+                <p className="text-[11px] text-[#f5efff]/50 font-light">
                   Exact feature names and column ordering required by live inference services.
                 </p>
               </div>
             </div>
-            <span className="text-xs font-mono text-cyan-300 font-bold">
+            <span className="text-xs font-mono text-[#a29bfe] font-medium px-3 py-1 rounded-full bg-[#f5efff]/[0.05] border border-[#f5efff]/[0.08]">
               77 BIDIRECTIONAL FEATURES
             </span>
           </div>

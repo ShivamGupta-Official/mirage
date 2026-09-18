@@ -4,22 +4,18 @@ import { useEffect, useState } from 'react';
 import {
   Shield,
   Activity,
-  Server,
   AlertTriangle,
-  GitBranch,
   Zap,
-  Eye,
-  Radar,
-  Clock,
   Cpu,
   Database,
-  CircleAlert,
   Globe,
   Terminal,
-  RefreshCw,
   Layers,
   GitCompare,
   Sliders,
+  Send,
+  Radar,
+  Search,
 } from 'lucide-react';
 import { useMirage } from '@/components/providers/mirage-provider';
 import { CyberGlobe } from '@/components/network/cyber-globe';
@@ -28,9 +24,13 @@ import { ThreatStream } from '@/components/dashboard/threat-stream';
 import { RiskLeaderboard } from '@/components/dashboard/risk-leaderboard';
 import { MetricCard } from '@/components/dashboard/metric-card';
 import { SystemHealthPanel } from '@/components/dashboard/system-health';
+import { ThreatRadarCard } from '@/components/dashboard/threat-radar-card';
+import { AttackVolumeCard } from '@/components/dashboard/attack-volume-card';
+import { AiDetectionCard } from '@/components/dashboard/ai-detection-card';
 import { PipelineView } from '@/components/pipeline/pipeline-view';
 import { GeneralizationGapView } from '@/components/pipeline/generalization-gap-view';
 import { FlowClassifierBench } from '@/components/pipeline/flow-classifier-bench';
+import { ThreatIntelChat } from '@/components/dashboard/threat-intel-chat';
 import { cn, formatNumber, formatBytes } from '@/lib/utils';
 import type { MetricsSnapshot } from '@/types';
 
@@ -73,292 +73,178 @@ export default function DashboardPage() {
   const criticalHosts = hosts.filter((h) => h.riskScore >= 80);
 
   return (
-    <div className="space-y-6">
-      {/* ── Top Hero Strip ── */}
-      <div className="flex items-start justify-between flex-wrap gap-4 pb-2 border-b border-white/[0.06]">
-        <div>
-          <div className="flex items-center gap-3 mb-1">
-            <Shield size={22} className="text-cyan-400" />
-            <h1 className="text-2xl font-black tracking-wide text-white">
-              MIRAGE INTELLIGENCE
-            </h1>
-            <span
-              className="text-[10px] font-mono font-bold px-2 py-0.5 rounded bg-cyan-500/10 text-cyan-400 border border-cyan-500/20"
-              style={{ letterSpacing: '0.12em' }}
-            >
-              UNIDIRECTIONAL SENSOR ENCLAVE
-            </span>
-          </div>
-          <p className="text-xs text-white/50">
-            Hardware-isolated optical tap inspection · Bidirectional flow feature analytics · Multi-dataset cross-source validation.
-          </p>
+    <div className="space-y-5">
+      {/* ── Compact Header Row ── */}
+      <div className="flex items-center justify-between flex-wrap gap-3">
+        <div className="flex items-center gap-3">
+          <h1 className="font-editorial text-2xl sm:text-3xl font-light tracking-tight text-[#f5efff]">
+            MIRAGE <span className="italic font-normal opacity-70">Intelligence</span>
+          </h1>
+          <span className="font-mono text-[9px] uppercase tracking-[0.18em] px-2.5 py-1 rounded-full bg-[#f5efff]/5 text-[#f5efff]/60 border border-[#f5efff]/10 hidden sm:inline-flex items-center gap-1.5">
+            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 shadow-[0_0_6px_#34d399] animate-pulse" />
+            SOVEREIGN ENCLAVE
+          </span>
         </div>
 
-        {/* System status & Simulation Badge */}
-        <div className="flex items-center gap-3 flex-wrap">
+        <div className="flex items-center gap-2 flex-wrap">
           {isSimulating && (
-            <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-red-500/15 border border-red-500/30 text-xs text-red-400 font-mono animate-pulse">
-              <AlertTriangle size={13} />
-              <span>ATTACK ACTIVE: {activeScenario}</span>
-              <button
-                onClick={stopSimulation}
-                className="ml-2 px-2 py-0.5 rounded bg-red-600 hover:bg-red-500 text-white font-bold text-[10px] transition-colors"
-              >
-                STOP
-              </button>
+            <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-rose-500/15 border border-rose-500/30 text-xs text-rose-300 font-mono animate-pulse">
+              <AlertTriangle size={12} />
+              <span>{activeScenario}</span>
+              <button onClick={stopSimulation} className="ml-1 px-2 py-0.5 rounded-full bg-rose-600 hover:bg-rose-500 text-white font-bold text-[9px]">STOP</button>
             </div>
           )}
-          <StatusBadge label="SENSOR" value="ONLINE" color="#4ade80" pulse />
-          <StatusBadge label="ONE-WAY" value="ENFORCED" color="#4ade80" pulse />
-          <StatusBadge
-            label="PIPELINE"
-            value={health?.pipelineStatus ?? (isSimulating ? 'EVALUATING' : 'HEALTHY')}
-            color={isSimulating ? '#ef4444' : '#4ade80'}
-            pulse
-          />
-          <StatusBadge label="ML ENGINE" value="READY" color="#3b9eff" pulse />
+          <StatusPill label="SENSOR" value="ONLINE" color="#34d399" />
+          <StatusPill label="PIPELINE" value={health?.pipelineStatus ?? 'HEALTHY'} color={isSimulating ? '#f43f5e' : '#34d399'} />
+          <StatusPill label="ML" value="READY" color="#38bdf8" />
         </div>
       </div>
 
-      {/* ── Essential Metrics Bar (Spacious 5-Card Layout) ── */}
-      <div className="grid grid-cols-2 md:grid-cols-5 gap-3.5" role="region" aria-label="Primary metrics">
-        <MetricCard
-          label="Throughput"
-          value={formatBytes(displayMetrics.bytesPerSec) + '/s'}
-          icon={<Zap size={15} />}
-          sublabel="optical tap RX"
-          highlight={displayMetrics.bytesPerSec > 5000000 ? 'critical' : undefined}
-        />
-        <MetricCard
-          label="Packet Rate"
-          value={formatNumber(displayMetrics.packetsPerSec) + ' pps'}
-          icon={<Activity size={15} />}
-          sublabel="ingestion rate"
-          highlight={displayMetrics.packetsPerSec > 5000 ? 'critical' : undefined}
-        />
-        <MetricCard
-          label="Unified Flows"
-          value="5,834"
-          icon={<Database size={15} />}
-          sublabel="8 public & lab sources"
-        />
-        <MetricCard
-          label="Active Threats"
-          value={activeAlerts.length.toString()}
-          icon={<AlertTriangle size={15} />}
-          sublabel={criticalHosts.length > 0 ? `${criticalHosts.length} critical hosts` : 'enclave secure'}
-          highlight={activeAlerts.length > 0 ? 'high' : undefined}
-        />
-        <MetricCard
-          label="ML Invariant Status"
-          value="DUAL-MODEL"
-          icon={<Cpu size={15} />}
-          sublabel="RF (100) + XGBoost"
-        />
-      </div>
-
-      {/* ── Segmented Navigation Tabs (Uncrowded, Organized, High-Information) ── */}
-      <div className="flex items-center justify-between border-b border-white/10 pb-3 flex-wrap gap-3">
-        <div className="flex items-center gap-2 p-1 rounded-xl bg-white/[0.03] border border-white/10">
-          <TabButton
-            active={activeTab === 'operations'}
-            onClick={() => setActiveTab('operations')}
-            icon={<Globe size={14} />}
-            label="Live Threat Operations"
-            badge="NetScout Horizon"
-          />
-          <TabButton
-            active={activeTab === 'pipeline'}
-            onClick={() => setActiveTab('pipeline')}
-            icon={<Layers size={14} />}
-            label="NIDS Data Pipeline"
-            badge="8 Sources"
-          />
-          <TabButton
-            active={activeTab === 'generalization'}
-            onClick={() => setActiveTab('generalization')}
-            icon={<GitCompare size={14} />}
-            label="Dual-Split Generalization Gap"
-            badge="Artifact Analysis"
-          />
-          <TabButton
-            active={activeTab === 'classifier'}
-            onClick={() => setActiveTab('classifier')}
-            icon={<Sliders size={14} />}
-            label="Live Flow Classifier"
-            badge="Inference Bench"
-          />
+      {/* ── Tab Navigation ── */}
+      <div className="flex items-center gap-3 flex-wrap">
+        <div className="flex items-center gap-1 p-1 rounded-full bg-[#0f0e17]/90 border border-[#f5efff]/[0.06] overflow-x-auto no-scrollbar">
+          <TabPill active={activeTab === 'operations'} onClick={() => setActiveTab('operations')} icon={<Globe size={12} />} label="Live Threat Ops" />
+          <TabPill active={activeTab === 'pipeline'} onClick={() => setActiveTab('pipeline')} icon={<Layers size={12} />} label="NIDS Pipeline" />
+          <TabPill active={activeTab === 'generalization'} onClick={() => setActiveTab('generalization')} icon={<GitCompare size={12} />} label="Generalization Gap" />
+          <TabPill active={activeTab === 'classifier'} onClick={() => setActiveTab('classifier')} icon={<Sliders size={12} />} label="Flow Classifier" />
         </div>
 
         {activeTab === 'operations' && (
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1 p-1 rounded-full bg-[#0f0e17]/90 border border-[#f5efff]/[0.06]">
             <button
               onClick={() => setVisualizerMode('globe')}
-              className={cn(
-                'px-3 py-1 rounded-lg text-xs font-mono font-semibold transition-all border',
-                visualizerMode === 'globe'
-                  ? 'bg-cyan-500/20 text-cyan-300 border-cyan-500/40 shadow-sm'
-                  : 'bg-white/5 text-white/40 border-white/10 hover:text-white'
-              )}
-            >
-              3D Threat Globe
-            </button>
+              className={cn('px-3.5 py-1.5 rounded-full text-xs font-mono transition-all', visualizerMode === 'globe' ? 'bg-[#f5efff] text-[#08080c] font-semibold' : 'text-[#f5efff]/50 hover:text-[#f5efff]')}
+            >3D Globe</button>
             <button
               onClick={() => setVisualizerMode('topology')}
-              className={cn(
-                'px-3 py-1 rounded-lg text-xs font-mono font-semibold transition-all border',
-                visualizerMode === 'topology'
-                  ? 'bg-blue-500/20 text-blue-300 border-blue-500/40 shadow-sm'
-                  : 'bg-white/5 text-white/40 border-white/10 hover:text-white'
-              )}
-            >
-              Hardware Diode
-            </button>
+              className={cn('px-3.5 py-1.5 rounded-full text-xs font-mono transition-all', visualizerMode === 'topology' ? 'bg-[#f5efff] text-[#08080c] font-semibold' : 'text-[#f5efff]/50 hover:text-[#f5efff]')}
+            >Diode</button>
           </div>
         )}
       </div>
 
-      {/* ── TAB 1: Live Operations & Threat Globe ── */}
+      {/* ═══════════════ TAB 1: LIVE OPERATIONS ═══════════════ */}
       {activeTab === 'operations' && (
-        <div className="space-y-6">
-          {/* Visualizer Canvas */}
-          <div className="rounded-2xl overflow-hidden border border-white/10 bg-black/40 shadow-2xl">
+        <div className="space-y-5">
+
+          {/* ── Globe Hero — Full Width, No Frame ── */}
+          <div className="rounded-2xl overflow-hidden bg-[#090910]">
             {visualizerMode === 'globe' ? (
               <CyberGlobe
                 alerts={alerts}
                 hosts={hosts}
                 threatStream={threatStream}
                 activeScenario={isSimulating ? activeScenario : null}
-                className="h-[600px]"
+                className="h-[580px] w-full"
               />
             ) : (
-              <OneWayNetworkDiagram
-                packetsPerSec={displayMetrics.packetsPerSec}
-                hosts={hosts}
-                isActive
-              />
+              <OneWayNetworkDiagram packetsPerSec={displayMetrics.packetsPerSec} hosts={hosts} isActive />
             )}
           </div>
 
-          {/* Clean 2-Column Operational Dock */}
-          <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
-            <ThreatStream events={threatStream} />
-            <SystemHealthPanel health={health} connection={connection} />
+          {/* ── Enclave AI Co-Pilot Input & Chat ── */}
+          <ThreatIntelChat />
+
+          {/* ── 5 KPI Cards Row ── */}
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
+            <MetricCard label="Throughput" value={formatBytes(displayMetrics.bytesPerSec) + '/s'} icon={<Zap size={13} />} sublabel="optical tap RX" highlight={displayMetrics.bytesPerSec > 5000000 ? 'critical' : undefined} className="!p-4" />
+            <MetricCard label="Packet Rate" value={formatNumber(displayMetrics.packetsPerSec) + ' pps'} icon={<Activity size={13} />} sublabel="ingestion rate" className="!p-4" />
+            <MetricCard label="Unified Flows" value="5,834" icon={<Database size={13} />} sublabel="8 public & lab sources" className="!p-4" />
+            <MetricCard label="Active Threats" value={activeAlerts.length.toString()} icon={<AlertTriangle size={13} />} sublabel={criticalHosts.length > 0 ? `${criticalHosts.length} critical` : 'enclave secure'} highlight={activeAlerts.length > 0 ? 'high' : undefined} className="!p-4" />
+            <MetricCard label="ML Status" value="DUAL-MODEL" icon={<Cpu size={13} />} sublabel="RF(100) + XGBoost" className="!p-4 hidden sm:flex" />
           </div>
 
-          {/* Host Risk & Engine Status */}
-          <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
-            <RiskLeaderboard hosts={hosts} />
-            <div className="p-5 rounded-2xl bg-white/[0.02] border border-white/10">
-              <div className="flex items-center gap-2 mb-4">
-                <Radar size={16} className="text-cyan-400" />
-                <h3 className="text-xs font-bold text-white uppercase tracking-wider">
-                  Detection Engines & Latency
-                </h3>
-              </div>
-              <div className="space-y-2.5 font-mono text-xs">
-                {[
-                  { name: 'Packet Engine (SYN/UDP Flood)', latency: '2.1ms', status: 'ACTIVE', color: '#4ade80' },
-                  { name: 'Connection Engine (Slowloris)', latency: '3.4ms', status: 'ACTIVE', color: '#4ade80' },
-                  { name: 'Session Engine (C2/DGA/DNS Tunnel)', latency: '8.7ms', status: 'ACTIVE', color: '#4ade80' },
-                  { name: 'RandomForest_NIDS (100 Trees)', latency: '3.1ms', status: 'DEPLOYED', color: '#3b9eff' },
-                  { name: 'XGBoost_NIDS (Gradient Booster)', latency: '2.8ms', status: 'DEPLOYED', color: '#3b9eff' },
-                ].map((e) => (
-                  <div
-                    key={e.name}
-                    className="flex items-center justify-between p-2.5 rounded-lg bg-white/[0.02] border border-white/[0.04]"
-                  >
-                    <span className="text-white/80">{e.name}</span>
-                    <div className="flex items-center gap-3">
-                      <span className="text-white/40">{e.latency}</span>
-                      <span
-                        className="text-[10px] px-1.5 py-0.5 rounded font-bold"
-                        style={{ color: e.color, background: `${e.color}15` }}
-                      >
-                        {e.status}
-                      </span>
-                    </div>
+          {/* ── Two-Column Content Grid ── */}
+          <div className="grid grid-cols-1 xl:grid-cols-12 gap-5">
+
+            {/* Left Column — 8 cols */}
+            <div className="xl:col-span-8 min-w-0 space-y-5">
+              <ThreatStream events={threatStream} />
+              <SystemHealthPanel health={health} connection={connection} />
+
+              {/* Detection Engines */}
+              <div className="p-5 rounded-2xl bg-[#0f0e17]/80 border border-[#f5efff]/[0.06] backdrop-blur-xl">
+                <div className="flex items-center justify-between pb-3 border-b border-[#f5efff]/[0.06] mb-3">
+                  <div className="flex items-center gap-2">
+                    <Radar size={14} className="text-[#f5efff]/60" />
+                    <span className="font-mono text-[10px] uppercase tracking-[0.18em] text-[#f5efff]/50 font-medium">Detection Engines & Latency</span>
                   </div>
-                ))}
+                  <span className="font-mono text-[9px] text-[#f5efff]/30 uppercase tracking-widest">REAL-TIME L3-L7</span>
+                </div>
+                <div className="space-y-2 font-mono text-xs">
+                  {[
+                    { name: 'Packet Engine (SYN/UDP Flood)', latency: '2.1ms', status: 'ACTIVE', color: '#34d399' },
+                    { name: 'Connection Engine (Slowloris)', latency: '3.4ms', status: 'ACTIVE', color: '#34d399' },
+                    { name: 'Session Engine (C2/DGA/DNS)', latency: '8.7ms', status: 'ACTIVE', color: '#34d399' },
+                    { name: 'RandomForest NIDS (100 Trees)', latency: '3.1ms', status: 'DEPLOYED', color: '#38bdf8' },
+                    { name: 'XGBoost NIDS (Booster)', latency: '2.8ms', status: 'DEPLOYED', color: '#38bdf8' },
+                  ].map((e) => (
+                    <div key={e.name} className="flex items-center justify-between p-3 rounded-xl bg-[#f5efff]/[0.02] border border-[#f5efff]/[0.04] hover:border-[#f5efff]/[0.12] transition-colors">
+                      <span className="text-[#f5efff]/70 text-[10px] truncate mr-2">{e.name}</span>
+                      <div className="flex items-center gap-2 flex-shrink-0">
+                        <span className="text-[#f5efff]/35 text-[10px]">{e.latency}</span>
+                        <span className="text-[8px] px-1.5 py-0.5 rounded-full font-bold uppercase tracking-wider" style={{ color: e.color, background: `${e.color}12`, border: `1px solid ${e.color}25` }}>{e.status}</span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+                <div className="pt-3 border-t border-[#f5efff]/[0.04] flex items-center justify-between text-[10px] font-mono text-[#f5efff]/35 mt-3">
+                  <span>AVG INFERENCE LATENCY: 3.42ms</span>
+                  <span className="text-emerald-400 font-semibold">ALL 5 ENGINES NOMINAL</span>
+                </div>
               </div>
+            </div>
+
+            {/* Right Column — 4 cols */}
+            <div className="xl:col-span-4 min-w-0 space-y-5">
+              <ThreatRadarCard activeSources={activeAlerts.length > 0 ? activeAlerts.length * 123 : 983} />
+              <AttackVolumeCard totalEvents={983421} />
+              <AiDetectionCard
+                highRisk={activeAlerts.filter(a => a.severity === 'CRITICAL').length || 12}
+                mediumRisk={activeAlerts.filter(a => a.severity === 'HIGH').length || 47}
+                lowRisk={activeAlerts.filter(a => a.severity === 'MEDIUM').length || 156}
+                monitoring={768}
+                confidence={96.8}
+              />
+              <RiskLeaderboard hosts={hosts} className="flex-1" />
             </div>
           </div>
         </div>
       )}
 
-      {/* ── TAB 2: NIDS Data Pipeline & 8-Source Ingestion ── */}
+      {/* ── TAB 2 ── */}
       {activeTab === 'pipeline' && <PipelineView />}
-
-      {/* ── TAB 3: Dual-Split Generalization Gap Analysis ── */}
+      {/* ── TAB 3 ── */}
       {activeTab === 'generalization' && <GeneralizationGapView />}
-
-      {/* ── TAB 4: Live Flow Classifier & Inference Bench ── */}
+      {/* ── TAB 4 ── */}
       {activeTab === 'classifier' && <FlowClassifierBench />}
     </div>
   );
 }
 
-function TabButton({
-  active,
-  onClick,
-  icon,
-  label,
-  badge,
-}: {
-  active: boolean;
-  onClick: () => void;
-  icon: React.ReactNode;
-  label: string;
-  badge?: string;
-}) {
+/* ── Compact Status Pill ── */
+function StatusPill({ label, value, color }: { label: string; value: string; color: string }) {
+  return (
+    <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full border border-[#f5efff]/8 bg-[#f5efff]/[0.02]">
+      <span className="w-1.5 h-1.5 rounded-full animate-pulse" style={{ background: color, boxShadow: `0 0 6px ${color}` }} />
+      <span className="font-mono text-[9px] uppercase tracking-[0.12em] text-[#f5efff]/45">{label}</span>
+      <span className="font-mono text-[9px] font-bold tracking-wider" style={{ color }}>{value}</span>
+    </div>
+  );
+}
+
+/* ── Tab Pill ── */
+function TabPill({ active, onClick, icon, label }: { active: boolean; onClick: () => void; icon: React.ReactNode; label: string }) {
   return (
     <button
       onClick={onClick}
       className={cn(
-        'flex items-center gap-2 px-3.5 py-2 rounded-lg text-xs font-semibold transition-all whitespace-nowrap',
-        active
-          ? 'bg-cyan-500/20 text-cyan-300 border border-cyan-500/40 shadow-sm'
-          : 'text-white/50 hover:text-white hover:bg-white/5'
+        'flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-mono transition-all whitespace-nowrap',
+        active ? 'bg-[#f5efff] text-[#08080c] font-semibold shadow-[0_0_16px_rgba(245,239,255,0.2)]' : 'text-[#f5efff]/50 hover:text-[#f5efff] hover:bg-[#f5efff]/5'
       )}
     >
       {icon}
       <span>{label}</span>
-      {badge && (
-        <span
-          className={cn(
-            'text-[9px] font-mono px-1.5 py-0.5 rounded ml-1',
-            active ? 'bg-cyan-500/30 text-cyan-200' : 'bg-white/10 text-white/40'
-          )}
-        >
-          {badge}
-        </span>
-      )}
     </button>
-  );
-}
-
-function StatusBadge({
-  label,
-  value,
-  color,
-  pulse = false,
-}: {
-  label: string;
-  value: string;
-  color: string;
-  pulse?: boolean;
-}) {
-  return (
-    <div className="flex items-center gap-1.5" aria-label={`${label}: ${value}`}>
-      <span
-        className={cn('status-dot', pulse && 'status-dot-pulse')}
-        style={{ background: color }}
-        aria-hidden="true"
-      />
-      <span className="text-label text-[10px] text-white/50">{label}</span>
-      <span style={{ color, fontSize: '10px', fontWeight: 700, letterSpacing: '0.06em' }}>
-        {value}
-      </span>
-    </div>
   );
 }

@@ -2,51 +2,56 @@
 
 import { Activity, ShieldCheck, Cpu, Database, Server, Radio, Clock } from 'lucide-react';
 import type { SystemHealth } from '@/types';
+import { cn } from '@/lib/utils';
 
 interface SystemHealthPanelProps {
   health?: SystemHealth | null;
   connection?: any;
+  className?: string;
 }
 
-export function SystemHealthPanel({ health, connection }: SystemHealthPanelProps) {
+export function SystemHealthPanel({ health, connection, className }: SystemHealthPanelProps) {
   return (
-    <div className="p-5 rounded-xl glass-card border border-white/10 space-y-4 font-mono">
-      <div className="flex items-center justify-between pb-3 border-b border-white/10">
-        <h2 className="text-sm font-bold text-white tracking-wide flex items-center gap-2 font-sans">
-          <Activity size={16} className="text-emerald-400" />
-          Enclave System Health & Telemetry
-        </h2>
-        <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+    <div className={cn('p-6 rounded-2xl bg-[#0f0e17]/80 border border-[#f5efff]/[0.08] backdrop-blur-xl shadow-xl flex flex-col space-y-5', className)}>
+      <div className="flex items-center justify-between pb-3 border-b border-[#f5efff]/[0.08]">
+        <div className="flex items-center gap-2.5">
+          <Activity size={16} className="text-[#f5efff]/70" />
+          <h2 className="font-editorial text-lg font-light text-[#f5efff] tracking-wide">
+            Enclave System Health & Telemetry
+          </h2>
+        </div>
+        <span className="px-3 py-1 rounded-full text-[9px] font-mono font-bold uppercase tracking-wider bg-emerald-500/10 text-emerald-400 border border-emerald-500/25 flex items-center gap-1.5">
+          <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 shadow-[0_0_6px_#34d399] animate-pulse" />
           ALL SYSTEMS NOMINAL
         </span>
       </div>
 
-      <div className="grid grid-cols-2 gap-3 text-xs">
-        <div className="p-2.5 rounded-lg bg-white/5 border border-white/10 space-y-1">
-          <span className="text-[10px] text-white/40 uppercase block">ONE-WAY DIODE</span>
-          <span className="text-emerald-400 font-bold flex items-center gap-1">
-            <Radio size={12} /> HARDWARE_SECURED
+      <div className="grid grid-cols-2 gap-3.5 text-xs font-mono">
+        <div className="p-3.5 rounded-xl bg-[#f5efff]/[0.02] border border-[#f5efff]/[0.06] hover:border-[#f5efff]/[0.15] transition-colors space-y-1.5">
+          <span className="text-[10px] text-[#f5efff]/40 uppercase tracking-widest block">ONE-WAY DIODE</span>
+          <span className="text-emerald-400 font-semibold flex items-center gap-1.5">
+            <Radio size={13} /> HARDWARE_SECURED
           </span>
         </div>
 
-        <div className="p-2.5 rounded-lg bg-white/5 border border-white/10 space-y-1">
-          <span className="text-[10px] text-white/40 uppercase block">DETECTION LATENCY</span>
-          <span className="text-blue-400 font-bold flex items-center gap-1">
-            <Clock size={12} /> {health?.detectionLatencyMs ? `${health.detectionLatencyMs.toFixed(2)} ms` : '1.45 ms'}
+        <div className="p-3.5 rounded-xl bg-[#f5efff]/[0.02] border border-[#f5efff]/[0.06] hover:border-[#f5efff]/[0.15] transition-colors space-y-1.5">
+          <span className="text-[10px] text-[#f5efff]/40 uppercase tracking-widest block">DETECTION LATENCY</span>
+          <span className="text-sky-400 font-semibold flex items-center gap-1.5">
+            <Clock size={13} /> {health?.detectionLatencyMs ? `${health.detectionLatencyMs.toFixed(2)} ms` : '1.45 ms'}
           </span>
         </div>
 
-        <div className="p-2.5 rounded-lg bg-white/5 border border-white/10 space-y-1">
-          <span className="text-[10px] text-white/40 uppercase block">TELEMETRY DATABASE</span>
-          <span className="text-emerald-400 font-bold flex items-center gap-1">
-            <Database size={12} /> POSTGRES_DUAL_RESILIENT
+        <div className="p-3.5 rounded-xl bg-[#f5efff]/[0.02] border border-[#f5efff]/[0.06] hover:border-[#f5efff]/[0.15] transition-colors space-y-1.5">
+          <span className="text-[10px] text-[#f5efff]/40 uppercase tracking-widest block">TELEMETRY DATABASE</span>
+          <span className="text-[#f5efff]/80 font-semibold flex items-center gap-1.5">
+            <Database size={13} className="text-emerald-400" /> POSTGRES_DUAL_RESILIENT
           </span>
         </div>
 
-        <div className="p-2.5 rounded-lg bg-white/5 border border-white/10 space-y-1">
-          <span className="text-[10px] text-white/40 uppercase block">AI ENCLAVE ENGINES</span>
-          <span className="text-purple-400 font-bold flex items-center gap-1">
-            <Cpu size={12} /> 4/4 LOADED
+        <div className="p-3.5 rounded-xl bg-[#f5efff]/[0.02] border border-[#f5efff]/[0.06] hover:border-[#f5efff]/[0.15] transition-colors space-y-1.5">
+          <span className="text-[10px] text-[#f5efff]/40 uppercase tracking-widest block">AI ENCLAVE ENGINES</span>
+          <span className="text-purple-300 font-semibold flex items-center gap-1.5">
+            <Cpu size={13} className="text-purple-400" /> 4/4 LOADED
           </span>
         </div>
       </div>

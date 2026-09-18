@@ -81,91 +81,105 @@ export default function TrafficPage() {
 
   return (
     <div className="space-y-6">
-      {/* Top Banner */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 p-4 rounded-xl glass-card border border-white/10">
+      {/* ── Top Studio Header ── */}
+      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-5 p-6 rounded-2xl bg-[#0f0e17]/80 border border-[#f5efff]/[0.08] backdrop-blur-xl">
         <div>
-          <h1 className="text-xl font-bold text-white tracking-wide flex items-center gap-2">
-            <Zap className="text-amber-400" size={22} />
-            Passive Traffic Breakdown & Flow Resolution
+          <div className="eyebrow-label mb-2 flex items-center gap-2">
+            <span className="w-2 h-2 rounded-full bg-amber-400 shadow-[0_0_8px_rgba(251,191,36,0.8)]" />
+            <span>FLOW SPECTROGRAM & PROTOCOL DECOMPOSITION</span>
+          </div>
+          <h1 className="font-editorial text-3xl sm:text-4xl font-light text-[#f5efff] tracking-tight">
+            Traffic Breakdown & Resolution
           </h1>
-          <p className="text-xs text-white/50 mt-1">
+          <p className="text-xs sm:text-sm text-[#f5efff]/50 max-w-2xl font-light leading-relaxed mt-1">
             Aggregated traffic statistics categorized by protocols, top network talkers, and multi-resolution time windows.
           </p>
         </div>
 
-        <div className="flex items-center gap-2">
-          <span className="text-xs text-white/40 font-mono">RESOLUTION:</span>
-          {['1s', '5s', '30s', '60s'].map((res) => (
-            <button
-              key={res}
-              onClick={() => setResolution(res)}
-              className={`px-2.5 py-1 rounded-md text-xs font-mono font-semibold transition-colors ${
-                resolution === res
-                  ? 'bg-blue-600 text-white'
-                  : 'bg-white/5 text-white/60 hover:bg-white/10'
-              }`}
-            >
-              {res}
-            </button>
-          ))}
+        {/* Resolution Tabs */}
+        <div className="flex items-center gap-2.5">
+          <span className="text-[10px] text-[#f5efff]/40 font-mono uppercase tracking-wider">WINDOW:</span>
+          <div className="p-1 rounded-full bg-white/[0.04] border border-[#f5efff]/[0.08] inline-flex items-center gap-1">
+            {['1s', '5s', '30s', '60s'].map((res) => {
+              const isSelected = resolution === res;
+              return (
+                <button
+                  key={res}
+                  onClick={() => setResolution(res)}
+                  className={`px-3 py-1.5 rounded-full text-xs font-mono font-medium transition-all ${
+                    isSelected
+                      ? 'bg-[#f5efff] text-black shadow-md'
+                      : 'text-[#f5efff]/60 hover:text-[#f5efff] hover:bg-white/[0.04]'
+                  }`}
+                >
+                  {res}
+                </button>
+              );
+            })}
+          </div>
         </div>
       </div>
 
       {/* Protocol Breakdown Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {PROTOCOL_STATS.map((proto) => (
-          <div key={proto.name} className="p-4 rounded-xl glass-card border border-white/10 space-y-2">
+          <div key={proto.name} className="p-5 rounded-2xl bg-[#0f0e17]/80 border border-[#f5efff]/[0.08] backdrop-blur-xl space-y-3">
             <div className="flex items-center justify-between">
-              <span className="text-xs font-bold text-white/80 font-mono">{proto.name}</span>
-              <span className="text-xs font-bold font-mono" style={{ color: proto.color }}>
+              <span className="text-xs font-medium text-[#f5efff]">{proto.name}</span>
+              <span className="font-editorial text-2xl font-light" style={{ color: proto.color }}>
                 {proto.pct}%
               </span>
             </div>
 
-            <div className="w-full h-1.5 rounded-full bg-white/10 overflow-hidden">
+            <div className="w-full h-1 rounded-full bg-white/10 overflow-hidden">
               <div
                 className="h-full rounded-full transition-all duration-300"
                 style={{ width: `${proto.pct}%`, backgroundColor: proto.color }}
               />
             </div>
 
-            <div className="text-[11px] text-white/40 font-mono flex justify-between pt-1">
+            <div className="text-[11px] text-[#f5efff]/40 font-mono flex justify-between pt-1">
               <span>Rate: {proto.pps} pps</span>
-              <span>Diode Rx</span>
+              <span className="text-[#a29bfe]">Diode Rx</span>
             </div>
           </div>
         ))}
       </div>
 
       {/* Top Talkers Table */}
-      <div className="p-5 rounded-xl glass-card border border-white/10 space-y-4">
-        <h2 className="text-sm font-semibold text-white tracking-wide">
-          Observed Ingress Endpoints (Top Talkers)
-        </h2>
+      <div className="p-6 rounded-2xl bg-[#0f0e17]/80 border border-[#f5efff]/[0.08] backdrop-blur-xl space-y-4">
+        <div className="flex items-center justify-between">
+          <h2 className="text-sm font-medium text-[#f5efff] tracking-wide">
+            Observed Ingress Endpoints (Top Talkers)
+          </h2>
+          <span className="text-[10px] font-mono uppercase tracking-wider text-[#f5efff]/40">
+            Hardware Diode Observed
+          </span>
+        </div>
 
         <div className="overflow-x-auto">
-          <table className="w-full text-left text-xs text-white/70">
-            <thead className="text-[11px] uppercase tracking-wider text-white/40 border-b border-white/10">
+          <table className="w-full text-left text-xs text-[#f5efff]/70">
+            <thead className="text-[10px] uppercase font-mono tracking-widest text-[#f5efff]/40 border-b border-[#f5efff]/[0.08] bg-[#f5efff]/[0.02]">
               <tr>
-                <th className="py-2.5 px-3">Host IP</th>
-                <th className="py-2.5 px-3">Hostname</th>
-                <th className="py-2.5 px-3">Role</th>
-                <th className="py-2.5 px-3">Ingress Rate</th>
-                <th className="py-2.5 px-3">Total Volume</th>
+                <th className="py-3 px-4 font-medium">Host IP</th>
+                <th className="py-3 px-4 font-medium">Hostname</th>
+                <th className="py-3 px-4 font-medium">Role</th>
+                <th className="py-3 px-4 font-medium">Ingress Rate</th>
+                <th className="py-3 px-4 font-medium">Total Volume</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-white/5 font-mono">
+            <tbody className="divide-y divide-[#f5efff]/[0.04] font-mono">
               {TOP_TALKERS.map((t) => (
-                <tr key={t.ip} className="hover:bg-white/5 transition-colors">
-                  <td className="py-3 px-3 font-bold text-white">{t.ip}</td>
-                  <td className="py-3 px-3 text-white/60 font-sans">{t.name}</td>
-                  <td className="py-3 px-3">
-                    <span className="px-1.5 py-0.5 rounded text-[10px] bg-white/5 text-white/70 border border-white/10 font-sans">
+                <tr key={t.ip} className="hover:bg-[#f5efff]/[0.03] transition-colors">
+                  <td className="py-3.5 px-4 font-medium text-[#f5efff]">{t.ip}</td>
+                  <td className="py-3.5 px-4 text-[#f5efff]/60 font-light">{t.name}</td>
+                  <td className="py-3.5 px-4">
+                    <span className="px-2 py-0.5 rounded-full text-[10px] bg-[#f5efff]/[0.05] text-[#f5efff]/70 border border-[#f5efff]/[0.08] font-mono">
                       {t.role}
                     </span>
                   </td>
-                  <td className="py-3 px-3 text-blue-400 font-bold">{t.pps} pps</td>
-                  <td className="py-3 px-3 text-white/70">{t.bytes}</td>
+                  <td className="py-3.5 px-4 text-[#a29bfe] font-medium">{t.pps} pps</td>
+                  <td className="py-3.5 px-4 text-[#f5efff]/70">{t.bytes}</td>
                 </tr>
               ))}
             </tbody>

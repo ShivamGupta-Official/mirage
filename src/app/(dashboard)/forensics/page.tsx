@@ -208,14 +208,17 @@ export default function ForensicsPage() {
 
   return (
     <div className="space-y-6">
-      {/* Top Banner */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 p-5 rounded-2xl bg-white/[0.02] border border-white/10 backdrop-blur-md">
+      {/* ── Top Studio Header ── */}
+      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-5 p-6 rounded-2xl bg-[#0f0e17]/80 border border-[#f5efff]/[0.08] backdrop-blur-xl">
         <div>
-          <h1 className="text-xl font-bold text-white tracking-wide flex items-center gap-2">
-            <Lock className="text-emerald-400" size={22} />
-            Forensics & Cryptographic Audit Ledger
+          <div className="eyebrow-label mb-2 flex items-center gap-2">
+            <span className="w-2 h-2 rounded-full bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.8)]" />
+            <span>CRYPTOGRAPHIC LEDGER & DATASET REGISTRY</span>
+          </div>
+          <h1 className="font-editorial text-3xl sm:text-4xl font-light text-[#f5efff] tracking-tight">
+            Forensics & Audit Ledger
           </h1>
-          <p className="text-xs text-white/50 mt-1">
+          <p className="text-xs sm:text-sm text-[#f5efff]/50 max-w-2xl font-light leading-relaxed mt-1">
             Immutable SHA-256 chained audit trail · 8 Public & Lab Benchmark Datasets Explorer · Controlled PCAP hashing.
           </p>
         </div>
@@ -224,38 +227,40 @@ export default function ForensicsPage() {
           <button
             onClick={handleVerifyChain}
             disabled={isVerifying}
-            className="flex items-center gap-2 px-3.5 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold transition-all shadow-lg shadow-emerald-600/20"
+            className="flex items-center gap-2 px-4 py-2 rounded-full bg-[#f5efff] hover:bg-white text-black text-xs font-mono font-medium transition-all shadow-md"
           >
-            <RefreshCw size={14} className={isVerifying ? 'animate-spin' : ''} />
+            <RefreshCw size={13} className={isVerifying ? 'animate-spin' : ''} />
             Verify Cryptographic Chain
           </button>
         </div>
       </div>
 
-      {/* Segmented Navigation */}
-      <div className="flex items-center gap-2 border-b border-white/10 pb-2">
-        <button
-          onClick={() => setActiveTab('ledger')}
-          className={cn(
-            'px-3.5 py-1.5 rounded-lg text-xs font-mono font-semibold transition-all flex items-center gap-2',
-            activeTab === 'ledger'
-              ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 shadow-sm'
-              : 'text-white/50 hover:text-white hover:bg-white/5'
-          )}
-        >
-          <Fingerprint size={14} /> Immutable Audit Chain ({blocks.length} Blocks)
-        </button>
-        <button
-          onClick={() => setActiveTab('datasets')}
-          className={cn(
-            'px-3.5 py-1.5 rounded-lg text-xs font-mono font-semibold transition-all flex items-center gap-2',
-            activeTab === 'datasets'
-              ? 'bg-cyan-500/20 text-cyan-300 border border-cyan-500/40 shadow-sm'
-              : 'text-white/50 hover:text-white hover:bg-white/5'
-          )}
-        >
-          <Database size={14} /> Ingested Benchmark Datasets ({PUBLIC_DATASETS.length} Sources)
-        </button>
+      {/* ── Segmented Navigation Tabs ── */}
+      <div className="flex items-center justify-start overflow-x-auto pb-1 no-scrollbar">
+        <div className="p-1.5 rounded-full bg-white/[0.04] border border-[#f5efff]/[0.08] inline-flex items-center gap-1.5">
+          <button
+            onClick={() => setActiveTab('ledger')}
+            className={cn(
+              'px-4 py-2 rounded-full text-xs font-mono font-medium transition-all flex items-center gap-2',
+              activeTab === 'ledger'
+                ? 'bg-[#f5efff] text-black shadow-md'
+                : 'text-[#f5efff]/60 hover:text-[#f5efff] hover:bg-white/[0.04]'
+            )}
+          >
+            <Fingerprint size={13} /> Immutable Audit Chain ({blocks.length} Blocks)
+          </button>
+          <button
+            onClick={() => setActiveTab('datasets')}
+            className={cn(
+              'px-4 py-2 rounded-full text-xs font-mono font-medium transition-all flex items-center gap-2',
+              activeTab === 'datasets'
+                ? 'bg-[#f5efff] text-black shadow-md'
+                : 'text-[#f5efff]/60 hover:text-[#f5efff] hover:bg-white/[0.04]'
+            )}
+          >
+            <Database size={13} /> Ingested Benchmark Datasets ({PUBLIC_DATASETS.length} Sources)
+          </button>
+        </div>
       </div>
 
       {/* ── Tab 1: Audit Chain & PCAP Evidence ── */}
@@ -286,41 +291,41 @@ export default function ForensicsPage() {
           )}
 
           {/* PCAP Forensics Evidence Dropzone */}
-          <div className="p-5 rounded-2xl bg-white/[0.02] border border-white/10 space-y-4">
-            <h2 className="text-sm font-semibold text-white tracking-wide flex items-center gap-2">
-              <FileCode size={16} className="text-blue-400" />
+          <div className="p-6 rounded-2xl bg-[#0f0e17]/80 border border-[#f5efff]/[0.08] backdrop-blur-xl space-y-4">
+            <h2 className="text-sm font-medium text-[#f5efff] tracking-wide flex items-center gap-2">
+              <FileCode size={16} className="text-[#a29bfe]" />
               Controlled PCAP Evidence Ingestion & Artifact Hashing
             </h2>
-            <p className="text-xs text-white/50">
+            <p className="text-xs text-[#f5efff]/50 font-light">
               Upload forensic packet captures (.pcap/.pcapng). Computes SHA-256 checksums, validates strict lab subnet containment, and runs NFStream feature extraction.
             </p>
 
             <div
               onClick={handleSimulatePcap}
-              className="border-2 border-dashed border-white/15 hover:border-blue-500/50 rounded-xl p-8 text-center cursor-pointer transition-colors bg-white/[0.02] hover:bg-white/[0.04]"
+              className="border-2 border-dashed border-[#f5efff]/10 hover:border-[#f5efff]/30 rounded-2xl p-8 text-center cursor-pointer transition-colors bg-white/[0.01] hover:bg-white/[0.03]"
             >
-              <Upload size={28} className="mx-auto text-white/40 mb-2" />
-              <div className="text-xs font-semibold text-white">Click to ingest sample lab PCAP</div>
-              <div className="text-[11px] text-white/40 mt-1">
+              <Upload size={28} className="mx-auto text-[#f5efff]/40 mb-2" />
+              <div className="text-xs font-mono font-medium text-[#f5efff]">Click to ingest sample lab PCAP</div>
+              <div className="text-[11px] text-[#f5efff]/40 mt-1 font-light">
                 Max 50MB · Auto-generates cryptographic evidence block · Matches canonical 78-feature schema
               </div>
             </div>
 
             {pcapStatus && (
-              <div className="p-3 rounded-lg bg-blue-500/10 border border-blue-500/20 font-mono text-xs text-blue-300">
+              <div className="p-3.5 rounded-xl bg-black/40 border border-[#f5efff]/[0.08] font-mono text-xs text-[#a29bfe]">
                 {pcapStatus}
               </div>
             )}
           </div>
 
           {/* Blockchain Ledger Block Viewer */}
-          <div className="p-5 rounded-2xl bg-white/[0.02] border border-white/10 space-y-4">
+          <div className="p-6 rounded-2xl bg-[#0f0e17]/80 border border-[#f5efff]/[0.08] backdrop-blur-xl space-y-4">
             <div className="flex items-center justify-between">
-              <h2 className="text-sm font-semibold text-white tracking-wide flex items-center gap-2">
+              <h2 className="text-sm font-medium text-[#f5efff] tracking-wide flex items-center gap-2">
                 <Fingerprint size={16} className="text-purple-400" />
                 Immutable Forensic Ledger ({blocks.length} Blocks)
               </h2>
-              <span className="text-xs text-white/40 font-mono">
+              <span className="text-[10px] text-[#f5efff]/40 font-mono">
                 Genesis Hash: {blocks[0].event_hash.substring(0, 16)}...
               </span>
             </div>
@@ -329,27 +334,27 @@ export default function ForensicsPage() {
               {blocks.map((b) => (
                 <div
                   key={b.index}
-                  className="p-4 rounded-xl bg-white/5 border border-white/10 space-y-2 hover:bg-white/[0.08] transition-colors"
+                  className="p-4 rounded-2xl bg-[#0f0e17] border border-[#f5efff]/[0.06] space-y-2 hover:border-[#f5efff]/20 transition-all"
                 >
                   <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs">
                     <div className="flex items-center gap-2">
-                      <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-blue-500/15 text-blue-400 border border-blue-500/30">
+                      <span className="px-2.5 py-0.5 rounded-full text-[10px] font-mono font-medium bg-[#f5efff]/[0.06] text-[#a29bfe] border border-[#f5efff]/[0.1]">
                         BLOCK #{b.index}
                       </span>
-                      <span className="text-white font-bold">{b.event_type}</span>
-                      <span className="text-white/40">({b.action})</span>
+                      <span className="text-[#f5efff] font-medium">{b.event_type}</span>
+                      <span className="text-[#f5efff]/40">({b.action})</span>
                     </div>
-                    <span className="text-white/40 text-[11px]">{b.timestamp}</span>
+                    <span className="text-[#f5efff]/40 text-[11px]">{b.timestamp}</span>
                   </div>
 
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-2 pt-2 border-t border-white/5 text-[11px]">
-                    <div className="p-2 rounded bg-black/30 truncate">
-                      <span className="text-white/30 text-[9px] block">PREVIOUS BLOCK HASH</span>
-                      <span className="text-white/60">{b.previous_hash}</span>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-2 pt-2 border-t border-[#f5efff]/[0.04] text-[11px]">
+                    <div className="p-2.5 rounded-xl bg-black/40 truncate border border-[#f5efff]/[0.04]">
+                      <span className="text-[#f5efff]/30 text-[9px] uppercase tracking-wider block">PREVIOUS BLOCK HASH</span>
+                      <span className="text-[#f5efff]/60">{b.previous_hash}</span>
                     </div>
-                    <div className="p-2 rounded bg-black/30 truncate">
-                      <span className="text-white/30 text-[9px] block">CURRENT EVENT HASH (SHA-256)</span>
-                      <span className="text-emerald-400 font-bold">{b.event_hash}</span>
+                    <div className="p-2.5 rounded-xl bg-black/40 truncate border border-[#f5efff]/[0.04]">
+                      <span className="text-[#f5efff]/30 text-[9px] uppercase tracking-wider block">CURRENT EVENT HASH (SHA-256)</span>
+                      <span className="text-emerald-300 font-medium">{b.event_hash}</span>
                     </div>
                   </div>
                 </div>
@@ -361,42 +366,42 @@ export default function ForensicsPage() {
 
       {/* ── Tab 2: Public Benchmark Datasets Explorer ── */}
       {activeTab === 'datasets' && (
-        <div className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="space-y-5">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
             {PUBLIC_DATASETS.map((ds) => (
               <div
                 key={ds.id}
-                className="p-5 rounded-2xl bg-white/[0.02] border border-white/10 flex flex-col justify-between"
+                className="p-6 rounded-2xl bg-[#0f0e17]/80 border border-[#f5efff]/[0.08] backdrop-blur-xl hover:border-[#f5efff]/20 transition-all flex flex-col justify-between"
               >
                 <div>
-                  <div className="flex items-start justify-between gap-2 mb-2">
+                  <div className="flex items-start justify-between gap-2 mb-3">
                     <div>
-                      <span className="text-[10px] font-mono text-cyan-400 font-bold block mb-0.5">
+                      <span className="eyebrow-label text-[10px] text-[#a29bfe] uppercase tracking-wider block mb-1">
                         {ds.tier}
                       </span>
-                      <h3 className="text-sm font-bold text-white tracking-wide">{ds.name}</h3>
+                      <h3 className="font-editorial text-xl font-light text-[#f5efff]">{ds.name}</h3>
                     </div>
-                    <span className="text-[9px] font-mono font-bold px-2 py-0.5 rounded bg-white/10 text-white/70 border border-white/15">
+                    <span className="text-[10px] font-mono font-medium px-2.5 py-0.5 rounded-full bg-[#f5efff]/[0.05] text-[#f5efff]/70 border border-[#f5efff]/[0.08]">
                       {ds.role}
                     </span>
                   </div>
 
-                  <p className="text-xs text-white/60 mb-3 leading-relaxed font-sans">
+                  <p className="text-xs text-[#f5efff]/60 mb-4 leading-relaxed font-light">
                     {ds.notes}
                   </p>
 
-                  <div className="space-y-1.5 font-mono text-xs border-t border-white/[0.06] pt-2 mb-3">
-                    <div className="flex justify-between text-white/50">
+                  <div className="space-y-2 font-mono text-xs border-t border-[#f5efff]/[0.06] pt-3 mb-2">
+                    <div className="flex justify-between text-[#f5efff]/50">
                       <span>Schema:</span>
-                      <span className="text-white/80">{ds.schema}</span>
+                      <span className="text-[#f5efff]/80">{ds.schema}</span>
                     </div>
-                    <div className="flex justify-between text-white/50">
+                    <div className="flex justify-between text-[#f5efff]/50">
                       <span>Flow Volume:</span>
-                      <span className="text-cyan-300 font-bold">{ds.flows.toLocaleString()} flows</span>
+                      <span className="text-emerald-300 font-medium">{ds.flows.toLocaleString()} flows</span>
                     </div>
-                    <div className="flex justify-between text-white/50">
+                    <div className="flex justify-between text-[#f5efff]/50">
                       <span>Mapped Classes:</span>
-                      <span className="text-purple-300">{ds.classes.join(', ')}</span>
+                      <span className="text-[#a29bfe]">{ds.classes.join(', ')}</span>
                     </div>
                   </div>
                 </div>
