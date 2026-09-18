@@ -182,29 +182,81 @@ export default function LiveMonitorPage() {
 
             return (
               <>
-                <div className="h-44 w-full flex items-end gap-1.5 pt-6 pb-2 border-b border-[#f5efff]/[0.06]">
-                  {trafficHistory.map((val, idx) => {
-                    const heightPercent = Math.min(100, Math.max(8, (val / maxScale) * 100));
-                    const isHigh = val > 1500;
-                    return (
-                      <div key={idx} className="flex-1 flex flex-col items-center gap-1 group relative">
+                {/* High-visibility SVG Area Graph + Pulse Bars */}
+                <div className="relative h-44 w-full pt-4 pb-2 border-b border-[#f5efff]/[0.06] overflow-hidden">
+                  <svg className="w-full h-full overflow-visible" preserveAspectRatio="none" viewBox="0 0 400 120">
+                    <defs>
+                      <linearGradient id="pulseGradientNormal" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="0%" stopColor="#a29bfe" stopOpacity="0.45" />
+                        <stop offset="100%" stopColor="#a29bfe" stopOpacity="0.0" />
+                      </linearGradient>
+                      <linearGradient id="pulseGradientHigh" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="0%" stopColor="#f43f5e" stopOpacity="0.55" />
+                        <stop offset="100%" stopColor="#f43f5e" stopOpacity="0.0" />
+                      </linearGradient>
+                    </defs>
+
+                    {/* SVG Area Fill */}
+                    {(() => {
+                      const pts = trafficHistory.map((val, idx) => {
+                        const x = (idx / (trafficHistory.length - 1)) * 400;
+                        const y = 110 - Math.min(100, Math.max(10, (val / maxScale) * 100));
+                        return `${x},${y}`;
+                      });
+                      const areaPath = `M 0,115 L ${pts.join(' L ')} L 400,115 Z`;
+                      const linePath = `M ${pts.join(' L ')}`;
+                      const isHighPeak = peakVal > 1500;
+
+                      return (
+                        <>
+                          <path
+                            d={areaPath}
+                            fill={isHighPeak ? 'url(#pulseGradientHigh)' : 'url(#pulseGradientNormal)'}
+                            className="transition-all duration-300"
+                          />
+                          <path
+                            d={linePath}
+                            fill="none"
+                            stroke={isHighPeak ? '#f43f5e' : '#a29bfe'}
+                            strokeWidth="2.5"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            className="transition-all duration-300"
+                          />
+                        </>
+                      );
+                    })()}
+                  </svg>
+
+                  {/* Overlay Interactive Value Pillars & Tooltips */}
+                  <div className="absolute inset-0 flex items-end justify-between px-1 pointer-events-auto">
+                    {trafficHistory.map((val, idx) => {
+                      const heightPx = Math.min(110, Math.max(12, (val / maxScale) * 110));
+                      const isHigh = val > 1500;
+                      return (
                         <div
-                          className="w-full rounded-t transition-all duration-300 group-hover:brightness-125"
-                          style={{
-                            height: `${heightPercent}%`,
-                            background: isHigh
-                              ? 'linear-gradient(180deg, rgba(244,63,94,0.85) 0%, rgba(244,63,94,0.2) 100%)'
-                              : 'linear-gradient(180deg, rgba(245,239,255,0.7) 0%, rgba(162,155,254,0.15) 100%)',
-                          }}
-                        />
-                        <span className="text-[9px] font-mono text-[#f5efff]/20">{idx * 2}s</span>
-                        {/* Tooltip */}
-                        <div className="absolute -top-8 hidden group-hover:flex px-2 py-0.5 rounded-full bg-black/95 text-[10px] font-mono text-[#f5efff] whitespace-nowrap border border-[#f5efff]/15 shadow-xl z-10">
-                          {val.toLocaleString()} pps
+                          key={idx}
+                          className="flex-1 h-full flex flex-col justify-end items-center group relative cursor-pointer"
+                        >
+                          {/* Column Bar Indicator */}
+                          <div
+                            className="w-1.5 sm:w-2 rounded-t transition-all duration-200 group-hover:scale-y-110 group-hover:brightness-150"
+                            style={{
+                              height: `${heightPx}px`,
+                              backgroundColor: isHigh ? '#f43f5e' : '#a29bfe',
+                              opacity: 0.75,
+                            }}
+                          />
+                          {/* Value Tooltip */}
+                          <div className="absolute -top-6 hidden group-hover:flex px-2 py-0.5 rounded-full bg-black/95 text-[10px] font-mono text-[#f5efff] whitespace-nowrap border border-[#f5efff]/20 shadow-2xl z-20 pointer-events-none">
+                            {val.toLocaleString()} pps
+                          </div>
+                          {/* X Axis Time */}
+                          <span className="text-[9px] font-mono text-[#f5efff]/30 mt-1">{idx * 2}s</span>
                         </div>
-                      </div>
-                    );
-                  })}
+                      );
+                    })}
+                  </div>
                 </div>
 
                 <div className="grid grid-cols-3 text-center pt-2 font-mono">
