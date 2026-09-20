@@ -55,6 +55,9 @@ export function useWebSocket() {
 
   const connect = useCallback(() => {
     if (!mountedRef.current) return;
+    if (typeof window !== 'undefined' && window.location.pathname === '/' && !process.env.NEXT_PUBLIC_WS_URL) {
+      return;
+    }
 
     try {
       const ws = new WebSocket(WS_URL);

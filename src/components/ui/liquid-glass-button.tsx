@@ -108,8 +108,10 @@ export const LiquidGlassButton = React.forwardRef<HTMLElement, LiquidGlassButton
         "active:scale-95 backdrop-blur-xl transition-all duration-300",
     }[variant];
 
+    const Comp = (Component || "button") as any;
+
     return (
-      <Component
+      <Comp
         ref={(node: HTMLElement | null) => {
           (localRef as React.MutableRefObject<HTMLElement | null>).current = node;
           if (typeof forwardedRef === "function") forwardedRef(node);
@@ -125,7 +127,7 @@ export const LiquidGlassButton = React.forwardRef<HTMLElement, LiquidGlassButton
         {...props}
       >
         {children}
-      </Component>
+      </Comp>
     );
   }
 );

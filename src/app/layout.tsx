@@ -34,7 +34,6 @@ export default function RootLayout({
         <meta name="color-scheme" content="dark" />
         <meta name="theme-color" content="#08080c" />
         <meta httpEquiv="X-Content-Type-Options" content="nosniff" />
-        <meta httpEquiv="X-Frame-Options" content="DENY" />
         <meta name="referrer" content="no-referrer" />
       </head>
       <body className="bg-[#08080c] text-[#f5efff]">

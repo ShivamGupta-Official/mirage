@@ -68,6 +68,8 @@ interface CyberGlobeProps {
   className?: string;
   /** Strip HUD overlays for lightweight landing page embed */
   compact?: boolean;
+  /** 0 -> 1 scroll progress for perspective camera zoom */
+  scrollProgress?: number;
 }
 
 // Convert Lat/Lon to 3D Cartesian Vector on sphere of radius R
@@ -190,12 +192,109 @@ export function CyberGlobe({
   activeScenario,
   className,
   compact = false,
+  scrollProgress,
 }: CyberGlobeProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const [autoRotate, setAutoRotate] = useState<boolean>(true);
-  const autoRotateRef = useRef(true);
+  const autoRotateRef = useRef<boolean>(true);
   const [liveStreamActive, setLiveStreamActive] = useState<boolean>(true);
-  const [dynamicThreats, setDynamicThreats] = useState<DynamicThreatEvent[]>([]);
+
+  const scrollProgressRef = useRef<number>(scrollProgress ?? 0);
+  useEffect(() => {
+    scrollProgressRef.current = scrollProgress ?? 0;
+  }, [scrollProgress]);
+
+  // Live user location detection (IP + Browser Geolocation)
+  const [userLocation, setUserLocation] = useState<{
+    lat: number;
+    lon: number;
+    city: string;
+    country: string;
+    isDetected: boolean;
+  }>({
+    lat: 28.6139,
+    lon: 77.2090,
+    city: 'Detecting Location...',
+    country: 'Sovereign Enclave',
+    isDetected: false,
+  });
+
+  const lastRotationRef = useRef<{ x: number; y: number }>({ x: 0, y: 0 });
+  const focusingUserRef = useRef<boolean>(true);
+  const targetRotationRef = useRef<{ x: number; y: number }>({
+    x: 0.17,
+    y: -((77.2090 + 90) * Math.PI) / 180,
+  });
+
+  // Automatically detect user's live physical location
+  useEffect(() => {
+    let active = true;
+
+    const setLocation = (lat: number, lon: number, city: string, country: string) => {
+      if (!active) return;
+      setUserLocation({
+        lat,
+        lon,
+        city,
+        country,
+        isDetected: true,
+      });
+      const targetY = -((lon + 90) * Math.PI) / 180;
+      const targetX = Math.max(-0.35, Math.min(0.35, (lat * Math.PI) / 180 * 0.35));
+      targetRotationRef.current = { x: targetX, y: targetY };
+      focusingUserRef.current = true;
+    };
+
+    // 1. Rapid IP Geolocation (instant, no user prompt required)
+    fetch('https://ipapi.co/json/')
+      .then((res) => res.json())
+      .then((data) => {
+        if (!active) return;
+        if (data && typeof data.latitude === 'number' && typeof data.longitude === 'number') {
+          setLocation(data.latitude, data.longitude, data.city || 'Local Area', data.country_name || 'Enclave');
+        }
+      })
+      .catch(() => {
+        // Fallback silently if offline or blocked
+      });
+
+    // 2. High precision browser Geolocation API
+    if (typeof window !== 'undefined' && 'geolocation' in navigator) {
+      navigator.geolocation.getCurrentPosition(
+        (pos) => {
+          if (!active) return;
+          setLocation(
+            pos.coords.latitude,
+            pos.coords.longitude,
+            'Live Client Node',
+            'Sovereign Enclave'
+          );
+        },
+        () => {
+          // IP fallback remains active if geolocation prompt is ignored/declined
+        },
+        { timeout: 7000, enableHighAccuracy: false }
+      );
+    }
+
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  const hoverToUserLocation = useCallback(() => {
+    const targetY = -((userLocation.lon + 90) * Math.PI) / 180;
+    const targetX = Math.max(-0.35, Math.min(0.35, (userLocation.lat * Math.PI) / 180 * 0.35));
+    targetRotationRef.current = { x: targetX, y: targetY };
+    focusingUserRef.current = true;
+  }, [userLocation.lat, userLocation.lon]);
+
+  const [dynamicThreats, setDynamicThreats] = useState<DynamicThreatEvent[]>(() => [
+    generateDynamicHorizonThreat(),
+    generateDynamicHorizonThreat(),
+    generateDynamicHorizonThreat(),
+    generateDynamicHorizonThreat(),
+  ]);
   const [selectedNode, setSelectedNode] = useState<ThreatNode>(DEFAULT_TARGET_NODE);
 
   // Poll dynamic NetScout Horizon threats periodically when live streaming is on
@@ -262,9 +361,27 @@ export function CyberGlobe({
     };
   }, [liveStreamActive]);
 
-  // Combine static target enclave, live Horizon threats, and incoming threatStream into active nodes
+  // Combine user's live enclave target, live Horizon threats, and incoming threatStream into active nodes
   const threatNodes: ThreatNode[] = useMemo(() => {
-    const nodes: ThreatNode[] = [DEFAULT_TARGET_NODE];
+    const userTargetNode: ThreatNode = {
+      id: 'node-target-enclave',
+      ip: '127.0.0.1 (YOU)',
+      label: `PRIMARY DEFENSE ENCLAVE (${userLocation.city})`,
+      location: `${userLocation.city}, ${userLocation.country}`,
+      lat: userLocation.lat,
+      lon: userLocation.lon,
+      role: 'target',
+      riskScore: 8.0,
+      threatType: 'SOVEREIGN ENCLAVE',
+      packetRate: 1450,
+      bandwidthGbps: 1.2,
+      country: userLocation.country,
+      city: userLocation.city,
+      asn: 'AS-OPTICAL-DIODE',
+      mlConfidence: 100,
+    };
+
+    const nodes: ThreatNode[] = [userTargetNode];
 
     // Add dynamic NetScout Horizon threats
     dynamicThreats.forEach((threat) => {
@@ -314,7 +431,7 @@ export function CyberGlobe({
     }
 
     return nodes;
-  }, [dynamicThreats, threatStream]);
+  }, [userLocation, dynamicThreats, threatStream]);
 
   // Only create the 3D scene ONCE when threats first arrive (avoids re-creating every 4s)
   const hasAttackers = threatNodes.length > 1;
@@ -326,47 +443,65 @@ export function CyberGlobe({
     const container = containerRef.current;
     if (!container) return;
 
-    const width = container.clientWidth || 800;
-    const height = container.clientHeight || 550;
+    const getW = () => container.clientWidth || (typeof window !== 'undefined' ? window.innerWidth : 1200);
+    const getH = () => container.clientHeight || (typeof window !== 'undefined' ? window.innerHeight : 800);
 
-    // Scene & Camera
+    const width = getW();
+    const height = getH();
+
+    // Scene & Camera - Centered at Y = 0 (Starts small at z=18.5 in dead center of free space)
     const scene = new THREE.Scene();
     const camera = new THREE.PerspectiveCamera(45, width / height, 0.1, 1000);
-    camera.position.set(0, 0.5, 16);
+    camera.position.set(0, 0, 18.5);
 
-    // WebGL Renderer
+    // WebGL Renderer with full transparent background
     const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
     renderer.setSize(width, height);
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.5));
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
     renderer.toneMapping = THREE.ACESFilmicToneMapping;
     renderer.toneMappingExposure = 1.25;
+    renderer.setClearColor(0x000000, 0);
+
+    renderer.domElement.style.width = '100%';
+    renderer.domElement.style.height = '100%';
+    renderer.domElement.style.display = 'block';
     container.appendChild(renderer.domElement);
 
-    // Lighting
-    const ambientLight = new THREE.AmbientLight(0x0f1c30, 2.0);
+    const domElem = renderer.domElement;
+
+    // Lighting — matching olivierlarose/3d-earth-scroll
+    const ambientLight = new THREE.AmbientLight(0xffffff, 0.25);
     scene.add(ambientLight);
 
-    const sunLight = new THREE.DirectionalLight(0xd4e7ff, 2.5);
-    sunLight.position.set(20, 10, 15);
+    const sunLight = new THREE.DirectionalLight(0xffffff, 3.5);
+    sunLight.position.set(16, 2, -4);
     scene.add(sunLight);
 
-    const blueRimLight = new THREE.DirectionalLight(0x2288ff, 3.5);
-    blueRimLight.position.set(-15, 8, -12);
-    scene.add(blueRimLight);
+    const rimLight = new THREE.DirectionalLight(0x38bdf8, 1.8);
+    rimLight.position.set(-14, 6, -10);
+    scene.add(rimLight);
 
-    // Earth Sphere
+    // 3D Earth Sphere — olivierlarose/3d-earth-scroll textures
     const globeRadius = 4.8;
-    const earthGeometry = new THREE.SphereGeometry(globeRadius, 40, 40);
-    const earthTexture = createProceduralEarthTextures();
+    const earthGeometry = new THREE.SphereGeometry(globeRadius, 64, 64);
+
+    const textureLoader = new THREE.TextureLoader();
+    const colorMap = textureLoader.load('/assets/color.jpg');
+    colorMap.colorSpace = THREE.SRGBColorSpace;
+    const normalMap = textureLoader.load('/assets/normal.png');
+    const aoMap = textureLoader.load('/assets/occlusion.jpg');
 
     const earthMaterial = new THREE.MeshStandardMaterial({
-      map: earthTexture,
-      roughness: 0.60,
-      metalness: 0.25,
-      emissive: new THREE.Color(0x051325),
-      emissiveIntensity: 0.65,
+      map: colorMap,
+      normalMap: normalMap,
+      aoMap: aoMap,
+      roughness: 0.75,
+      metalness: 0.1,
     });
     const earthMesh = new THREE.Mesh(earthGeometry, earthMaterial);
+    // Smooth orientation continuation
+    earthMesh.rotation.y = lastRotationRef.current.y || targetRotationRef.current.y;
+    earthMesh.rotation.x = lastRotationRef.current.x || targetRotationRef.current.x;
     scene.add(earthMesh);
 
     // Atmosphere Glow
@@ -393,12 +528,12 @@ export function CyberGlobe({
     const atmosphereMesh = new THREE.Mesh(atmosphereGeom, atmosphereMat);
     scene.add(atmosphereMesh);
 
-    // Orbital Rings
+    // Orbital Rings — Elegant celestial cyan & soft indigo
     const orbitalGroup = new THREE.Group();
     [
-      { radius: globeRadius * 1.35, rotX: 0.35, rotZ: 0.25, color: 0x3b9eff },
-      { radius: globeRadius * 1.50, rotX: -0.60, rotZ: 0.50, color: 0x4ade80 },
-      { radius: globeRadius * 1.25, rotX: 0.85, rotZ: -0.40, color: 0xf59e0b },
+      { radius: globeRadius * 1.35, rotX: 0.35, rotZ: 0.25, color: 0x38bdf8 },
+      { radius: globeRadius * 1.50, rotX: -0.60, rotZ: 0.50, color: 0x818cf8 },
+      { radius: globeRadius * 1.25, rotX: 0.85, rotZ: -0.40, color: 0x0ea5e9 },
     ].forEach(({ radius, rotX, rotZ, color }) => {
       const ringGeom = new THREE.BufferGeometry();
       const segments = 96;
@@ -440,7 +575,7 @@ export function CyberGlobe({
         : 0xf59e0b;
 
       // Pin Head
-      const headGeom = new THREE.SphereGeometry(isTarget ? 0.20 : 0.15, 16, 16);
+      const headGeom = new THREE.SphereGeometry(isTarget ? 0.22 : 0.15, 16, 16);
       const headMat = new THREE.MeshBasicMaterial({ color: nodeColor });
       const head = new THREE.Mesh(headGeom, headMat);
       head.position.copy(pos);
@@ -448,33 +583,51 @@ export function CyberGlobe({
 
       // Pin Stem
       const normal = pos.clone().normalize();
-      const stemGeom = new THREE.CylinderGeometry(0.02, 0.02, 0.35, 8);
-      const stemMat = new THREE.MeshBasicMaterial({ color: nodeColor, transparent: true, opacity: 0.85 });
-      const stem = new THREE.Mesh(stemGeom, stemMat);
-      stem.position.copy(pos.clone().add(normal.clone().multiplyScalar(0.17)));
-      stem.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), normal);
+      const stemHeight = isTarget ? 0.80 : 0.45;
+      const stemEnd = pos.clone().add(normal.clone().multiplyScalar(stemHeight));
+      const stemGeom = new THREE.BufferGeometry().setFromPoints([pos, stemEnd]);
+      const stemMat = new THREE.LineBasicMaterial({
+        color: nodeColor,
+        transparent: true,
+        opacity: isTarget ? 0.90 : 0.65,
+      });
+      const stem = new THREE.Line(stemGeom, stemMat);
       pinGroup.add(stem);
 
-      // Expanding Radar Shockwave
-      const ringGeom = new THREE.RingGeometry(0.1, 0.18, 32);
-      const ringMat = new THREE.MeshBasicMaterial({
-        color: nodeColor,
-        side: THREE.DoubleSide,
-        transparent: true,
-        opacity: 0.85,
-      });
-      const shockwave = new THREE.Mesh(ringGeom, ringMat);
-      shockwave.position.copy(pos.clone().add(normal.clone().multiplyScalar(0.02)));
-      shockwave.lookAt(pos.clone().add(normal));
-      pinGroup.add(shockwave);
+      // Pin Top Beacon
+      const tipGeom = new THREE.SphereGeometry(isTarget ? 0.09 : 0.05, 12, 12);
+      const tipMat = new THREE.MeshBasicMaterial({ color: isTarget ? 0xe0f2fe : nodeColor });
+      const tip = new THREE.Mesh(tipGeom, tipMat);
+      tip.position.copy(stemEnd);
+      pinGroup.add(tip);
 
-      shockwaveMeshes.push({ mesh: shockwave, scale: 1, maxScale: isTarget ? 4.5 : 3.2 });
+      // Expanding concentric surface radar shockwaves
+      const waveCount = isTarget ? 2 : 1;
+      for (let w = 0; w < waveCount; w++) {
+        const shockwaveGeom = new THREE.RingGeometry(0.18, 0.36, 32);
+        const shockwaveMat = new THREE.MeshBasicMaterial({
+          color: nodeColor,
+          side: THREE.DoubleSide,
+          transparent: true,
+          opacity: isTarget ? 0.55 : 0.75,
+        });
+        const shockwave = new THREE.Mesh(shockwaveGeom, shockwaveMat);
+        shockwave.position.copy(pos.clone().multiplyScalar(1.004));
+        shockwave.lookAt(pos.clone().multiplyScalar(2));
+        pinGroup.add(shockwave);
+
+        shockwaveMeshes.push({
+          mesh: shockwave,
+          scale: 1.0 + w * 1.5,
+          maxScale: isTarget ? 4.2 : 3.0,
+        });
+      }
     });
     earthMesh.add(pinGroup);
 
     // Ballistic Attack Trajectory Arcs with Laser Particles
     const arcGroup = new THREE.Group();
-    const targetNode = threatNodes.find((n) => n.role === 'target') || DEFAULT_TARGET_NODE;
+    const targetNode = threatNodes.find((n) => n.role === 'target') || threatNodes[0];
     const targetVec = latLonToVector3(targetNode.lat, targetNode.lon, globeRadius);
 
     interface AttackArcData {
@@ -538,6 +691,7 @@ export function CyberGlobe({
 
     const onPointerDown = (e: PointerEvent) => {
       isDragging = true;
+      focusingUserRef.current = false;
       prevMousePos = { x: e.clientX, y: e.clientY };
     };
 
@@ -556,24 +710,90 @@ export function CyberGlobe({
       isDragging = false;
     };
 
-    const domElem = renderer.domElement;
+    // Scroll rotation & wheel zoom (olivierlarose/3d-earth-scroll behavior)
+    let lastScrollY = typeof window !== 'undefined' ? window.scrollY : 0;
+    let scrollDelta = 0;
+    const onScroll = () => {
+      const currentScrollY = window.scrollY;
+      scrollDelta = (currentScrollY - lastScrollY) * 0.0025;
+      lastScrollY = currentScrollY;
+    };
+    window.addEventListener('scroll', onScroll, { passive: true });
+
+    const onWheel = (e: WheelEvent) => {
+      e.preventDefault();
+      camera.position.z = Math.max(9, Math.min(26, camera.position.z + e.deltaY * 0.012));
+    };
+
     domElem.addEventListener('pointerdown', onPointerDown);
+    domElem.addEventListener('wheel', onWheel, { passive: false });
     window.addEventListener('pointermove', onPointerMove);
     window.addEventListener('pointerup', onPointerUp);
+
+    // Helper for shortest rotational path interpolation
+    const shortestAngleDiff = (target: number, current: number): number => {
+      const twoPi = Math.PI * 2;
+      let diff = (target - current) % twoPi;
+      if (diff < -Math.PI) diff += twoPi;
+      if (diff > Math.PI) diff -= twoPi;
+      return diff;
+    };
 
     // Animation Loop
     let animId: number;
     let clock = new THREE.Clock();
+    let currentScrollRotation = (scrollProgressRef.current ?? 0) * (Math.PI * 4.0);
+    let targetScrollRotation = currentScrollRotation;
 
     const animate = () => {
       animId = requestAnimationFrame(animate);
       const elapsedTime = clock.getElapsedTime();
 
-      // Continuous auto-rotation when not dragging
-      if (autoRotateRef.current && !isDragging) {
-        earthMesh.rotation.y += 0.0018;
+      // Dynamic scroll-driven rotation: rotates smoothly around its axis across 4-5 pages
+      if (scrollProgressRef.current !== undefined) {
+        const p = Math.min(1, Math.max(0, scrollProgressRef.current));
+        targetScrollRotation = p * (Math.PI * 4.0);
       }
-      orbitalGroup.rotation.y -= 0.0010;
+      const scrollRotDelta = (targetScrollRotation - currentScrollRotation) * 0.12;
+      currentScrollRotation += scrollRotDelta;
+
+      if (Math.abs(scrollRotDelta) > 0.0001) {
+        // Rotate earth directly in sync with scroll animation
+        focusingUserRef.current = false;
+        earthMesh.rotation.y += scrollRotDelta;
+      } else if (!isDragging) {
+        // Smooth hover towards user's live physical location when idle
+        if (focusingUserRef.current) {
+          const diffY = shortestAngleDiff(targetRotationRef.current.y, earthMesh.rotation.y);
+          const diffX = targetRotationRef.current.x - earthMesh.rotation.x;
+          earthMesh.rotation.y += diffY * 0.045;
+          earthMesh.rotation.x += diffX * 0.045;
+
+          if (Math.abs(diffY) < 0.002 && Math.abs(diffX) < 0.002) {
+            focusingUserRef.current = false;
+          }
+        } else if (autoRotateRef.current) {
+          earthMesh.rotation.y += 0.0016;
+        }
+      }
+
+      // Responsive Continuous Zoom: Earth expands with EACH scroll from small (z=18.0) to full max zoom (z=4.85)
+      if (scrollProgressRef.current !== undefined) {
+        const p = Math.min(1, Math.max(0, scrollProgressRef.current));
+        // Direct continuous zoom without plateaus — expands visibly with each scroll
+        const targetZ = 18.0 - Math.pow(p, 0.90) * 13.15; // 18.0 -> 4.85
+        camera.position.z += (targetZ - camera.position.z) * 0.14;
+
+        // Subtle dynamic 3D latitude tilt during scroll
+        const targetTiltX = 0.16 + Math.sin(p * Math.PI) * 0.12;
+        earthMesh.rotation.x += (targetTiltX - earthMesh.rotation.x) * 0.06;
+      }
+
+      // Remember rotation state
+      lastRotationRef.current.y = earthMesh.rotation.y;
+      lastRotationRef.current.x = earthMesh.rotation.x;
+
+      orbitalGroup.rotation.y += scrollRotDelta * 0.4 - 0.0010;
 
       // Animate shockwaves
       shockwaveMeshes.forEach((item) => {
@@ -602,30 +822,43 @@ export function CyberGlobe({
 
     const handleResize = () => {
       if (!container) return;
-      const newW = container.clientWidth;
-      const newH = container.clientHeight;
-      camera.aspect = newW / newH;
-      camera.updateProjectionMatrix();
-      renderer.setSize(newW, newH);
+      const newW = container.clientWidth || window.innerWidth;
+      const newH = container.clientHeight || window.innerHeight;
+      if (newW > 0 && newH > 0) {
+        camera.aspect = newW / newH;
+        camera.updateProjectionMatrix();
+        renderer.setSize(newW, newH);
+      }
     };
+
+    let resizeObserver: ResizeObserver | null = null;
+    if (typeof ResizeObserver !== 'undefined') {
+      resizeObserver = new ResizeObserver(() => {
+        handleResize();
+      });
+      resizeObserver.observe(container);
+    }
     window.addEventListener('resize', handleResize);
 
     return () => {
       cancelAnimationFrame(animId);
+      if (resizeObserver) resizeObserver.disconnect();
       window.removeEventListener('resize', handleResize);
+      window.removeEventListener('scroll', onScroll);
+      domElem.removeEventListener('wheel', onWheel);
       domElem.removeEventListener('pointerdown', onPointerDown);
       window.removeEventListener('pointermove', onPointerMove);
       window.removeEventListener('pointerup', onPointerUp);
-      if (container && renderer.domElement) {
-        container.removeChild(renderer.domElement);
+      if (container && domElem && container.contains(domElem)) {
+        container.removeChild(domElem);
       }
       renderer.dispose();
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [hasAttackers]);
+  }, [userLocation.lat, userLocation.lon, hasAttackers]);
 
   return (
-    <div className={`relative overflow-hidden bg-[#090910] ${className || 'h-[640px]'}`}>
+    <div className={`relative overflow-hidden bg-transparent ${className || 'h-[640px]'}`}>
       {/* 3D WebGL Canvas */}
       <div ref={containerRef} className="w-full h-full cursor-grab active:cursor-grabbing" />
 
@@ -791,6 +1024,27 @@ export function CyberGlobe({
               </div>
             </div>
           )}
+
+          {/* Floating Live User Enclave Telemetry — Only in full dashboard view */}
+          <div className="absolute bottom-6 left-1/2 -translate-x-1/2 z-20 flex items-center gap-2.5 px-3 py-1.5 font-mono text-[11px] text-[#f5efff]/75 pointer-events-auto select-none">
+            <span className="flex h-2 w-2 relative">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-cyan-400 opacity-75"></span>
+              <span className="relative inline-flex rounded-full h-2 w-2 bg-cyan-500"></span>
+            </span>
+            <span className="truncate max-w-[210px] sm:max-w-none">
+              <span className="text-[#f5efff]/40 mr-1.5 uppercase tracking-wider text-[9px]">YOUR DEFENSE NODE:</span>
+              <strong className="text-white font-medium">{userLocation.city}, {userLocation.country}</strong>
+            </span>
+            <span className="text-[#f5efff]/20">·</span>
+            <button
+              onClick={hoverToUserLocation}
+              className="text-cyan-400 hover:text-cyan-300 font-medium tracking-wide flex items-center gap-1 transition-colors cursor-pointer text-[10px] uppercase hover:underline"
+              title="Center globe on your physical location"
+            >
+              <Crosshair size={11} className="text-cyan-400" />
+              <span>Orient to Me</span>
+            </button>
+          </div>
         </>
       )}
     </div>

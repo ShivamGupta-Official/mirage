@@ -9,26 +9,20 @@ import { Eyebrow } from '@/components/studio/eyebrow';
 import { Magnetic } from '@/components/studio/magnetic-button';
 import { CountUp } from '@/components/studio/count-up';
 import { ScrollReveal } from '@/components/studio/scroll-reveal';
-import { CyberGlobe } from '@/components/network/cyber-globe';
+import { ScrollGlobeHero } from '@/components/ui/scroll-globe-hero';
 import { STUDIO_PROJECTS, STUDIO_SERVICES, STUDIO_AWARDS } from '@/lib/studio-data';
 import { DefenseModulesGrid } from '@/components/studio/defense-modules-grid';
-import { WovenLightHero, WovenCanvas } from '@/components/studio/woven-light-hero';
-
-/* ────────────────────────────────────────────────────────
-   MIRAGE — Clean, spacious landing page
-   Every section uses generous negative space and big type.
-   All animations are GPU-accelerated (transform3d + opacity).
-   No scroll listeners — purely IntersectionObserver-driven.
-──────────────────────────────────────────────────────── */
+import { WovenCanvas } from '@/components/studio/woven-light-hero';
+import { TextParticle } from '@/components/ui/text-particle';
 
 export default function HomePage() {
   return (
-    <div className="relative min-h-screen bg-[#08080c] text-[#f5efff] overflow-x-hidden selection:bg-[#f5efff] selection:text-[#08080c]">
+    <div className="relative min-h-screen bg-[#08080c] text-[#f5efff] selection:bg-[#f5efff] selection:text-[#08080c]">
       {/* ═══ PRELOADER (3 seconds) ═══ */}
       <Preloader />
 
-      {/* ═══ PERSISTENT 2X WOVEN SILK CANVAS (ACTIVE TILL VERY END OF THE SITE) ═══ */}
-      <div className="fixed inset-0 z-0 pointer-events-none opacity-50">
+      {/* ═══ PERSISTENT 2X WOVEN SILK PARTICLES CANVAS (THROUGHOUT THE SITE) ═══ */}
+      <div className="fixed inset-0 z-0 pointer-events-none opacity-45">
         <WovenCanvas scale={2.4} />
       </div>
 
@@ -36,9 +30,9 @@ export default function HomePage() {
       <StudioNav />
 
       {/* ═════════════════════════════════════════════════════
-          1. HERO — Full viewport, titles from different edges
+          1. FIRST PAGE: PROJECT HERO (MIRAGE / NTRO)
       ═════════════════════════════════════════════════════ */}
-      <section className="relative min-h-screen flex flex-col justify-center px-6 sm:px-10 md:px-16 lg:px-24 pt-32 pb-24 overflow-hidden z-10">
+      <section className="relative min-h-screen flex flex-col justify-center px-6 sm:px-10 md:px-16 lg:px-24 pt-24 sm:pt-28 pb-16 overflow-hidden z-10">
         {/* Soft ambient gradient */}
         <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_25%_15%,rgba(245,239,255,0.03),transparent_55%)]" />
 
@@ -48,44 +42,41 @@ export default function HomePage() {
             <Eyebrow label="// NTRO · PROBLEM STATEMENT 26145 · SIH 2026" tag="active" />
           </ScrollReveal>
 
-          {/* Main title — each line from a different direction */}
-          <div className="mt-12 sm:mt-16 space-y-1 sm:space-y-2 md:space-y-3">
-            <ScrollReveal direction="left" delay={300} distance={140} duration={1100}>
-              <h1 className="font-editorial text-[3.2rem] sm:text-7xl md:text-[5.5rem] lg:text-[7.5rem] xl:text-[9rem] font-light tracking-tight leading-[0.9] text-[#f5efff]">
-                Multi-Resolution
-              </h1>
-            </ScrollReveal>
-
-            <ScrollReveal direction="right" delay={520} distance={140} duration={1100}>
-              <h1 className="font-editorial text-[3.2rem] sm:text-7xl md:text-[5.5rem] lg:text-[7.5rem] xl:text-[9rem] font-light tracking-tight leading-[0.9] italic text-white">
-                Passive Threat
-              </h1>
-            </ScrollReveal>
-
-            <ScrollReveal direction="bottom" delay={740} distance={100} duration={1100}>
-              <h1 className="font-editorial text-[3.2rem] sm:text-7xl md:text-[5.5rem] lg:text-[7.5rem] xl:text-[9rem] font-light tracking-tight leading-[0.9] text-[#f5efff]">
-                Intelligence
-              </h1>
-            </ScrollReveal>
+          {/* Main title — interactive physics particle text */}
+          <div className="mt-4 sm:mt-5 w-full max-w-[1280px] h-[220px] sm:h-[300px] md:h-[370px] lg:h-[420px] relative pointer-events-auto">
+            <h1 className="sr-only">Multi-Resolution Passive Threat Intelligence</h1>
+            <TextParticle
+              lines={[
+                { text: 'Multi-Resolution' },
+                { text: 'Passive Threat', italic: true },
+                { text: 'Intelligence' },
+              ]}
+              textAlign="left"
+              fontSize={140}
+              fontFamily='"Cormorant Garamond", Georgia, serif'
+              particleSize={2.4}
+              particleColor="#f5efff"
+              particleDensity={3}
+              lineHeightMultiplier={1.02}
+              className="w-full h-full"
+            />
           </div>
 
-          {/* Description */}
-          <ScrollReveal direction="fade" delay={950} duration={900}>
-            <p className="mt-12 sm:mt-16 max-w-2xl text-base sm:text-lg md:text-xl text-[#f5efff]/50 font-light leading-[1.7]">
-              Hardware-enforced unidirectional optical tap monitoring.
-              Extracts packet, connection, and session graph invariants
-              with zero physical return channel.
+          {/* Description — pushed a bit more up */}
+          <ScrollReveal direction="fade" delay={850} duration={800}>
+            <p className="mt-3 sm:mt-4 max-w-2xl text-base sm:text-lg md:text-xl text-[#f5efff]/60 font-light leading-[1.65]">
+              Hardware-enforced unidirectional optical tap monitoring. Extracts packet, connection, and session graph invariants with zero physical return channel.
             </p>
           </ScrollReveal>
 
           {/* CTAs */}
-          <ScrollReveal direction="bottom" delay={1150} duration={800}>
-            <div className="mt-10 sm:mt-12 flex flex-wrap gap-4">
+          <ScrollReveal direction="bottom" delay={1050} duration={800}>
+            <div className="mt-6 sm:mt-8 flex flex-wrap gap-4">
               <Magnetic strength={0.3}>
                 <Link
                   href="/dashboard"
                   data-cursor="Launch"
-                  className="studio-pill-btn studio-pill-btn-primary text-sm sm:text-base py-4 px-9 sm:px-11"
+                  className="studio-pill-btn studio-pill-btn-primary text-sm sm:text-base py-3.5 px-8 sm:px-10"
                 >
                   Enter Live SOC Console
                 </Link>
@@ -94,7 +85,7 @@ export default function HomePage() {
                 <Link
                   href="/work"
                   data-cursor="View"
-                  className="studio-pill-btn text-sm sm:text-base py-4 px-9 sm:px-11"
+                  className="studio-pill-btn text-sm sm:text-base py-3.5 px-8 sm:px-10"
                 >
                   Explore Architectures
                 </Link>
@@ -105,9 +96,9 @@ export default function HomePage() {
       </section>
 
       {/* ═════════════════════════════════════════════════════
-          2. LIVE METRICS — Three clean stat cards
+          2. LIVE METRICS — Sub-millisecond stats
       ═════════════════════════════════════════════════════ */}
-      <section className="px-6 sm:px-10 md:px-16 lg:px-24 pb-24 md:pb-32">
+      <section className="px-6 sm:px-10 md:px-16 lg:px-24 pb-24 md:pb-32 relative z-10">
         <div className="max-w-[1400px] mx-auto grid grid-cols-1 sm:grid-cols-3 gap-5 sm:gap-7">
           {[
             { label: 'EVALUATION LATENCY', value: '1.45 ms', note: 'Sub-millisecond Streaming', accent: 'emerald' },
@@ -133,60 +124,35 @@ export default function HomePage() {
       </section>
 
       {/* ═════════════════════════════════════════════════════
-          3. SOC DASHBOARD PREVIEW — Optimized Globe
+          3. SECOND PAGE ONWARD: 5-SCREEN 3D EARTH SCROLL ANIMATION
       ═════════════════════════════════════════════════════ */}
-      <section className="px-6 sm:px-10 md:px-16 lg:px-24 py-24 md:py-36 border-t border-[#f5efff]/[0.05]">
-        <div className="max-w-[1400px] mx-auto">
-          <ScrollReveal direction="fade">
-            <Eyebrow label="// SOVEREIGN DEFENSE TELEMETRY" tag="active" />
-          </ScrollReveal>
-
-          <div className="mt-5 mb-12 sm:mb-16 flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4">
-            <ScrollReveal direction="left" delay={200}>
-              <h2 className="font-editorial text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-light tracking-tight text-[#f5efff] leading-[1.05]">
-                Global Ingress <span className="italic">Threat Radar</span>
-              </h2>
-            </ScrollReveal>
-
-            <ScrollReveal direction="right" delay={350}>
-              <Link
-                href="/dashboard"
-                data-cursor="Launch"
-                className="inline-flex items-center gap-2 font-mono text-xs uppercase tracking-[0.2em] text-[#f5efff]/50 hover:text-white transition-colors whitespace-nowrap"
-              >
-                Open Full Console <ArrowUpRight className="h-3.5 w-3.5" />
-              </Link>
-            </ScrollReveal>
-          </div>
-
-          <ScrollReveal direction="bottom" delay={300} distance={50}>
-            <div className="rounded-3xl border border-[#f5efff]/[0.08] bg-[#09090f] overflow-hidden shadow-[0_20px_60px_rgba(0,0,0,0.6)]">
-              {/* Window bar */}
-              <div className="border-b border-[#f5efff]/[0.06] px-6 py-3.5 flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <span className="h-2 w-2 rounded-full bg-emerald-400 animate-pulse" />
-                  <span className="font-mono text-[10px] sm:text-xs tracking-wider uppercase text-[#f5efff]/50">
-                    LIVE ORBITAL TELEMETRY · WebGL
-                  </span>
-                </div>
-                <span className="font-mono text-[10px] text-[#f5efff]/30 uppercase tracking-widest hidden sm:inline">
-                  60 FPS
-                </span>
-              </div>
-
-              {/* Globe — compact mode strips all HUD overlays */}
-              <div className="h-[320px] sm:h-[420px] md:h-[500px] w-full relative">
-                <CyberGlobe compact />
-              </div>
-            </div>
-          </ScrollReveal>
-        </div>
-      </section>
+      <ScrollGlobeHero
+        pages={5}
+        headline="Global Ingress Threat Radar"
+        subhead="Hardware-enforced unidirectional optical tap monitoring and real-time planetary threat reconnaissance."
+        sections={[
+          {
+            title: 'Autonomous Reconnaissance',
+            body: 'Continuous planetary radar mapping and satellite payload trajectory tracking at microsecond resolution.',
+          },
+          {
+            title: 'Zero-Trust Mesh Topology',
+            body: 'Sovereign cryptographic attestations synchronizing orbital arrays with subterranean ground stations.',
+          },
+          {
+            title: 'Quantum-Resistant Telemetry',
+            body: 'Post-quantum lattice encryptions shielding mission-critical national security datalinks globally.',
+          },
+        ]}
+        outroTitle="MIRAGE"
+        outroDescription="Multi-resolution Intelligent Risk & Adaptive Graph Engine"
+        className="z-10"
+      />
 
       {/* ═════════════════════════════════════════════════════
           4. CORE PILLARS — Three spacious cards
       ═════════════════════════════════════════════════════ */}
-      <section className="px-6 sm:px-10 md:px-16 lg:px-24 py-28 md:py-44 border-t border-[#f5efff]/[0.05]">
+      <section className="px-6 sm:px-10 md:px-16 lg:px-24 py-28 md:py-44">
         <div className="max-w-[1400px] mx-auto">
           <ScrollReveal direction="fade">
             <Eyebrow label="// CORE ARCHITECTURAL PILLARS" tag="active" />

@@ -73,7 +73,6 @@
 html {
   background-color: var(--studio-bg);
   color: #f5efff;
-  scroll-behavior: smooth;
   color-scheme: dark;
 }
 
@@ -81,7 +80,6 @@ body {
   background-color: var(--studio-bg);
   color: #f5efff;
   font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
-  overflow-x: hidden;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
