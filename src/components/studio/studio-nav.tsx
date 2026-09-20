@@ -52,12 +52,12 @@ export function StudioNav() {
             : 'py-6 bg-transparent border-b border-transparent'
         }`}
       >
-        <div className="mx-auto flex max-w-7xl items-center justify-between px-6 md:px-12">
+        <div className="mx-auto flex max-w-7xl items-center justify-between px-4 sm:px-6 md:px-12">
           {/* Brand / Home Link */}
           <Link
             href="/"
             data-cursor="Home"
-            className="group flex items-center gap-3.5 focus:outline-none"
+            className="group flex items-center gap-3 sm:gap-3.5 focus:outline-none"
           >
             <div className="relative flex h-8 w-8 items-center justify-center rounded-lg border border-[#f5efff]/20 bg-[#f5efff]/5 transition-all duration-300 group-hover:border-[#f5efff]/50 group-hover:shadow-[0_0_20px_rgba(245,239,255,0.2)]">
               <Shield className="h-4 w-4 text-[#f5efff] transition-transform duration-300 group-hover:scale-110" />
@@ -74,7 +74,7 @@ export function StudioNav() {
           </Link>
 
           {/* Right Controls */}
-          <div className="flex items-center gap-3 sm:gap-4">
+          <div className="flex items-center gap-2.5 sm:gap-4">
             {/* Audio frequency visualizer */}
             <div className="hidden sm:flex items-center gap-1 px-3 py-1.5 rounded-full border border-[#f5efff]/10 bg-[#f5efff]/5 text-[#f5efff]/70">
               <span className="studio-eq-bar" />
@@ -92,9 +92,9 @@ export function StudioNav() {
                 onClick={() => setIsSettingsOpen(true)}
                 data-cursor="Settings"
                 aria-label="Open System Settings"
-                className="flex h-10 w-10 items-center justify-center rounded-full border border-[#f5efff]/15 bg-[#f5efff]/5 text-[#f5efff] hover:border-[#f5efff]/40 hover:bg-[#f5efff]/10 transition-all duration-300 focus:outline-none"
+                className="flex h-9 w-9 sm:h-10 sm:w-10 items-center justify-center rounded-full border border-[#f5efff]/15 bg-[#f5efff]/5 text-[#f5efff] hover:border-[#f5efff]/40 hover:bg-[#f5efff]/10 active:scale-95 transition-all duration-300 focus:outline-none"
               >
-                <Sliders className="h-4 w-4" />
+                <Sliders className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
               </button>
             </Magnetic>
 
@@ -118,7 +118,7 @@ export function StudioNav() {
                 onClick={() => setIsMenuOpen(true)}
                 data-cursor="Menu"
                 aria-label="Open Navigation Menu"
-                className="flex h-10 w-10 items-center justify-center rounded-full border border-[#f5efff]/15 bg-[#f5efff]/5 text-[#f5efff] hover:border-[#f5efff]/40 hover:bg-[#f5efff]/10 transition-all duration-300 focus:outline-none"
+                className="flex h-9 w-9 sm:h-10 sm:w-10 items-center justify-center rounded-full border border-[#f5efff]/15 bg-[#f5efff]/5 text-[#f5efff] hover:border-[#f5efff]/40 hover:bg-[#f5efff]/10 active:scale-95 transition-all duration-300 focus:outline-none"
               >
                 <Menu className="h-4 w-4" />
               </button>
@@ -129,44 +129,44 @@ export function StudioNav() {
 
       {/* Full-Screen Overlay Navigation Menu */}
       <div
-        className={`fixed inset-0 z-[100] flex flex-col justify-between bg-[#08080c] px-6 py-8 md:px-16 md:py-12 text-[#f5efff] transition-all duration-500 ease-in-out ${
+        className={`fixed inset-0 z-[100] flex flex-col justify-between bg-[#08080c] px-4 py-6 sm:px-8 md:px-16 md:py-12 text-[#f5efff] overflow-y-auto transition-all duration-500 ease-in-out ${
           isMenuOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'
         }`}
       >
         {/* Top Header inside overlay */}
-        <div className="flex items-center justify-between border-b border-[#f5efff]/10 pb-6">
+        <div className="flex items-center justify-between border-b border-[#f5efff]/10 pb-5 sm:pb-6">
           <div className="flex items-center gap-3">
             <span className="h-2 w-2 rounded-full bg-[#f5efff] shadow-[0_0_8px_#f5efff]" />
-            <span className="font-mono text-xs uppercase tracking-[0.25em] text-[#f5efff]/70">
+            <span className="font-mono text-[11px] sm:text-xs uppercase tracking-[0.25em] text-[#f5efff]/70">
               NAVIGATION DIRECTORY
             </span>
           </div>
           <button
             onClick={() => setIsMenuOpen(false)}
             data-cursor="Close"
-            className="flex h-10 w-10 items-center justify-center rounded-full border border-[#f5efff]/20 bg-[#f5efff]/5 text-[#f5efff] hover:bg-[#f5efff]/15 transition-colors"
+            className="flex h-9 w-9 sm:h-10 sm:w-10 items-center justify-center rounded-full border border-[#f5efff]/20 bg-[#f5efff]/5 text-[#f5efff] hover:bg-[#f5efff]/15 active:scale-95 transition-all"
           >
-            <X className="h-5 w-5" />
+            <X className="h-4 w-4 sm:h-5 sm:w-5" />
           </button>
         </div>
 
         {/* Central Menu Items */}
-        <div className="my-auto max-w-4xl py-8">
-          <nav className="space-y-4 md:space-y-6">
+        <div className="my-auto max-w-4xl py-6 sm:py-8">
+          <nav className="space-y-3 sm:space-y-4 md:space-y-6">
             {navLinks.map((link) => {
               const isActive = pathname === link.href;
               return (
-                <div key={link.num} className="group flex flex-col md:flex-row md:items-baseline justify-between py-2 border-b border-[#f5efff]/5 transition-all duration-300 hover:border-[#f5efff]/25">
+                <div key={link.num} className="group flex flex-col md:flex-row md:items-baseline justify-between py-1.5 sm:py-2 border-b border-[#f5efff]/5 transition-all duration-300 hover:border-[#f5efff]/25">
                   <Link
                     href={link.href}
                     data-cursor="View"
-                    className="flex items-baseline gap-4 md:gap-8"
+                    className="flex items-baseline gap-3 sm:gap-4 md:gap-8"
                   >
-                    <span className="font-mono text-sm md:text-base text-[#f5efff]/35 group-hover:text-[#f5efff] transition-colors">
+                    <span className="font-mono text-xs sm:text-sm md:text-base text-[#f5efff]/35 group-hover:text-[#f5efff] transition-colors">
                       {link.num}
                     </span>
                     <span
-                      className={`font-editorial text-4xl sm:text-6xl md:text-7xl font-light tracking-tight transition-all duration-300 ${
+                      className={`font-editorial text-3xl sm:text-5xl md:text-7xl font-light tracking-tight transition-all duration-300 ${
                         isActive
                           ? 'text-[#f5efff] italic underline underline-offset-8 decoration-1 decoration-[#f5efff]/50'
                           : 'text-[#f5efff]/75 group-hover:text-[#f5efff] group-hover:translate-x-3'
@@ -175,7 +175,7 @@ export function StudioNav() {
                       {link.label}
                     </span>
                   </Link>
-                  <span className="mt-1 md:mt-0 font-mono text-xs text-[#f5efff]/40 tracking-wider">
+                  <span className="mt-1 md:mt-0 font-mono text-[11px] sm:text-xs text-[#f5efff]/40 tracking-wider">
                     {link.desc}
                   </span>
                 </div>

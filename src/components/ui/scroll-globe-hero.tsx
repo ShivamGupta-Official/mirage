@@ -256,22 +256,22 @@ export function ScrollGlobeHero({
           {/* Hero Layer (Screen 1) */}
           <div
             ref={heroRef}
-            className="absolute inset-0 grid place-items-center will-change-transform will-change-opacity p-6"
+            className="absolute inset-0 grid place-items-center will-change-transform will-change-opacity p-4 sm:p-6"
           >
-            <div className="text-center max-w-5xl mx-auto space-y-4 pt-8 md:pt-0">
-              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-[#f5efff]/10 bg-[#f5efff]/5 mb-3">
+            <div className="text-center max-w-5xl mx-auto space-y-3 sm:space-y-4 pt-6 md:pt-0">
+              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-[#f5efff]/10 bg-[#f5efff]/5 mb-2 sm:mb-3">
                 <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-                <span className="font-mono text-xs uppercase tracking-[0.25em] text-[#f5efff]/70">
+                <span className="font-mono text-[10px] sm:text-xs uppercase tracking-[0.25em] text-[#f5efff]/70">
                   // SOVEREIGN DEFENSE TELEMETRY · GLOBAL RADAR
                 </span>
               </div>
-              <h2 className="font-editorial text-5xl sm:text-7xl md:text-8xl lg:text-9xl font-light tracking-tight leading-[0.95] text-[#f5efff]">
+              <h2 className="font-editorial text-3xl sm:text-6xl md:text-8xl lg:text-9xl font-light tracking-tight leading-[1.05] sm:leading-[0.95] text-[#f5efff]">
                 Global Ingress <span className="italic text-white">Threat Radar</span>
               </h2>
-              <p className="mt-4 text-base sm:text-lg md:text-xl text-[#f5efff]/50 max-w-2xl mx-auto font-light leading-[1.7]">
+              <p className="mt-3 sm:mt-4 text-xs sm:text-base md:text-xl text-[#f5efff]/55 max-w-2xl mx-auto font-light leading-relaxed">
                 {subhead}
               </p>
-              <div className="pt-6 flex items-center justify-center gap-2 text-xs font-mono text-[#f5efff]/40 uppercase tracking-widest">
+              <div className="pt-4 sm:pt-6 flex items-center justify-center gap-2 text-[11px] sm:text-xs font-mono text-[#f5efff]/40 uppercase tracking-widest">
                 <span>Scroll to explore orbit</span>
                 <span className="animate-bounce">↓</span>
               </div>
@@ -285,16 +285,16 @@ export function ScrollGlobeHero({
               ref={(el) => {
                 beatRefs.current[idx] = el;
               }}
-              className="absolute inset-0 grid place-items-center will-change-transform will-change-opacity p-6"
+              className="absolute inset-0 grid place-items-center will-change-transform will-change-opacity p-4 sm:p-6"
             >
-              <div className="text-center max-w-3xl mx-auto space-y-3 px-6">
-                <div className="font-mono text-xs uppercase tracking-[0.25em] text-cyan-400/90 font-medium">
+              <div className="text-center max-w-3xl mx-auto space-y-2.5 sm:space-y-3 px-4 sm:px-6">
+                <div className="font-mono text-[11px] sm:text-xs uppercase tracking-[0.25em] text-cyan-400/90 font-medium">
                   // TELEMETRY VECTOR 0{idx + 1}
                 </div>
-                <h3 className="font-editorial text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-light tracking-tight text-[#f5efff] leading-tight">
+                <h3 className="font-editorial text-2xl sm:text-5xl md:text-6xl lg:text-7xl font-light tracking-tight text-[#f5efff] leading-tight">
                   {beat.title}
                 </h3>
-                <p className="font-sans text-sm sm:text-base md:text-lg text-[#f5efff]/60 font-light leading-relaxed max-w-xl mx-auto">
+                <p className="font-sans text-xs sm:text-base md:text-lg text-[#f5efff]/60 font-light leading-relaxed max-w-xl mx-auto">
                   {beat.body}
                 </p>
               </div>
@@ -305,7 +305,7 @@ export function ScrollGlobeHero({
           {outroTitle && (
             <div
               ref={outroRef}
-              className="absolute inset-x-0 bottom-3 sm:bottom-6 top-[53%] flex flex-col items-center justify-center will-change-transform will-change-opacity px-6 pointer-events-none z-10"
+              className="absolute inset-x-0 bottom-2 sm:bottom-6 top-[48%] sm:top-[53%] flex flex-col items-center justify-center will-change-transform will-change-opacity px-4 sm:px-6 pointer-events-none z-10"
             >
               <div className="text-center max-w-4xl mx-auto space-y-2 sm:space-y-3">
                 {outroEyebrow && (
@@ -316,14 +316,14 @@ export function ScrollGlobeHero({
                     </span>
                   </div>
                 )}
-                <div className="w-full h-24 sm:h-32 md:h-40 max-w-4xl mx-auto pointer-events-auto relative">
+                <div className="w-full h-20 sm:h-32 md:h-40 max-w-4xl mx-auto pointer-events-auto relative">
                   <TextParticle
                     text={outroTitle}
-                    fontSize={120}
+                    fontSize={110}
                     fontFamily='"Cormorant Garamond", Georgia, serif'
-                    particleSize={2.2}
+                    particleSize={2.0}
                     particleColor="#f5efff"
-                    particleDensity={4}
+                    particleDensity={3}
                     className="w-full h-full"
                   />
                 </div>

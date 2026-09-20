@@ -32,7 +32,7 @@ export default function HomePage() {
       {/* ═════════════════════════════════════════════════════
           1. FIRST PAGE: PROJECT HERO (MIRAGE / NTRO)
       ═════════════════════════════════════════════════════ */}
-      <section className="relative min-h-screen flex flex-col justify-center px-6 sm:px-10 md:px-16 lg:px-24 pt-24 sm:pt-28 pb-16 overflow-hidden z-10">
+      <section className="relative min-h-[100dvh] flex flex-col justify-center px-4 sm:px-10 md:px-16 lg:px-24 pt-20 sm:pt-28 pb-12 sm:pb-16 overflow-hidden z-10">
         {/* Soft ambient gradient */}
         <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_25%_15%,rgba(245,239,255,0.03),transparent_55%)]" />
 
@@ -43,7 +43,7 @@ export default function HomePage() {
           </ScrollReveal>
 
           {/* Main title — interactive physics particle text */}
-          <div className="mt-4 sm:mt-5 w-full max-w-[1280px] h-[220px] sm:h-[300px] md:h-[370px] lg:h-[420px] relative pointer-events-auto">
+          <div className="mt-4 sm:mt-5 w-full max-w-[1280px] h-[190px] sm:h-[300px] md:h-[370px] lg:h-[420px] relative pointer-events-auto">
             <h1 className="sr-only">Multi-Resolution Passive Threat Intelligence</h1>
             <TextParticle
               lines={[
@@ -57,35 +57,35 @@ export default function HomePage() {
               particleSize={2.4}
               particleColor="#f5efff"
               particleDensity={3}
-              lineHeightMultiplier={1.02}
+              lineHeightMultiplier={1.04}
               className="w-full h-full"
             />
           </div>
 
           {/* Description — pushed a bit more up */}
           <ScrollReveal direction="fade" delay={850} duration={800}>
-            <p className="mt-3 sm:mt-4 max-w-2xl text-base sm:text-lg md:text-xl text-[#f5efff]/60 font-light leading-[1.65]">
+            <p className="mt-3 sm:mt-4 max-w-2xl text-sm sm:text-base md:text-lg lg:text-xl text-[#f5efff]/65 font-light leading-relaxed">
               Hardware-enforced unidirectional optical tap monitoring. Extracts packet, connection, and session graph invariants with zero physical return channel.
             </p>
           </ScrollReveal>
 
           {/* CTAs */}
           <ScrollReveal direction="bottom" delay={1050} duration={800}>
-            <div className="mt-6 sm:mt-8 flex flex-wrap gap-4">
-              <Magnetic strength={0.3}>
+            <div className="mt-6 sm:mt-8 flex flex-col sm:flex-row gap-3 sm:gap-4 w-full sm:w-auto">
+              <Magnetic strength={0.3} className="w-full sm:w-auto">
                 <Link
                   href="/dashboard"
                   data-cursor="Launch"
-                  className="studio-pill-btn studio-pill-btn-primary text-sm sm:text-base py-3.5 px-8 sm:px-10"
+                  className="studio-pill-btn studio-pill-btn-primary text-sm sm:text-base py-3.5 px-7 sm:px-10 w-full sm:w-auto text-center justify-center font-medium shadow-[0_4px_20px_rgba(245,239,255,0.15)] active:scale-[0.98] transition-transform"
                 >
                   Enter Live SOC Console
                 </Link>
               </Magnetic>
-              <Magnetic strength={0.3}>
+              <Magnetic strength={0.3} className="w-full sm:w-auto">
                 <Link
                   href="/work"
                   data-cursor="View"
-                  className="studio-pill-btn text-sm sm:text-base py-3.5 px-8 sm:px-10"
+                  className="studio-pill-btn text-sm sm:text-base py-3.5 px-7 sm:px-10 w-full sm:w-auto text-center justify-center active:scale-[0.98] transition-transform"
                 >
                   Explore Architectures
                 </Link>
@@ -98,22 +98,22 @@ export default function HomePage() {
       {/* ═════════════════════════════════════════════════════
           2. LIVE METRICS — Sub-millisecond stats
       ═════════════════════════════════════════════════════ */}
-      <section className="px-6 sm:px-10 md:px-16 lg:px-24 pb-24 md:pb-32 relative z-10">
-        <div className="max-w-[1400px] mx-auto grid grid-cols-1 sm:grid-cols-3 gap-5 sm:gap-7">
+      <section className="px-4 sm:px-10 md:px-16 lg:px-24 pb-16 sm:pb-24 md:pb-32 relative z-10">
+        <div className="max-w-[1400px] mx-auto grid grid-cols-1 sm:grid-cols-3 gap-3.5 sm:gap-7">
           {[
             { label: 'EVALUATION LATENCY', value: '1.45 ms', note: 'Sub-millisecond Streaming', accent: 'emerald' },
             { label: 'PHYSICAL RETURN PATH', value: '0.00 ns', note: 'Absolute Zero Backchannel', accent: 'cyan' },
             { label: 'DETECTION ACCURACY', value: '99.94%', note: 'Welford EWMA Validated', accent: 'emerald' },
           ].map((stat, i) => (
             <ScrollReveal key={stat.label} direction="bottom" delay={i * 150}>
-              <div className="rounded-2xl border border-[#f5efff]/[0.06] bg-[#0c0b14]/70 backdrop-blur-sm p-7 sm:p-9">
-                <span className="font-mono text-[10px] sm:text-xs uppercase tracking-[0.2em] text-[#f5efff]/35 block">
+              <div className="rounded-2xl border border-[#f5efff]/[0.08] bg-[#0c0b14]/80 backdrop-blur-md p-5 sm:p-7 md:p-9 shadow-[0_4px_20px_rgba(0,0,0,0.4)]">
+                <span className="font-mono text-[10px] sm:text-xs uppercase tracking-[0.2em] text-[#f5efff]/45 block">
                   {stat.label}
                 </span>
-                <span className="font-mono text-3xl sm:text-4xl md:text-5xl font-bold text-[#f5efff] mt-3 block">
+                <span className="font-mono text-2xl sm:text-4xl md:text-5xl font-bold text-[#f5efff] mt-2 sm:mt-3 block">
                   {stat.value}
                 </span>
-                <span className={`text-xs flex items-center gap-2 mt-3 ${stat.accent === 'emerald' ? 'text-emerald-400/80' : 'text-cyan-400/80'}`}>
+                <span className={`text-xs flex items-center gap-2 mt-2 sm:mt-3 ${stat.accent === 'emerald' ? 'text-emerald-400/90' : 'text-cyan-400/90'}`}>
                   <span className={`h-1.5 w-1.5 rounded-full ${stat.accent === 'emerald' ? 'bg-emerald-400' : 'bg-cyan-400'} animate-pulse`} />
                   {stat.note}
                 </span>
@@ -152,19 +152,19 @@ export default function HomePage() {
       {/* ═════════════════════════════════════════════════════
           4. CORE PILLARS — Three spacious cards
       ═════════════════════════════════════════════════════ */}
-      <section className="px-6 sm:px-10 md:px-16 lg:px-24 py-28 md:py-44">
+      <section className="px-4 sm:px-10 md:px-16 lg:px-24 py-16 sm:py-28 md:py-44">
         <div className="max-w-[1400px] mx-auto">
           <ScrollReveal direction="fade">
             <Eyebrow label="// CORE ARCHITECTURAL PILLARS" tag="active" />
           </ScrollReveal>
 
           <ScrollReveal direction="right" delay={200}>
-            <h2 className="font-editorial text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-light tracking-tight text-[#f5efff] mt-5 mb-16 sm:mb-24 leading-[1.05]">
+            <h2 className="font-editorial text-3xl sm:text-5xl md:text-6xl lg:text-7xl font-light tracking-tight text-[#f5efff] mt-4 sm:mt-5 mb-10 sm:mb-24 leading-[1.05]">
               Built for physical <span className="italic">asymmetry</span>.
             </h2>
           </ScrollReveal>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 sm:gap-8">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-5 sm:gap-8">
             {[
               {
                 num: '001',
@@ -193,19 +193,19 @@ export default function HomePage() {
                 direction={i === 0 ? 'left' : i === 1 ? 'bottom' : 'right'}
                 delay={i * 180}
               >
-                <div className="group rounded-2xl border border-[#f5efff]/[0.06] bg-[#0b0a13] p-8 sm:p-10 md:p-12 transition-all duration-500 hover:border-[#f5efff]/[0.15] hover:bg-[#0f0e1a] h-full">
-                  <div className="flex items-center justify-between mb-12">
-                    <span className="font-mono text-xs text-[#f5efff]/30 uppercase tracking-[0.2em]">
+                <div className="group rounded-2xl border border-[#f5efff]/[0.08] bg-[#0b0a13] p-6 sm:p-10 md:p-12 transition-all duration-500 hover:border-[#f5efff]/[0.2] hover:bg-[#0f0e1a] h-full shadow-[0_4px_25px_rgba(0,0,0,0.5)]">
+                  <div className="flex items-center justify-between mb-8 sm:mb-12">
+                    <span className="font-mono text-[11px] sm:text-xs text-[#f5efff]/35 uppercase tracking-[0.2em]">
                       ({pillar.num}) {pillar.label}
                     </span>
-                    <pillar.Icon className="h-5 w-5 text-[#f5efff]/20 group-hover:text-[#f5efff]/45 transition-colors duration-500" />
+                    <pillar.Icon className="h-5 w-5 text-[#f5efff]/30 group-hover:text-[#f5efff]/60 transition-colors duration-500" />
                   </div>
 
-                  <h3 className="font-editorial text-2xl sm:text-3xl md:text-4xl font-light text-[#f5efff] mb-5 leading-tight">
+                  <h3 className="font-editorial text-xl sm:text-3xl md:text-4xl font-light text-[#f5efff] mb-3 sm:mb-5 leading-tight">
                     {pillar.title}
                   </h3>
 
-                  <p className="font-sans text-sm sm:text-base text-[#f5efff]/45 leading-[1.7]">
+                  <p className="font-sans text-xs sm:text-base text-[#f5efff]/50 leading-[1.65]">
                     {pillar.desc}
                   </p>
                 </div>
@@ -218,7 +218,7 @@ export default function HomePage() {
       {/* ═════════════════════════════════════════════════════
           5. MISSION STATEMENT — Big centered text
       ═════════════════════════════════════════════════════ */}
-      <section className="px-6 sm:px-10 md:px-16 lg:px-24 py-32 md:py-48 border-t border-[#f5efff]/[0.05] relative overflow-hidden">
+      <section className="px-4 sm:px-10 md:px-16 lg:px-24 py-20 sm:py-32 md:py-48 border-t border-[#f5efff]/[0.05] relative overflow-hidden">
         <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(245,239,255,0.025),transparent_55%)]" />
 
         <div className="max-w-5xl mx-auto text-center relative z-10">
@@ -227,7 +227,7 @@ export default function HomePage() {
           </ScrollReveal>
 
           <ScrollReveal direction="bottom" delay={200} distance={50}>
-            <h2 className="font-editorial text-3xl sm:text-5xl md:text-6xl lg:text-7xl font-light tracking-tight text-[#f5efff] leading-[1.12] mt-8">
+            <h2 className="font-editorial text-2xl sm:text-5xl md:text-6xl lg:text-7xl font-light tracking-tight text-[#f5efff] leading-[1.15] mt-6 sm:mt-8">
               We build defense telemetry that thrives where traditional
               bidirectional tools{' '}
               <span className="italic underline decoration-1 decoration-[#f5efff]/25 underline-offset-4">

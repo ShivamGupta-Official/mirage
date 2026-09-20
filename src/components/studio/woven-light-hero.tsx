@@ -169,9 +169,10 @@ export const WovenCanvas = ({ scale = 2.0 }: { scale?: number }) => {
     const clock = new THREE.Clock();
 
     const isDarkMode = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+    const isMobile = typeof window !== 'undefined' && window.innerWidth < 768;
 
-    // --- Optimized Woven Silk ---
-    const particleCount = 14000;
+    // --- Mobile-Optimized Woven Silk ---
+    const particleCount = isMobile ? 6500 : 14000;
     const positions = new Float32Array(particleCount * 3);
     const originalPositions = new Float32Array(particleCount * 3);
     const colors = new Float32Array(particleCount * 3);
@@ -210,7 +211,7 @@ export const WovenCanvas = ({ scale = 2.0 }: { scale?: number }) => {
     geometry.setAttribute('color', new THREE.BufferAttribute(colors, 3));
 
     const material = new THREE.PointsMaterial({
-      size: 0.028,
+      size: isMobile ? 0.032 : 0.028,
       vertexColors: true,
       blending: isDarkMode ? THREE.NormalBlending : THREE.AdditiveBlending,
       transparent: true,
@@ -227,6 +228,15 @@ export const WovenCanvas = ({ scale = 2.0 }: { scale?: number }) => {
       mouseMoved = true;
     };
     window.addEventListener('mousemove', handleMouseMove);
+
+    const handleTouchMove = (event: TouchEvent) => {
+      if (event.touches.length > 0) {
+        mouse.x = (event.touches[0].clientX / window.innerWidth) * 2 - 1;
+        mouse.y = -(event.touches[0].clientY / window.innerHeight) * 2 + 1;
+        mouseMoved = true;
+      }
+    };
+    window.addEventListener('touchmove', handleTouchMove, { passive: true });
 
     let scrollY = 0;
     const handleScroll = () => {
@@ -297,6 +307,7 @@ export const WovenCanvas = ({ scale = 2.0 }: { scale?: number }) => {
       cancelAnimationFrame(animationFrameId);
       window.removeEventListener('resize', handleResize);
       window.removeEventListener('mousemove', handleMouseMove);
+      window.removeEventListener('touchmove', handleTouchMove);
       window.removeEventListener('scroll', handleScroll);
       if (currentMount.contains(renderer.domElement)) {
         currentMount.removeChild(renderer.domElement);

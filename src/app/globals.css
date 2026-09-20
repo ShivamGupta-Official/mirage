@@ -150,6 +150,22 @@ body {
   box-shadow: 0 0 30px rgba(245, 239, 255, 0.3);
 }
 
+/* ─── Mobile Touch & Native App Smoothness ─── */
+@media (hover: none) and (pointer: coarse) {
+  * {
+    -webkit-tap-highlight-color: transparent;
+  }
+  .studio-pill-btn:active {
+    transform: scale(0.97);
+    background: rgba(245, 239, 255, 0.2);
+  }
+  .studio-pill-btn-primary:active {
+    transform: scale(0.97);
+    background: #ffffff;
+    box-shadow: 0 0 25px rgba(245, 239, 255, 0.4);
+  }
+}
+
 /* ─── Smooth Link Underline ─── */
 .studio-nav-link {
   position: relative;

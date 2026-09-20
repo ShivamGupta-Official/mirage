@@ -77,18 +77,26 @@ export function TextParticle({
 
       ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-      // Auto-scale font size if viewport width is narrow
+      const isMobile = canvas.width < 640;
       const maxLineLen = Math.max(...parsedLines.map((l) => l.text.length), 1);
-      const availWidth = textAlign === "left" ? canvas.width * 0.98 : canvas.width * 0.92;
-      const autoFontSize = Math.min(
+      const availWidth = textAlign === "left" ? canvas.width * (isMobile ? 0.95 : 0.98) : canvas.width * 0.92;
+      
+      let autoFontSize = Math.min(
         fontSize,
-        Math.max(28, availWidth / (maxLineLen * 0.58))
+        Math.max(20, availWidth / (maxLineLen * 0.58))
       );
+
+      // Verify font bounds with context measurement to ensure 0% overflow on phones
+      ctx.font = `300 ${autoFontSize}px ${fontFamily}`;
+      const widestLine = Math.max(...parsedLines.map((l) => ctx.measureText(l.text).width), 1);
+      if (widestLine > availWidth) {
+        autoFontSize = Math.floor(autoFontSize * (availWidth / widestLine));
+      }
 
       ctx.textBaseline = "middle";
       ctx.textAlign = textAlign;
 
-      const lineHeight = autoFontSize * lineHeightMultiplier;
+      const lineHeight = autoFontSize * (isMobile ? 1.06 : lineHeightMultiplier);
       const totalTextH = (parsedLines.length - 1) * lineHeight;
       const startY = (canvas.height - totalTextH) / 2;
       const x = textAlign === "left" ? 4 : textAlign === "right" ? canvas.width - 4 : canvas.width / 2;
@@ -105,7 +113,7 @@ export function TextParticle({
           const lineY = startY + i * lineHeight + autoFontSize * 0.44;
           const startX = textAlign === "left" ? x : textAlign === "right" ? x - textW : x - textW / 2;
           ctx.beginPath();
-          ctx.lineWidth = Math.max(3, autoFontSize * 0.035);
+          ctx.lineWidth = Math.max(2.5, autoFontSize * 0.035);
           ctx.strokeStyle = "black";
           ctx.moveTo(startX, lineY);
           ctx.lineTo(startX + textW, lineY);
@@ -121,8 +129,12 @@ export function TextParticle({
       );
       const newParticles: Particle[] = [];
 
-      for (let py = 0; py < textCoordinates.height; py += particleDensity) {
-        for (let px = 0; px < textCoordinates.width; px += particleDensity) {
+      // Mobile adaptive density and size
+      const effDensity = isMobile ? Math.max(particleDensity, 3) : particleDensity;
+      const effSize = isMobile ? Math.min(particleSize, 1.9) : particleSize;
+
+      for (let py = 0; py < textCoordinates.height; py += effDensity) {
+        for (let px = 0; px < textCoordinates.width; px += effDensity) {
           const index = (py * textCoordinates.width + px) * 4;
           const alpha = textCoordinates.data[index + 3];
 
@@ -130,7 +142,7 @@ export function TextParticle({
             newParticles.push({
               x: px,
               y: py,
-              size: particleSize,
+              size: effSize,
               baseX: px,
               baseY: py,
               density: Math.random() * 30 + 1,
@@ -175,6 +187,11 @@ export function TextParticle({
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
 
+    const isMobile = canvas.width < 640;
+    const forceRadiusSq = isMobile ? 5625 : 8100; // 75px on mobile, 90px on desktop
+    const forceStrength = isMobile ? 3.5 : 4.0;
+    const returnEase = isMobile ? 0.09 : 0.08;
+
     const animate = () => {
       ctx.clearRect(0, 0, canvas.width, canvas.height);
 
@@ -199,15 +216,15 @@ export function TextParticle({
           const dy = my - p.y;
           const distSq = dx * dx + dy * dy;
 
-          if (distSq < 8100) {
+          if (distSq < forceRadiusSq) {
             const distance = Math.sqrt(distSq);
-            forceDirectionX = (dx / distance) * 4;
-            forceDirectionY = (dy / distance) * 4;
+            forceDirectionX = (dx / distance) * forceStrength;
+            forceDirectionY = (dy / distance) * forceStrength;
           }
         }
 
-        const moveX = forceDirectionX + (p.baseX - p.x) * 0.08;
-        const moveY = forceDirectionY + (p.baseY - p.y) * 0.08;
+        const moveX = forceDirectionX + (p.baseX - p.x) * returnEase;
+        const moveY = forceDirectionY + (p.baseY - p.y) * returnEase;
 
         p.x += moveX;
         p.y += moveY;
@@ -248,12 +265,34 @@ export function TextParticle({
     mouseRef.current = { x: null, y: null };
   };
 
+  // Mobile Touch Interaction — smooth dispersion with native vertical scroll preservation
+  const handleTouchMove = (e: React.TouchEvent<HTMLCanvasElement>) => {
+    const canvas = canvasRef.current;
+    if (!canvas || e.touches.length === 0) return;
+
+    const rect = canvas.getBoundingClientRect();
+    const touch = e.touches[0];
+    mouseRef.current = {
+      x: touch.clientX - rect.left,
+      y: touch.clientY - rect.top,
+    };
+  };
+
+  const handleTouchEnd = () => {
+    mouseRef.current = { x: null, y: null };
+  };
+
   return (
     <canvas
       ref={canvasRef}
-      className={`w-full h-full ${className}`}
+      className={`w-full h-full select-none ${className}`}
+      style={{ touchAction: 'pan-y' }}
       onMouseMove={handleMouseMove}
       onMouseLeave={handleMouseLeave}
+      onTouchStart={handleTouchMove}
+      onTouchMove={handleTouchMove}
+      onTouchEnd={handleTouchEnd}
+      onTouchCancel={handleTouchEnd}
     />
   );
 }
