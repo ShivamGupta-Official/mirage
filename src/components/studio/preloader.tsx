@@ -22,15 +22,15 @@ export function Preloader() {
           setTimeout(() => {
             setIsFinished(true);
             sessionStorage.setItem('mirage_preloader_seen', 'true');
-            setTimeout(() => setShouldRender(false), 800);
-          }, 300);
+            setTimeout(() => setShouldRender(false), 350);
+          }, 100);
           return 100;
         }
-        // Organic irregular acceleration — ~3 second total duration
-        const jump = Math.floor(Math.random() * 3) + 1;
+        // Rapid fluid acceleration (~300ms)
+        const jump = Math.floor(Math.random() * 14) + 8;
         return Math.min(100, prev + jump);
       });
-    }, 40);
+    }, 20);
 
     return () => clearInterval(interval);
   }, []);

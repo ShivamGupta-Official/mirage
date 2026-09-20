@@ -28,7 +28,7 @@ export default function HomePage() {
       <Preloader />
 
       {/* ═══ PERSISTENT 2X WOVEN SILK CANVAS (ACTIVE TILL VERY END OF THE SITE) ═══ */}
-      <div className="fixed inset-0 z-0 pointer-events-auto opacity-50">
+      <div className="fixed inset-0 z-0 pointer-events-none opacity-50">
         <WovenCanvas scale={2.4} />
       </div>
 
