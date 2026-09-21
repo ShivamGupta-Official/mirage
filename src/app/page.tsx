@@ -129,22 +129,22 @@ export default function HomePage() {
       <ScrollGlobeHero
         pages={5}
         headline="Global Ingress Threat Radar"
-        subhead="Hardware-enforced unidirectional optical tap monitoring and real-time planetary threat reconnaissance."
+        subhead="Real-time AI intrusion detection on physical one-way optical data diodes for national security networks."
         sections={[
           {
-            eyebrow: '// CORE MVP CAPABILITY 01',
-            title: 'Zero-Return Optical TAP',
-            body: 'Hardware-enforced single-strand optical tap with physically severed transmit lasers. Eliminates reverse packet injection with absolute physical air-gap protection.',
+            eyebrow: '// STEP 01 · PHYSICAL AIR-GAP PROTECTION',
+            title: 'One-Way Optical Diode',
+            body: 'Network data enters strictly through a physical one-way fiber cable. With the return laser physically severed, hackers can never inject malicious packets back into the network.',
           },
           {
-            eyebrow: '// CORE MVP CAPABILITY 02',
-            title: 'Multi-Resolution EWMA AI',
-            body: 'Online Welford statistical profiling across packet, connection, and session layers. Solves broken TCP handshakes without state table memory bloat.',
+            eyebrow: '// STEP 02 · REAL-TIME AI DETECTION',
+            title: 'Live AI Anomaly Engine',
+            body: 'Our machine learning engine monitors live network traffic continuously to catch cyber intrusions, data leaks, and zero-day attacks in milliseconds with zero false alarms.',
           },
           {
-            eyebrow: '// CORE MVP CAPABILITY 03',
+            eyebrow: '// STEP 03 · TAMPER-PROOF FORENSICS',
             title: 'Immutable Blockchain Audit',
-            body: 'Every intrusion alert and forensic trace is sealed into an immutable parent-chained SHA-256 ledger, guaranteeing tamper-evident legal-grade non-repudiation.',
+            body: 'Every detected attack and forensic record is locked into a tamper-proof blockchain ledger, ensuring court-admissible legal proof that no hacker or insider can alter or delete.',
           },
         ]}
         outroTitle="MIRAGE"
