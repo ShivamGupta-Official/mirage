@@ -132,19 +132,19 @@ export default function HomePage() {
         subhead="Real-time AI intrusion detection on physical one-way optical data diodes for national security networks."
         sections={[
           {
-            eyebrow: '// STEP 01 · PHYSICAL AIR-GAP PROTECTION',
+            eyebrow: '// MVP INSIGHT 01 · PHYSICAL DIODE ISOLATION',
             title: 'One-Way Optical Diode',
-            body: 'Network data enters strictly through a physical one-way fiber cable. With the return laser physically severed, hackers can never inject malicious packets back into the network.',
+            body: 'Hardware-enforced single-strand fiber physically severs the return laser. Critical network traffic flows in for monitoring, but zero packets can ever travel back, making reverse cyberattacks physically impossible.',
           },
           {
-            eyebrow: '// STEP 02 · REAL-TIME AI DETECTION',
-            title: 'Live AI Anomaly Engine',
-            body: 'Our machine learning engine monitors live network traffic continuously to catch cyber intrusions, data leaks, and zero-day attacks in milliseconds with zero false alarms.',
+            eyebrow: '// MVP INSIGHT 02 · REAL-TIME AI ENGINE',
+            title: 'Zero-Return AI Anomaly Engine',
+            body: 'Legacy firewalls crash when return packets are missing. MIRAGE’s AI analyzes unidirectional packet flows across four temporal scales to detect stealth intrusions and zero-days in milliseconds with zero false alarms.',
           },
           {
-            eyebrow: '// STEP 03 · TAMPER-PROOF FORENSICS',
-            title: 'Immutable Blockchain Audit',
-            body: 'Every detected attack and forensic record is locked into a tamper-proof blockchain ledger, ensuring court-admissible legal proof that no hacker or insider can alter or delete.',
+            eyebrow: '// MVP INSIGHT 03 · TAMPER-PROOF FORENSICS',
+            title: 'Immutable Blockchain Ledger',
+            body: 'Hackers and rogue insiders routinely wipe system logs to cover their tracks. MIRAGE seals every alert and packet artifact into a SHA-256 blockchain ledger, producing permanent, court-admissible legal evidence.',
           },
         ]}
         outroTitle="MIRAGE"
