@@ -77,25 +77,25 @@ export default function DashboardPage() {
       {/* ── Compact Header Row ── */}
       <div className="flex items-center justify-between flex-wrap gap-3">
         <div className="flex items-center gap-3">
-          <h1 className="font-editorial text-2xl sm:text-3xl font-light tracking-tight text-[#f5efff]">
+          <h1 className="font-editorial text-2xl sm:text-3xl font-light tracking-tight text-white">
             MIRAGE <span className="italic font-normal opacity-70">Intelligence</span>
           </h1>
-          <span className="font-mono text-[9px] uppercase tracking-[0.18em] px-2.5 py-1 rounded-full bg-[#f5efff]/5 text-[#f5efff]/60 border border-[#f5efff]/10 hidden sm:inline-flex items-center gap-1.5">
-            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 shadow-[0_0_6px_#34d399] animate-pulse" />
-            SOVEREIGN ENCLAVE
+          <span className="font-mono text-[9px] uppercase tracking-wider px-2 py-0.5 rounded text-white/50 bg-white/5 border border-white/10 hidden sm:inline-flex items-center gap-1.5">
+            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
+            Active Enclave
           </span>
         </div>
 
         <div className="flex items-center gap-2 flex-wrap">
           {isSimulating && (
-            <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-rose-500/15 border border-rose-500/30 text-xs text-rose-300 font-mono animate-pulse">
+            <div className="flex items-center gap-2 px-3 py-1 rounded bg-rose-500/10 border border-rose-500/20 text-xs text-rose-300 font-mono">
               <AlertTriangle size={12} />
               <span>{activeScenario}</span>
-              <button onClick={stopSimulation} className="ml-1 px-2 py-0.5 rounded-full bg-rose-600 hover:bg-rose-500 text-white font-bold text-[9px]">STOP</button>
+              <button onClick={stopSimulation} className="ml-1 px-2 py-0.5 rounded bg-rose-600 hover:bg-rose-500 text-white font-bold text-[9px]">STOP</button>
             </div>
           )}
-          <StatusPill label="SENSOR" value="ONLINE" color="#34d399" />
-          <StatusPill label="PIPELINE" value={health?.pipelineStatus ?? 'HEALTHY'} color={isSimulating ? '#f43f5e' : '#34d399'} />
+          <StatusPill label="SENSOR" value="ONLINE" color="#10b981" />
+          <StatusPill label="PIPELINE" value={health?.pipelineStatus ?? 'HEALTHY'} color={isSimulating ? '#ef4444' : '#10b981'} />
           <StatusPill label="ML" value="READY" color="#38bdf8" />
         </div>
       </div>
@@ -225,10 +225,10 @@ export default function DashboardPage() {
 /* ── Compact Status Pill ── */
 function StatusPill({ label, value, color }: { label: string; value: string; color: string }) {
   return (
-    <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full border border-[#f5efff]/8 bg-[#f5efff]/[0.02]">
-      <span className="w-1.5 h-1.5 rounded-full animate-pulse" style={{ background: color, boxShadow: `0 0 6px ${color}` }} />
-      <span className="font-mono text-[9px] uppercase tracking-[0.12em] text-[#f5efff]/45">{label}</span>
-      <span className="font-mono text-[9px] font-bold tracking-wider" style={{ color }}>{value}</span>
+    <div className="flex items-center gap-1.5 px-2.5 py-0.5 rounded border border-white/10 bg-white/5">
+      <span className="w-1.5 h-1.5 rounded-full" style={{ background: color }} />
+      <span className="font-mono text-[9px] uppercase tracking-wider text-white/50">{label}</span>
+      <span className="font-mono text-[9px] font-medium" style={{ color }}>{value}</span>
     </div>
   );
 }
@@ -240,7 +240,7 @@ function TabPill({ active, onClick, icon, label }: { active: boolean; onClick: (
       onClick={onClick}
       className={cn(
         'flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-mono transition-all whitespace-nowrap',
-        active ? 'bg-[#f5efff] text-[#08080c] font-semibold shadow-[0_0_16px_rgba(245,239,255,0.2)]' : 'text-[#f5efff]/50 hover:text-[#f5efff] hover:bg-[#f5efff]/5'
+        active ? 'bg-white text-zinc-950 font-semibold' : 'text-white/50 hover:text-white hover:bg-white/5'
       )}
     >
       {icon}

@@ -15,6 +15,9 @@ import {
   Play,
   Pause,
   Layers,
+  ZoomIn,
+  ZoomOut,
+  Maximize2,
 } from 'lucide-react';
 import type { Alert, Host, ThreatEventDisplay } from '@/types';
 import {
@@ -32,6 +35,11 @@ export interface ThreatNode {
   location: string;
   lat: number;
   lon: number;
+  dstLat?: number;
+  dstLon?: number;
+  dstCountry?: string;
+  kasperskySystem?: string;
+  detectionCount?: number;
   role: 'attacker' | 'c2' | 'target' | 'internal_compromised' | 'gateway';
   riskScore: number;
   threatType?: string;
@@ -199,9 +207,9 @@ export function CyberGlobe({
   const autoRotateRef = useRef<boolean>(true);
   const [liveStreamActive, setLiveStreamActive] = useState<boolean>(true);
 
-  const scrollProgressRef = useRef<number>(scrollProgress ?? 0);
+  const scrollProgressRef = useRef<number | undefined>(scrollProgress);
   useEffect(() => {
-    scrollProgressRef.current = scrollProgress ?? 0;
+    scrollProgressRef.current = scrollProgress;
   }, [scrollProgress]);
 
   // Live user location detection (IP + Browser Geolocation)
@@ -225,6 +233,26 @@ export function CyberGlobe({
     x: 0.17,
     y: -((77.2090 + 90) * Math.PI) / 180,
   });
+
+  // Zoom constants & controls (allows free smooth zoom in and out)
+  const DEFAULT_ZOOM_Z = 18.0;
+  const MIN_ZOOM_Z = 6.2; // Maximum zoom in (close-up surface inspection)
+  const MAX_ZOOM_Z = 34.0; // Maximum zoom out (wide orbital overview)
+  const targetZoomZRef = useRef<number>(DEFAULT_ZOOM_Z);
+  const [zoomPercent, setZoomPercent] = useState<number>(100);
+  const lastZoomReportedRef = useRef<number>(100);
+
+  const handleZoomIn = useCallback(() => {
+    targetZoomZRef.current = Math.max(MIN_ZOOM_Z, targetZoomZRef.current - 3.2);
+  }, []);
+
+  const handleZoomOut = useCallback(() => {
+    targetZoomZRef.current = Math.min(MAX_ZOOM_Z, targetZoomZRef.current + 3.2);
+  }, []);
+
+  const handleResetZoom = useCallback(() => {
+    targetZoomZRef.current = DEFAULT_ZOOM_Z;
+  }, []);
 
   // Automatically detect user's live physical location
   useEffect(() => {
@@ -287,53 +315,66 @@ export function CyberGlobe({
     const targetX = Math.max(-0.35, Math.min(0.35, (userLocation.lat * Math.PI) / 180 * 0.35));
     targetRotationRef.current = { x: targetX, y: targetY };
     focusingUserRef.current = true;
+    targetZoomZRef.current = 12.5; // Smoothly zoom in to focus on user enclave
   }, [userLocation.lat, userLocation.lon]);
 
-  const [dynamicThreats, setDynamicThreats] = useState<DynamicThreatEvent[]>(() => [
-    generateDynamicHorizonThreat(),
-    generateDynamicHorizonThreat(),
-    generateDynamicHorizonThreat(),
-    generateDynamicHorizonThreat(),
-  ]);
-  const [selectedNode, setSelectedNode] = useState<ThreatNode>(DEFAULT_TARGET_NODE);
+  const selectAndFocusNode = useCallback((node: ThreatNode) => {
+    setSelectedNode(node);
+    const targetY = -((node.lon + 90) * Math.PI) / 180;
+    const targetX = Math.max(-0.35, Math.min(0.35, (node.lat * Math.PI) / 180 * 0.35));
+    targetRotationRef.current = { x: targetX, y: targetY };
+    focusingUserRef.current = true;
+    targetZoomZRef.current = 12.0; // Smoothly zoom in to focus on threat origin
+  }, []);
 
-  // Poll dynamic NetScout Horizon threats periodically when live streaming is on
+  const [dynamicThreats, setDynamicThreats] = useState<DynamicThreatEvent[]>([]);
+  const [selectedNode, setSelectedNode] = useState<ThreatNode>(DEFAULT_TARGET_NODE);
+  const [telemetrySource, setTelemetrySource] = useState<'kaspersky' | 'simulator'>('kaspersky');
+  const [isMounted, setIsMounted] = useState<boolean>(false);
+
+  // Poll dynamic Kaspersky Cybermap / NetScout threats periodically when live streaming is on
   useEffect(() => {
-    let isMounted = true;
+    setIsMounted(true);
+    let isSubscribed = true;
 
     // Fetch initial batch
     const fetchThreats = async () => {
       try {
-        const res = await fetch('/api/horizon/threats?count=6');
+        const res = await fetch(`/api/horizon/threats?count=8&source=${telemetrySource}`);
         if (res.ok) {
           const data = await res.json();
-          if (isMounted && data.threats) {
+          if (isSubscribed && data.threats && data.threats.length > 0) {
             setDynamicThreats(data.threats);
-            if (data.threats.length > 0) {
-              const top = data.threats[0];
-              setSelectedNode({
-                id: top.id,
-                ip: top.srcIp,
-                label: `${top.threatType} (${top.srcLocation.city})`,
-                location: `${top.srcLocation.city}, ${top.srcLocation.country} [${top.srcLocation.asn}]`,
-                lat: top.srcLocation.lat,
-                lon: top.srcLocation.lon,
-                role: top.threatType === 'C2_BEACON' ? 'c2' : 'attacker',
-                riskScore: top.riskScore,
-                threatType: top.threatType,
-                packetRate: top.packetRateKpps * 1000,
-                bandwidthGbps: top.bandwidthGbps,
-                country: top.srcLocation.country,
-                city: top.srcLocation.city,
-                asn: top.srcLocation.asn,
-                mlConfidence: top.mlConfidence,
-              });
-            }
+            const top = data.threats[0];
+            setSelectedNode({
+              id: top.id,
+              ip: top.srcIp,
+              label: top.kasperskySystem
+                ? `[${top.kasperskySystem}] ${top.srcLocation.country} → ${top.dstLocation?.country || 'India Enclave'}`
+                : `${top.threatType} (${top.srcLocation.city})`,
+              location: `${top.srcLocation.city}, ${top.srcLocation.country} [${top.srcLocation.asn}]`,
+              lat: top.srcLocation.lat,
+              lon: top.srcLocation.lon,
+              dstLat: top.dstLocation?.lat,
+              dstLon: top.dstLocation?.lon,
+              dstCountry: top.dstLocation?.country,
+              kasperskySystem: top.kasperskySystem,
+              detectionCount: top.detectionCount,
+              role: top.threatType === 'C2_BEACON' ? 'c2' : 'attacker',
+              riskScore: top.riskScore,
+              threatType: top.threatType,
+              packetRate: top.packetRateKpps * 1000,
+              bandwidthGbps: top.bandwidthGbps,
+              country: top.srcLocation.country,
+              city: top.srcLocation.city,
+              asn: top.srcLocation.asn,
+              mlConfidence: top.mlConfidence,
+            });
           }
         }
       } catch {
         // Fallback local dynamic synthesis
-        if (isMounted) {
+        if (isSubscribed) {
           const localEvents = [
             generateDynamicHorizonThreat(),
             generateDynamicHorizonThreat(),
@@ -348,18 +389,27 @@ export function CyberGlobe({
     fetchThreats();
 
     // Set streaming interval (every 4 seconds)
-    const interval = setInterval(() => {
+    const interval = setInterval(async () => {
       if (!liveStreamActive) return;
-      // Add a fresh dynamic threat to the front
-      const freshThreat = generateDynamicHorizonThreat();
-      setDynamicThreats((prev) => [freshThreat, ...prev.slice(0, 7)]);
-    }, 4000);
+      try {
+        const res = await fetch(`/api/horizon/threats?count=4&source=${telemetrySource}`);
+        if (res.ok) {
+          const data = await res.json();
+          if (isSubscribed && data.threats && data.threats.length > 0) {
+            setDynamicThreats((prev) => [...data.threats, ...prev.slice(0, 8)]);
+          }
+        }
+      } catch {
+        const freshThreat = generateDynamicHorizonThreat();
+        setDynamicThreats((prev) => [freshThreat, ...prev.slice(0, 7)]);
+      }
+    }, 4500);
 
     return () => {
-      isMounted = false;
+      isSubscribed = false;
       clearInterval(interval);
     };
-  }, [liveStreamActive]);
+  }, [liveStreamActive, telemetrySource]);
 
   // Combine user's live enclave target, live Horizon threats, and incoming threatStream into active nodes
   const threatNodes: ThreatNode[] = useMemo(() => {
@@ -383,15 +433,22 @@ export function CyberGlobe({
 
     const nodes: ThreatNode[] = [userTargetNode];
 
-    // Add dynamic NetScout Horizon threats
-    dynamicThreats.forEach((threat) => {
+    // Add dynamic live Kaspersky Cybermap / NetScout Horizon threats
+    dynamicThreats.forEach((threat: any) => {
       nodes.push({
         id: threat.id,
         ip: threat.srcIp,
-        label: `${threat.threatType} · ${threat.srcLocation.city}`,
+        label: threat.kasperskySystem
+          ? `[${threat.kasperskySystem}] ${threat.srcLocation.country} → ${threat.dstLocation?.country || 'India'}`
+          : `${threat.threatType} · ${threat.srcLocation.city}`,
         location: `${threat.srcLocation.city}, ${threat.srcLocation.country} (${threat.srcLocation.asn})`,
         lat: threat.srcLocation.lat,
         lon: threat.srcLocation.lon,
+        dstLat: threat.dstLocation?.lat,
+        dstLon: threat.dstLocation?.lon,
+        dstCountry: threat.dstLocation?.country,
+        kasperskySystem: threat.kasperskySystem,
+        detectionCount: threat.detectionCount,
         role: threat.threatType === 'C2_BEACON' ? 'c2' : 'attacker',
         riskScore: threat.riskScore,
         threatType: threat.threatType,
@@ -574,58 +631,55 @@ export function CyberGlobe({
         ? 0xa855f7
         : 0xf59e0b;
 
-      // Pin Head
-      const headGeom = new THREE.SphereGeometry(isTarget ? 0.22 : 0.15, 16, 16);
+      // Medium Base Marker Dot
+      const headGeom = new THREE.SphereGeometry(isTarget ? 0.068 : 0.052, 14, 14);
       const headMat = new THREE.MeshBasicMaterial({ color: nodeColor });
       const head = new THREE.Mesh(headGeom, headMat);
       head.position.copy(pos);
       pinGroup.add(head);
 
-      // Pin Stem
+      // Medium Pinpoint Stem
       const normal = pos.clone().normalize();
-      const stemHeight = isTarget ? 0.80 : 0.45;
+      const stemHeight = isTarget ? 0.20 : 0.15;
       const stemEnd = pos.clone().add(normal.clone().multiplyScalar(stemHeight));
       const stemGeom = new THREE.BufferGeometry().setFromPoints([pos, stemEnd]);
       const stemMat = new THREE.LineBasicMaterial({
         color: nodeColor,
         transparent: true,
-        opacity: isTarget ? 0.90 : 0.65,
+        opacity: isTarget ? 0.85 : 0.65,
       });
       const stem = new THREE.Line(stemGeom, stemMat);
       pinGroup.add(stem);
 
-      // Pin Top Beacon
-      const tipGeom = new THREE.SphereGeometry(isTarget ? 0.09 : 0.05, 12, 12);
-      const tipMat = new THREE.MeshBasicMaterial({ color: isTarget ? 0xe0f2fe : nodeColor });
+      // Medium Tip Beacon Dot
+      const tipGeom = new THREE.SphereGeometry(isTarget ? 0.034 : 0.024, 10, 10);
+      const tipMat = new THREE.MeshBasicMaterial({ color: isTarget ? 0xffffff : nodeColor });
       const tip = new THREE.Mesh(tipGeom, tipMat);
       tip.position.copy(stemEnd);
       pinGroup.add(tip);
 
-      // Expanding concentric surface radar shockwaves
-      const waveCount = isTarget ? 2 : 1;
-      for (let w = 0; w < waveCount; w++) {
-        const shockwaveGeom = new THREE.RingGeometry(0.18, 0.36, 32);
-        const shockwaveMat = new THREE.MeshBasicMaterial({
-          color: nodeColor,
-          side: THREE.DoubleSide,
-          transparent: true,
-          opacity: isTarget ? 0.55 : 0.75,
-        });
-        const shockwave = new THREE.Mesh(shockwaveGeom, shockwaveMat);
-        shockwave.position.copy(pos.clone().multiplyScalar(1.004));
-        shockwave.lookAt(pos.clone().multiplyScalar(2));
-        pinGroup.add(shockwave);
+      // Medium Telemetry Shockwave Ripple
+      const shockwaveGeom = new THREE.RingGeometry(0.055, 0.095, 20);
+      const shockwaveMat = new THREE.MeshBasicMaterial({
+        color: nodeColor,
+        side: THREE.DoubleSide,
+        transparent: true,
+        opacity: 0.35,
+      });
+      const shockwave = new THREE.Mesh(shockwaveGeom, shockwaveMat);
+      shockwave.position.copy(pos.clone().multiplyScalar(1.002));
+      shockwave.lookAt(pos.clone().multiplyScalar(2));
+      pinGroup.add(shockwave);
 
-        shockwaveMeshes.push({
-          mesh: shockwave,
-          scale: 1.0 + w * 1.5,
-          maxScale: isTarget ? 4.2 : 3.0,
-        });
-      }
+      shockwaveMeshes.push({
+        mesh: shockwave,
+        scale: 1.0,
+        maxScale: 2.1,
+      });
     });
     earthMesh.add(pinGroup);
 
-    // Ballistic Attack Trajectory Arcs with Laser Particles
+    // Ballistic Attack Trajectory Arcs with Thin Lines & Medium Pulse Photons
     const arcGroup = new THREE.Group();
     const targetNode = threatNodes.find((n) => n.role === 'target') || threatNodes[0];
     const targetVec = latLonToVector3(targetNode.lat, targetNode.lon, globeRadius);
@@ -641,22 +695,34 @@ export function CyberGlobe({
       .filter((n) => n.role !== 'target')
       .forEach((srcNode) => {
         const srcVec = latLonToVector3(srcNode.lat, srcNode.lon, globeRadius);
-        const midPoint = srcVec.clone().add(targetVec).multiplyScalar(0.5);
-        const distance = srcVec.distanceTo(targetVec);
-        const altitude = globeRadius * (1.18 + distance * 0.09);
+        const destVec =
+          srcNode.dstLat !== undefined && srcNode.dstLon !== undefined
+            ? latLonToVector3(srcNode.dstLat, srcNode.dstLon, globeRadius)
+            : targetVec;
+
+        const midPoint = srcVec.clone().add(destVec).multiplyScalar(0.5);
+        const distance = srcVec.distanceTo(destVec);
+        const altitude = globeRadius * (1.16 + distance * 0.08);
         midPoint.normalize().multiplyScalar(altitude);
 
-        const curve = new THREE.QuadraticBezierCurve3(srcVec, midPoint, targetVec);
+        const curve = new THREE.QuadraticBezierCurve3(srcVec, midPoint, destVec);
         const points = curve.getPoints(48);
         const arcGeom = new THREE.BufferGeometry().setFromPoints(points);
 
-        const arcColor =
-          srcNode.role === 'attacker'
-            ? 0xef4444
-            : srcNode.role === 'c2'
-            ? 0xa855f7
-            : 0xf59e0b;
+        // Map colors according to Kaspersky Cybermap system types or default roles
+        let arcColor = 0x2eb9df; // Default dynamic cyan
+        if (srcNode.kasperskySystem === 'IDS') arcColor = 0xec008c; // Pink
+        else if (srcNode.kasperskySystem === 'WAV') arcColor = 0x2eb9df; // Radiant Cyan
+        else if (srcNode.kasperskySystem === 'RMW') arcColor = 0x3b82f6; // Cobalt
+        else if (srcNode.kasperskySystem === 'OAS') arcColor = 0x38b349; // Green
+        else if (srcNode.kasperskySystem === 'ODS') arcColor = 0xed1c24; // Red
+        else if (srcNode.kasperskySystem === 'VUL') arcColor = 0xfbf267; // Yellow
+        else if (srcNode.kasperskySystem === 'MAV') arcColor = 0xf26522; // Orange
+        else if (srcNode.kasperskySystem === 'KAS') arcColor = 0x9e00ff; // Electric Purple
+        else if (srcNode.role === 'c2') arcColor = 0x9e00ff;
+        else if (srcNode.role === 'attacker') arcColor = 0xef4444;
 
+        // Thin ballistic arc vector (clean, crisp line as before)
         const arcMat = new THREE.LineBasicMaterial({
           color: arcColor,
           transparent: true,
@@ -665,11 +731,11 @@ export function CyberGlobe({
         const arcLine = new THREE.Line(arcGeom, arcMat);
         arcGroup.add(arcLine);
 
-        // Traveling pulse photon laser heads
-        const pulseCount = 2;
+        // Medium traveling photon spark bead
+        const pulseCount = 1;
         const pulseMeshes: THREE.Mesh[] = [];
         for (let p = 0; p < pulseCount; p++) {
-          const pulseGeom = new THREE.SphereGeometry(0.12, 12, 12);
+          const pulseGeom = new THREE.SphereGeometry(0.048, 10, 10);
           const pulseMat = new THREE.MeshBasicMaterial({
             color: arcColor,
             transparent: true,
@@ -684,51 +750,91 @@ export function CyberGlobe({
       });
     earthMesh.add(arcGroup);
 
-    // Interactive Drag Orbit Controls
+    // Interactive Multi-Touch, Drag & Zoom Controls
+    const activePointers = new Map<number, { x: number; y: number }>();
+    let prevPinchDist: number | null = null;
     let isDragging = false;
     let prevMousePos = { x: 0, y: 0 };
     const rotationVelocity = { x: 0, y: 0 };
 
     const onPointerDown = (e: PointerEvent) => {
-      isDragging = true;
+      activePointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
       focusingUserRef.current = false;
-      prevMousePos = { x: e.clientX, y: e.clientY };
+
+      if (activePointers.size === 1) {
+        isDragging = true;
+        prevMousePos = { x: e.clientX, y: e.clientY };
+      } else if (activePointers.size === 2) {
+        isDragging = false;
+        const [p1, p2] = Array.from(activePointers.values());
+        prevPinchDist = Math.hypot(p2.x - p1.x, p2.y - p1.y);
+      }
     };
 
     const onPointerMove = (e: PointerEvent) => {
-      if (!isDragging) return;
-      const deltaX = e.clientX - prevMousePos.x;
-      const deltaY = e.clientY - prevMousePos.y;
-      rotationVelocity.y = deltaX * 0.005;
-      rotationVelocity.x = deltaY * 0.005;
-      earthMesh.rotation.y += rotationVelocity.y;
-      earthMesh.rotation.x += rotationVelocity.x;
-      prevMousePos = { x: e.clientX, y: e.clientY };
+      if (!activePointers.has(e.pointerId)) return;
+      activePointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
+
+      if (activePointers.size === 2) {
+        // Multi-touch pinch-to-zoom for mobile & touchscreens
+        const [p1, p2] = Array.from(activePointers.values());
+        const currentDist = Math.hypot(p2.x - p1.x, p2.y - p1.y);
+        if (prevPinchDist !== null && currentDist > 0) {
+          const diff = (prevPinchDist - currentDist) * 0.035;
+          targetZoomZRef.current = Math.max(MIN_ZOOM_Z, Math.min(MAX_ZOOM_Z, targetZoomZRef.current + diff));
+        }
+        prevPinchDist = currentDist;
+      } else if (isDragging && activePointers.size === 1) {
+        const deltaX = e.clientX - prevMousePos.x;
+        const deltaY = e.clientY - prevMousePos.y;
+        rotationVelocity.y = deltaX * 0.005;
+        rotationVelocity.x = deltaY * 0.005;
+        earthMesh.rotation.y += rotationVelocity.y;
+        earthMesh.rotation.x += rotationVelocity.x;
+        prevMousePos = { x: e.clientX, y: e.clientY };
+      }
     };
 
-    const onPointerUp = () => {
-      isDragging = false;
+    const onPointerUp = (e: PointerEvent) => {
+      activePointers.delete(e.pointerId);
+      if (activePointers.size === 0) {
+        isDragging = false;
+        prevPinchDist = null;
+      } else if (activePointers.size === 1) {
+        isDragging = true;
+        const remaining = Array.from(activePointers.values())[0];
+        prevMousePos = { x: remaining.x, y: remaining.y };
+        prevPinchDist = null;
+      }
     };
 
-    // Scroll rotation & wheel zoom (olivierlarose/3d-earth-scroll behavior)
-    let lastScrollY = typeof window !== 'undefined' ? window.scrollY : 0;
-    let scrollDelta = 0;
-    const onScroll = () => {
-      const currentScrollY = window.scrollY;
-      scrollDelta = (currentScrollY - lastScrollY) * 0.0025;
-      lastScrollY = currentScrollY;
-    };
-    window.addEventListener('scroll', onScroll, { passive: true });
-
+    // Smooth Scroll Wheel & Trackpad Zooming
     const onWheel = (e: WheelEvent) => {
       e.preventDefault();
-      camera.position.z = Math.max(9, Math.min(26, camera.position.z + e.deltaY * 0.012));
+      e.stopPropagation();
+      const zoomStep = Math.sign(e.deltaY) * 2.2;
+      targetZoomZRef.current = Math.max(MIN_ZOOM_Z, Math.min(MAX_ZOOM_Z, targetZoomZRef.current + zoomStep));
+    };
+
+    // Double-click to zoom in / Shift+Double-click to reset
+    const onDblClick = (e: MouseEvent) => {
+      e.preventDefault();
+      if (e.shiftKey) {
+        targetZoomZRef.current = DEFAULT_ZOOM_Z;
+      } else {
+        targetZoomZRef.current = Math.max(MIN_ZOOM_Z, targetZoomZRef.current - 3.5);
+      }
     };
 
     domElem.addEventListener('pointerdown', onPointerDown);
     domElem.addEventListener('wheel', onWheel, { passive: false });
+    if (container) {
+      container.addEventListener('wheel', onWheel, { passive: false });
+    }
+    domElem.addEventListener('dblclick', onDblClick);
     window.addEventListener('pointermove', onPointerMove);
     window.addEventListener('pointerup', onPointerUp);
+    window.addEventListener('pointercancel', onPointerUp);
 
     // Helper for shortest rotational path interpolation
     const shortestAngleDiff = (target: number, current: number): number => {
@@ -777,7 +883,7 @@ export function CyberGlobe({
         }
       }
 
-      // Responsive Continuous Zoom: Earth expands with EACH scroll from small (z=18.0) to full max zoom (z=4.85)
+      // Smooth camera zoom handling
       if (scrollProgressRef.current !== undefined) {
         const p = Math.min(1, Math.max(0, scrollProgressRef.current));
         // Direct continuous zoom without plateaus — expands visibly with each scroll
@@ -787,6 +893,16 @@ export function CyberGlobe({
         // Subtle dynamic 3D latitude tilt during scroll
         const targetTiltX = 0.16 + Math.sin(p * Math.PI) * 0.12;
         earthMesh.rotation.x += (targetTiltX - earthMesh.rotation.x) * 0.06;
+      } else {
+        // Inertial smooth camera zoom (lerp)
+        camera.position.z += (targetZoomZRef.current - camera.position.z) * 0.12;
+
+        // Throttled update of UI zoom percentage
+        const currentPct = Math.round((DEFAULT_ZOOM_Z / camera.position.z) * 100);
+        if (Math.abs(currentPct - lastZoomReportedRef.current) >= 2) {
+          lastZoomReportedRef.current = currentPct;
+          setZoomPercent(currentPct);
+        }
       }
 
       // Remember rotation state
@@ -797,22 +913,23 @@ export function CyberGlobe({
 
       // Animate shockwaves
       shockwaveMeshes.forEach((item) => {
-        item.scale += 0.035;
+        item.scale += 0.018;
         if (item.scale > item.maxScale) {
           item.scale = 1.0;
         }
         item.mesh.scale.set(item.scale, item.scale, item.scale);
         const mat = item.mesh.material as THREE.MeshBasicMaterial;
-        mat.opacity = Math.max(0, 0.9 - (item.scale / item.maxScale) * 0.9);
+        const progress = (item.scale - 1.0) / (item.maxScale - 1.0);
+        mat.opacity = Math.max(0, 0.45 * (1.0 - progress));
       });
 
-      // Animate traveling attack pulses along arcs
+      // Animate traveling attack pulses along tubes (luminous photon sparks)
       attackArcs.forEach(({ curve, pulseMeshes }, arcIdx) => {
         pulseMeshes.forEach((pulse, pIdx) => {
-          const t = (elapsedTime * 0.50 + pIdx * 0.5 + arcIdx * 0.20) % 1.0;
+          const t = (elapsedTime * 0.38 + pIdx * 0.5 + arcIdx * 0.12) % 1.0;
           const pos = curve.getPoint(t);
           pulse.position.copy(pos);
-          pulse.scale.setScalar(0.9 + Math.sin(t * Math.PI) * 0.7);
+          pulse.scale.setScalar(0.95 + Math.sin(t * Math.PI) * 0.35);
         });
       });
 
@@ -844,11 +961,15 @@ export function CyberGlobe({
       cancelAnimationFrame(animId);
       if (resizeObserver) resizeObserver.disconnect();
       window.removeEventListener('resize', handleResize);
-      window.removeEventListener('scroll', onScroll);
       domElem.removeEventListener('wheel', onWheel);
+      if (container) {
+        container.removeEventListener('wheel', onWheel);
+      }
+      domElem.removeEventListener('dblclick', onDblClick);
       domElem.removeEventListener('pointerdown', onPointerDown);
       window.removeEventListener('pointermove', onPointerMove);
       window.removeEventListener('pointerup', onPointerUp);
+      window.removeEventListener('pointercancel', onPointerUp);
       if (container && domElem && container.contains(domElem)) {
         container.removeChild(domElem);
       }
@@ -864,187 +985,144 @@ export function CyberGlobe({
 
       {!compact && (
         <>
-          {/* Top-Left NetScout Horizon Telemetry Header - Minimal, Clean */}
-          <div className="absolute top-4 left-4 z-10 pointer-events-none">
-            <div className="flex items-center gap-2 mb-1">
-              <Globe size={14} className="text-[#f5efff]/70 animate-pulse" />
-              <span className="font-mono text-[9px] font-medium tracking-[0.2em] text-[#f5efff]/60 uppercase">
-                NETSCOUT THREAT HORIZON
-              </span>
-              <span className="px-2 py-0.5 rounded-full text-[8px] font-mono font-medium bg-emerald-500/10 text-emerald-300 border border-emerald-500/20 flex items-center gap-1">
-                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping" />
-                LIVE
-              </span>
-            </div>
-            <h2 className="text-lg sm:text-xl font-editorial font-light tracking-wide text-[#f5efff] uppercase">
-              GLOBAL ATTACK TRAJECTORY
-            </h2>
-            <div className="text-[10px] text-[#f5efff]/45 font-mono flex items-center gap-2 mt-0.5">
-              <span>ENCLAVE: 28.61° N · 77.20° E</span>
-              <span>·</span>
-              <span className="text-emerald-400 font-medium flex items-center gap-1">
-                <Shield size={10} />
-                OPTICAL DIODE ISOLATED
-              </span>
-            </div>
-          </div>
-
-          {/* Floating Controls & Stream Status (Top Left underneath header) */}
-          <div className="absolute top-20 left-4 z-10 flex items-center gap-2">
-            <button
-              onClick={() => setLiveStreamActive((prev) => !prev)}
-              className={`px-2.5 py-1 rounded-full text-[10px] font-mono font-medium border backdrop-blur-md transition-colors flex items-center gap-1.5 ${
-                liveStreamActive
-                  ? 'bg-emerald-500/10 text-emerald-300 border-emerald-500/25 hover:bg-emerald-500/20'
-                  : 'bg-amber-500/10 text-amber-300 border-amber-500/25 hover:bg-amber-500/20'
-              }`}
-            >
-              <Radio size={10} className={liveStreamActive ? 'text-emerald-400 animate-pulse' : 'text-amber-400'} />
-              <span>{liveStreamActive ? `${threatNodes.length - 1} Attacks Streaming` : 'Stream Paused'}</span>
-            </button>
-            <button
-              onClick={() => setAutoRotate((prev) => { const next = !prev; autoRotateRef.current = next; return next; })}
-              className="px-2.5 py-1 rounded-full text-[10px] font-mono font-medium border border-[#f5efff]/10 bg-[#0c0b16]/70 backdrop-blur-md text-[#f5efff]/70 hover:text-[#f5efff] hover:bg-[#0c0b16]/90 transition-colors flex items-center gap-1.5"
-            >
-              <RotateCw size={10} className={autoRotate ? 'animate-spin' : ''} />
-              <span>{autoRotate ? 'Rotating' : 'Static'}</span>
-            </button>
-          </div>
-
-          {/* Attack Origin Country / City Feed (Right Side) */}
-          <div className="absolute top-4 right-4 z-10 w-64 max-h-[420px] overflow-y-auto space-y-1.5 p-2.5 rounded-xl bg-[#0c0b16]/80 backdrop-blur-xl border border-[#f5efff]/[0.06] font-mono text-xs shadow-2xl no-scrollbar">
-            <div className="flex items-center justify-between text-[11px] font-semibold text-[#f5efff]/70 px-1 pb-2 border-b border-[#f5efff]/[0.08]">
-              <span className="flex items-center gap-1.5 text-rose-400">
-                <Crosshair size={13} /> PREDICTED ATTACK ORIGINS
-              </span>
-              <span className="text-[10px] text-[#f5efff]/50 px-2 py-0.5 rounded-full bg-[#f5efff]/5 border border-[#f5efff]/10 flex items-center gap-1">
-                <Zap size={10} className="text-emerald-400" /> {dynamicThreats.length} ACTIVE
+          {/* Top-Left Telemetry Header & Controls */}
+          <div className="absolute top-4 left-4 z-10 space-y-2 pointer-events-auto">
+            <div className="flex items-center gap-2.5">
+              <h2 className="font-editorial text-xl sm:text-2xl font-light tracking-wide text-[#f5efff]">
+                Global Attack Trajectory
+              </h2>
+              <span className="px-2 py-0.5 rounded-full text-[9px] font-mono uppercase tracking-[0.14em] bg-[#f5efff]/5 text-[#f5efff]/60 border border-[#f5efff]/10">
+                Kaspersky Live
               </span>
             </div>
 
-            {threatNodes
-              .filter((n) => n.role !== 'target')
-              .map((node) => {
-                const isSelected = selectedNode?.id === node.id;
-                const isCritical = node.riskScore >= 80;
+            {/* Essential Controls: Source, Rotate, Zoom */}
+            <div className="flex items-center gap-1.5 flex-wrap">
+              <button
+                onClick={() => setTelemetrySource((prev) => (prev === 'kaspersky' ? 'simulator' : 'kaspersky'))}
+                className="px-2.5 py-1 rounded-full text-[10px] font-mono uppercase tracking-wider border border-[#f5efff]/10 bg-[#f5efff]/5 hover:bg-[#f5efff]/10 text-[#f5efff]/70 transition-colors"
+                title="Toggle live telemetry source"
+              >
+                {telemetrySource === 'kaspersky' ? 'Kaspersky' : 'Simulator'}
+              </button>
 
-                return (
-                  <div
-                    key={node.id}
-                    onClick={() => setSelectedNode(node)}
-                    className={`p-2.5 rounded-xl border transition-all duration-200 cursor-pointer ${
-                      isSelected
-                        ? 'bg-[#f5efff]/10 border-[#f5efff]/30 shadow-[0_0_20px_rgba(245,239,255,0.08)]'
-                        : 'bg-[#f5efff]/[0.02] border-[#f5efff]/[0.06] hover:bg-[#f5efff]/[0.06] hover:border-[#f5efff]/[0.15]'
-                    }`}
-                  >
-                    <div className="flex items-center justify-between mb-1">
-                      <span className="font-semibold text-[#f5efff] font-mono text-xs flex items-center gap-1.5">
-                        <span
-                          className={`w-1.5 h-1.5 rounded-full ${
-                            isCritical ? 'bg-rose-400 animate-pulse shadow-[0_0_6px_#f43f5e]' : 'bg-amber-400'
-                          }`}
-                        />
-                        {node.city || node.ip}
-                      </span>
-                      <span
-                        className={`text-[9px] px-2 py-0.5 rounded-full font-bold uppercase tracking-wider ${
-                          isCritical
-                            ? 'bg-rose-500/15 text-rose-400 border border-rose-500/25'
-                            : 'bg-amber-500/15 text-amber-400 border border-amber-500/25'
-                        }`}
-                      >
-                        Risk {Math.round(node.riskScore)}
-                      </span>
-                    </div>
+              <button
+                onClick={() => setAutoRotate((prev) => { const next = !prev; autoRotateRef.current = next; return next; })}
+                className="px-2.5 py-1 rounded-full text-[10px] font-mono uppercase tracking-wider border border-[#f5efff]/10 bg-[#f5efff]/5 hover:bg-[#f5efff]/10 text-[#f5efff]/70 transition-colors flex items-center gap-1.5"
+                title="Toggle rotation"
+              >
+                <RotateCw size={10} className={autoRotate ? 'animate-spin' : ''} />
+                <span>{autoRotate ? 'Rotate' : 'Static'}</span>
+              </button>
 
-                    <div className="text-[11px] text-[#f5efff]/60 font-sans truncate">
-                      {node.country} · {node.asn || 'AS-TRANSIT'}
-                    </div>
-
-                    <div className="text-[10px] text-[#f5efff]/40 mt-1 flex justify-between items-center font-mono">
-                      <span className="text-[#f5efff]/80 font-medium">{node.threatType || 'DDOS'}</span>
-                      <span>
-                        {node.bandwidthGbps ? `${node.bandwidthGbps} Gbps` : `${Math.round((node.packetRate || 0) / 1000)} kpps`}
-                      </span>
-                    </div>
-                  </div>
-                );
-              })}
-          </div>
-
-          {/* Bottom Selected Node Inspection HUD */}
-          {selectedNode && (
-            <div className="absolute bottom-4 left-4 right-4 z-10 p-3 rounded-xl bg-[#0c0b16]/85 backdrop-blur-xl border border-[#f5efff]/[0.08] flex flex-col md:flex-row md:items-center justify-between gap-3 font-mono text-xs shadow-2xl">
-              <div className="flex items-center gap-4">
-                <div className="p-2.5 rounded-xl bg-[#f5efff]/5 border border-[#f5efff]/10 text-[#f5efff]/80">
-                  <Compass size={20} />
-                </div>
-                <div>
-                  <div className="flex items-center gap-2">
-                    <span className="text-[#f5efff] font-editorial text-lg sm:text-xl font-light">
-                      {selectedNode.city ? `${selectedNode.city}, ${selectedNode.country}` : selectedNode.ip}
-                    </span>
-                    <span className="text-[#f5efff]/60 font-mono text-[11px]">[{selectedNode.ip}]</span>
-                  </div>
-                  <div className="text-[#f5efff]/50 text-[11px] mt-0.5 flex items-center gap-2 font-mono">
-                    <span>Carrier: {selectedNode.asn || selectedNode.location}</span>
-                    <span>·</span>
-                    <span className="text-emerald-400">Targeting: Protected Enclave (10.0.0.10)</span>
-                  </div>
-                </div>
-              </div>
-
-              <div className="flex items-center gap-6 flex-wrap">
-                <div className="text-right">
-                  <span className="text-[#f5efff]/40 text-[10px] block uppercase tracking-wider">PREDICTED LOCATION</span>
-                  <span className="text-[#f5efff] font-mono font-medium">
-                    {selectedNode.lat.toFixed(2)}°, {selectedNode.lon.toFixed(2)}°
-                  </span>
-                </div>
-                <div className="text-right">
-                  <span className="text-[#f5efff]/40 text-[10px] block uppercase tracking-wider">ML CONFIDENCE</span>
-                  <span className="text-emerald-400 font-editorial text-lg">
-                    {selectedNode.mlConfidence ? `${selectedNode.mlConfidence}%` : '96.2%'}
-                  </span>
-                </div>
-                <div className="text-right">
-                  <span className="text-[#f5efff]/40 text-[10px] block uppercase tracking-wider">BANDWIDTH / RATE</span>
-                  <span className="text-[#f5efff] font-editorial text-lg">
-                    {selectedNode.bandwidthGbps ? `${selectedNode.bandwidthGbps} Gbps` : '12.4 Gbps'}
-                  </span>
-                </div>
+              {/* Minimal Zoom Toolbar */}
+              <div className="flex items-center gap-0.5 px-1.5 py-0.5 rounded-full border border-[#f5efff]/10 bg-[#f5efff]/5">
                 <button
-                  onClick={() => setAutoRotate((prev) => { const next = !prev; autoRotateRef.current = next; return next; })}
-                  className="px-3.5 py-1.5 rounded-full border border-[#f5efff]/15 bg-[#f5efff]/5 hover:bg-[#f5efff]/10 text-[#f5efff] text-xs font-mono flex items-center gap-2 transition-all duration-300"
+                  onClick={handleZoomIn}
+                  className="w-5 h-5 rounded-full flex items-center justify-center text-[#f5efff]/80 hover:text-white hover:bg-[#f5efff]/10 transition-colors font-mono text-xs font-bold"
+                  title="Zoom In"
+                  aria-label="Zoom In"
                 >
-                  <RotateCw size={12} className={autoRotate ? 'animate-spin' : ''} />
-                  <span>{autoRotate ? 'Orbiting' : 'Paused'}</span>
+                  +
+                </button>
+                <span className="text-[10px] font-mono text-[#f5efff]/70 px-1 min-w-[32px] text-center select-none">
+                  {zoomPercent}%
+                </span>
+                <button
+                  onClick={handleZoomOut}
+                  className="w-5 h-5 rounded-full flex items-center justify-center text-[#f5efff]/80 hover:text-white hover:bg-[#f5efff]/10 transition-colors font-mono text-xs font-bold"
+                  title="Zoom Out"
+                  aria-label="Zoom Out"
+                >
+                  −
+                </button>
+                <span className="w-[1px] h-3 bg-[#f5efff]/15 mx-0.5" />
+                <button
+                  onClick={handleResetZoom}
+                  className="px-1.5 py-0.5 rounded text-[9px] font-mono text-[#f5efff]/50 hover:text-white hover:bg-[#f5efff]/10 uppercase tracking-wider"
+                  title="Reset Zoom"
+                >
+                  Reset
                 </button>
               </div>
             </div>
-          )}
-
-          {/* Floating Live User Enclave Telemetry — Only in full dashboard view */}
-          <div className="absolute bottom-6 left-1/2 -translate-x-1/2 z-20 flex items-center gap-2.5 px-3 py-1.5 font-mono text-[11px] text-[#f5efff]/75 pointer-events-auto select-none">
-            <span className="flex h-2 w-2 relative">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-cyan-400 opacity-75"></span>
-              <span className="relative inline-flex rounded-full h-2 w-2 bg-cyan-500"></span>
-            </span>
-            <span className="truncate max-w-[210px] sm:max-w-none">
-              <span className="text-[#f5efff]/40 mr-1.5 uppercase tracking-wider text-[9px]">YOUR DEFENSE NODE:</span>
-              <strong className="text-white font-medium">{userLocation.city}, {userLocation.country}</strong>
-            </span>
-            <span className="text-[#f5efff]/20">·</span>
-            <button
-              onClick={hoverToUserLocation}
-              className="text-cyan-400 hover:text-cyan-300 font-medium tracking-wide flex items-center gap-1 transition-colors cursor-pointer text-[10px] uppercase hover:underline"
-              title="Center globe on your physical location"
-            >
-              <Crosshair size={11} className="text-cyan-400" />
-              <span>Orient to Me</span>
-            </button>
           </div>
+
+          {/* Compact Attack Feed (Right Side — Minimal Place & Coordinates) */}
+          <div className="absolute top-4 right-4 z-10 w-52 sm:w-56 max-h-[380px] overflow-y-auto space-y-1 p-2 rounded-xl bg-[#0c0b16]/85 backdrop-blur-xl border border-[#f5efff]/10 text-xs shadow-2xl no-scrollbar">
+            <div className="flex items-center justify-between text-[9px] font-mono uppercase tracking-[0.14em] text-[#f5efff]/45 px-1 pb-1.5 border-b border-[#f5efff]/10">
+              <span>Live Attacks</span>
+              <span className="font-mono text-[#f5efff]/60">{dynamicThreats.length}</span>
+            </div>
+
+            {threatNodes.filter((n) => n.role !== 'target').length === 0 ? (
+              <div className="p-3 text-center text-[#f5efff]/40 font-mono text-[10px]">
+                Connecting...
+              </div>
+            ) : (
+              threatNodes
+                .filter((n) => n.role !== 'target')
+                .map((node) => {
+                  const isSelected = selectedNode?.id === node.id;
+
+                  return (
+                    <div
+                      key={node.id}
+                      onClick={() => selectAndFocusNode(node)}
+                      className={`p-2 rounded-lg border transition-colors cursor-pointer ${
+                        isSelected
+                          ? 'bg-[#f5efff]/10 border-[#f5efff]/20'
+                          : 'bg-[#f5efff]/[0.02] border-[#f5efff]/5 hover:bg-[#f5efff]/[0.05]'
+                      }`}
+                    >
+                      <div className="flex items-center justify-between">
+                        <span className="font-editorial text-sm font-light text-[#f5efff] truncate flex items-center gap-1.5">
+                          <span className="w-1.5 h-1.5 rounded-full bg-rose-400 shrink-0" />
+                          <span className="truncate">{node.country || node.city}</span>
+                        </span>
+                        {node.dstCountry && (
+                          <span className="text-[10px] font-mono text-[#f5efff]/40 truncate max-w-[75px]">
+                            → {node.dstCountry}
+                          </span>
+                        )}
+                      </div>
+
+                      <div className="text-[9px] text-[#f5efff]/45 font-mono mt-0.5 flex items-center justify-between">
+                        <span>{node.lat.toFixed(1)}°, {node.lon.toFixed(1)}°</span>
+                        <span>{node.detectionCount ? `${node.detectionCount} hits` : (node.kasperskySystem || 'Live')}</span>
+                      </div>
+                    </div>
+                  );
+                })
+            )}
+          </div>
+
+          {/* Minimal Selected Target Bar (Only shows place name & coordinates when clicked) */}
+          {selectedNode && selectedNode.role !== 'target' && (
+            <div className="absolute bottom-3 left-4 z-10 px-3.5 py-2 rounded-xl bg-[#0c0b16]/90 backdrop-blur-xl border border-[#f5efff]/10 text-xs shadow-2xl flex items-center gap-3">
+              <span className="w-1.5 h-1.5 rounded-full bg-rose-400 shrink-0" />
+              <div className="flex items-center gap-2 font-mono">
+                <span className="font-editorial text-sm font-light text-[#f5efff]">
+                  {selectedNode.country} {selectedNode.dstCountry ? `→ ${selectedNode.dstCountry}` : ''}
+                </span>
+                <span className="text-[#f5efff]/40 text-[10px]">
+                  [{selectedNode.lat.toFixed(2)}°, {selectedNode.lon.toFixed(2)}°]
+                </span>
+                {selectedNode.detectionCount && (
+                  <span className="text-[#f5efff]/50 text-[10px]">
+                    · {selectedNode.detectionCount} hits
+                  </span>
+                )}
+              </div>
+              <button
+                onClick={() => setSelectedNode(DEFAULT_TARGET_NODE)}
+                className="text-[#f5efff]/40 hover:text-[#f5efff] text-xs ml-1"
+                title="Close"
+              >
+                ✕
+              </button>
+            </div>
+          )}
         </>
       )}
     </div>

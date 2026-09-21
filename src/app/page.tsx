@@ -12,7 +12,7 @@ import { ScrollReveal } from '@/components/studio/scroll-reveal';
 import { ScrollGlobeHero } from '@/components/ui/scroll-globe-hero';
 import { STUDIO_PROJECTS, STUDIO_SERVICES, STUDIO_AWARDS } from '@/lib/studio-data';
 import { DefenseModulesGrid } from '@/components/studio/defense-modules-grid';
-import { WovenCanvas } from '@/components/studio/woven-light-hero';
+import { AmbientParticlesCanvas } from '@/components/studio/ambient-particles';
 import { TextParticle } from '@/components/ui/text-particle';
 
 export default function HomePage() {
@@ -21,9 +21,9 @@ export default function HomePage() {
       {/* ═══ PRELOADER (3 seconds) ═══ */}
       <Preloader />
 
-      {/* ═══ PERSISTENT 2X WOVEN SILK PARTICLES CANVAS (THROUGHOUT THE SITE) ═══ */}
+      {/* ═══ PERSISTENT AMBIENT PARTICLES CANVAS ═══ */}
       <div className="fixed inset-0 z-0 pointer-events-none opacity-45">
-        <WovenCanvas scale={2.4} />
+        <AmbientParticlesCanvas scale={2.4} />
       </div>
 
       {/* ═══ NAVIGATION ═══ */}
