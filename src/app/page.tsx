@@ -132,16 +132,19 @@ export default function HomePage() {
         subhead="Hardware-enforced unidirectional optical tap monitoring and real-time planetary threat reconnaissance."
         sections={[
           {
-            title: 'Autonomous Reconnaissance',
-            body: 'Continuous planetary radar mapping and satellite payload trajectory tracking at microsecond resolution.',
+            eyebrow: '// CORE MVP CAPABILITY 01',
+            title: 'Zero-Return Optical TAP',
+            body: 'Hardware-enforced single-strand optical tap with physically severed transmit lasers. Eliminates reverse packet injection with absolute physical air-gap protection.',
           },
           {
-            title: 'Zero-Trust Mesh Topology',
-            body: 'Sovereign cryptographic attestations synchronizing orbital arrays with subterranean ground stations.',
+            eyebrow: '// CORE MVP CAPABILITY 02',
+            title: 'Multi-Resolution EWMA AI',
+            body: 'Online Welford statistical profiling across packet, connection, and session layers. Solves broken TCP handshakes without state table memory bloat.',
           },
           {
-            title: 'Quantum-Resistant Telemetry',
-            body: 'Post-quantum lattice encryptions shielding mission-critical national security datalinks globally.',
+            eyebrow: '// CORE MVP CAPABILITY 03',
+            title: 'Immutable Blockchain Audit',
+            body: 'Every intrusion alert and forensic trace is sealed into an immutable parent-chained SHA-256 ledger, guaranteeing tamper-evident legal-grade non-repudiation.',
           },
         ]}
         outroTitle="MIRAGE"

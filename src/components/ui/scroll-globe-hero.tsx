@@ -15,6 +15,7 @@ const GlobeScene = dynamic(() => import('./globe-scene'), {
 });
 
 export interface ScrollGlobeHeroSection {
+  eyebrow?: string;
   title: string;
   body: string;
 }
@@ -34,16 +35,19 @@ export interface ScrollGlobeHeroProps {
 
 const DEFAULT_SECTIONS: ScrollGlobeHeroSection[] = [
   {
-    title: 'Autonomous Reconnaissance',
-    body: 'Continuous planetary radar mapping and satellite payload trajectory tracking at microsecond resolution.',
+    eyebrow: '// CORE MVP CAPABILITY 01',
+    title: 'Zero-Return Optical TAP',
+    body: 'Hardware-enforced single-strand optical tap with physically severed transmit lasers. Eliminates reverse packet injection with absolute physical air-gap protection.',
   },
   {
-    title: 'Zero-Trust Mesh Topology',
-    body: 'Sovereign cryptographic attestations synchronizing orbital arrays with subterranean ground stations.',
+    eyebrow: '// CORE MVP CAPABILITY 02',
+    title: 'Multi-Resolution EWMA AI',
+    body: 'Online Welford statistical profiling across packet, connection, and session layers. Solves broken TCP handshakes without state table memory bloat.',
   },
   {
-    title: 'Quantum-Resistant Telemetry',
-    body: 'Post-quantum lattice encryptions shielding mission-critical national security datalinks globally.',
+    eyebrow: '// CORE MVP CAPABILITY 03',
+    title: 'Immutable Blockchain Audit',
+    body: 'Every intrusion alert and forensic trace is sealed into an immutable parent-chained SHA-256 ledger, guaranteeing tamper-evident legal-grade non-repudiation.',
   },
 ];
 
@@ -289,7 +293,7 @@ export function ScrollGlobeHero({
             >
               <div className="text-center max-w-3xl mx-auto space-y-2.5 sm:space-y-3 px-4 sm:px-6">
                 <div className="font-mono text-[11px] sm:text-xs uppercase tracking-[0.25em] text-cyan-400/90 font-medium">
-                  // TELEMETRY VECTOR 0{idx + 1}
+                  {beat.eyebrow || `// CORE MVP CAPABILITY 0${idx + 1}`}
                 </div>
                 <h3 className="font-editorial text-2xl sm:text-5xl md:text-6xl lg:text-7xl font-light tracking-tight text-[#f5efff] leading-tight">
                   {beat.title}
