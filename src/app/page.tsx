@@ -14,7 +14,6 @@ import { ScrollGlobeHero } from '@/components/ui/scroll-globe-hero';
 import { STUDIO_PROJECTS, STUDIO_SERVICES, STUDIO_AWARDS } from '@/lib/studio-data';
 import { DefenseModulesGrid } from '@/components/studio/defense-modules-grid';
 import { AmbientParticlesCanvas } from '@/components/studio/ambient-particles';
-import { TextParticle } from '@/components/ui/text-particle';
 import { ThreeDCardDeck, ThreeDCardItem } from '@/components/studio/three-d-cards';
 
 export default function HomePage() {
@@ -31,11 +30,6 @@ export default function HomePage() {
         />
       )}
 
-      {/* ═══ PERSISTENT AMBIENT PARTICLES CANVAS ═══ */}
-      <div className="fixed inset-0 z-0 pointer-events-none opacity-45">
-        <AmbientParticlesCanvas scale={2.4} />
-      </div>
-
       {/* ═══ NAVIGATION ═══ */}
       <StudioNav />
 
@@ -46,31 +40,36 @@ export default function HomePage() {
         {/* Soft ambient gradient */}
         <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_25%_15%,rgba(245,239,255,0.03),transparent_55%)]" />
 
+        {/* Interactive 3D Ambient Particles Canvas (directly behind hero title) */}
+        <div className="absolute inset-0 z-0 opacity-80 pointer-events-auto">
+          <AmbientParticlesCanvas scale={2.4} />
+        </div>
+
         <div className="relative z-10 max-w-[1400px] mx-auto w-full">
           {/* Eyebrow */}
           <ScrollReveal direction="fade" delay={200}>
             <Eyebrow label="// NTRO · PROBLEM STATEMENT 26145 · SIH 2026" tag="active" />
           </ScrollReveal>
 
-          {/* Main title — interactive physics particle text with bold Cormorant Garamond */}
-          <div className="mt-4 sm:mt-6 w-full max-w-[1300px] h-[210px] sm:h-[310px] md:h-[380px] lg:h-[440px] relative pointer-events-auto">
-            <h1 className="sr-only">Multi-Resolution Passive Threat Intelligence</h1>
-            <TextParticle
-              lines={[
-                { text: 'Multi-Resolution' },
-                { text: 'Passive Threat', italic: true },
-                { text: 'Intelligence' },
-              ]}
-              textAlign="left"
-              fontSize={140}
-              fontFamily='"Cormorant Garamond", Georgia, serif'
-              fontWeight={600}
-              particleSize={3.0}
-              particleColor="#f5efff"
-              particleDensity={1.8}
-              lineHeightMultiplier={1.04}
-              className="w-full h-full"
-            />
+          {/* Main title — crisp bold editorial typography */}
+          <div className="mt-8 sm:mt-12 md:mt-16 space-y-1 sm:space-y-2 md:space-y-3">
+            <ScrollReveal direction="left" delay={300} distance={120} duration={1000}>
+              <h1 className="font-editorial text-[3.2rem] sm:text-7xl md:text-[5.5rem] lg:text-[7.5rem] xl:text-[9rem] font-medium sm:font-semibold tracking-tight leading-[0.92] text-[#f5efff]">
+                Multi-Resolution
+              </h1>
+            </ScrollReveal>
+
+            <ScrollReveal direction="right" delay={500} distance={120} duration={1000}>
+              <h2 className="font-editorial text-[3.2rem] sm:text-7xl md:text-[5.5rem] lg:text-[7.5rem] xl:text-[9rem] font-medium sm:font-semibold tracking-tight leading-[0.92] italic text-white">
+                Passive Threat
+              </h2>
+            </ScrollReveal>
+
+            <ScrollReveal direction="bottom" delay={700} distance={100} duration={1000}>
+              <h2 className="font-editorial text-[3.2rem] sm:text-7xl md:text-[5.5rem] lg:text-[7.5rem] xl:text-[9rem] font-medium sm:font-semibold tracking-tight leading-[0.92] text-[#f5efff]">
+                Intelligence
+              </h2>
+            </ScrollReveal>
           </div>
 
           {/* Description — pushed a bit more up */}
