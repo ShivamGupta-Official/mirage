@@ -63,11 +63,11 @@ export const AmbientParticlesCanvas = ({ scale = 2.0 }: { scale?: number }) => {
     geometry.setAttribute('color', new THREE.BufferAttribute(colors, 3));
 
     const material = new THREE.PointsMaterial({
-      size: isMobile ? 0.034 : 0.03,
+      size: isMobile ? 0.032 : 0.028,
       vertexColors: true,
-      blending: THREE.AdditiveBlending,
+      blending: isDarkMode ? THREE.NormalBlending : THREE.AdditiveBlending,
       transparent: true,
-      opacity: 0.95,
+      opacity: isDarkMode ? 0.95 : 0.85,
     });
 
     const points = new THREE.Points(geometry, material);
