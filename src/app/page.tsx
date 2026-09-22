@@ -14,7 +14,6 @@ import { ScrollGlobeHero } from '@/components/ui/scroll-globe-hero';
 import { STUDIO_PROJECTS, STUDIO_SERVICES, STUDIO_AWARDS } from '@/lib/studio-data';
 import { DefenseModulesGrid } from '@/components/studio/defense-modules-grid';
 import { AmbientParticlesCanvas } from '@/components/studio/ambient-particles';
-import { TextParticle } from '@/components/ui/text-particle';
 import { ThreeDCardDeck, ThreeDCardItem } from '@/components/studio/three-d-cards';
 
 export default function HomePage() {
@@ -52,24 +51,25 @@ export default function HomePage() {
             <Eyebrow label="// NTRO · PROBLEM STATEMENT 26145 · SIH 2026" tag="active" />
           </ScrollReveal>
 
-          {/* Main title — interactive physics particle text */}
-          <div className="mt-4 sm:mt-5 w-full max-w-[1280px] h-[190px] sm:h-[300px] md:h-[370px] lg:h-[420px] relative pointer-events-auto">
-            <h1 className="sr-only">Multi-Resolution Passive Threat Intelligence</h1>
-            <TextParticle
-              lines={[
-                { text: 'Multi-Resolution' },
-                { text: 'Passive Threat', italic: true },
-                { text: 'Intelligence' },
-              ]}
-              textAlign="left"
-              fontSize={140}
-              fontFamily='"Cormorant Garamond", Georgia, serif'
-              particleSize={2.4}
-              particleColor="#f5efff"
-              particleDensity={3}
-              lineHeightMultiplier={1.04}
-              className="w-full h-full"
-            />
+          {/* Main title — bold solid editorial typography as before */}
+          <div className="mt-6 sm:mt-8 md:mt-10 space-y-1 sm:space-y-2 md:space-y-3">
+            <ScrollReveal direction="left" delay={300} distance={100} duration={900}>
+              <h1 className="font-editorial text-[3.2rem] sm:text-7xl md:text-[5.5rem] lg:text-[7.5rem] xl:text-[8.8rem] font-medium sm:font-semibold tracking-tight leading-[0.92] text-[#f5efff]">
+                Multi-Resolution
+              </h1>
+            </ScrollReveal>
+
+            <ScrollReveal direction="right" delay={500} distance={100} duration={900}>
+              <h2 className="font-editorial text-[3.2rem] sm:text-7xl md:text-[5.5rem] lg:text-[7.5rem] xl:text-[8.8rem] font-medium sm:font-semibold tracking-tight leading-[0.92] italic text-white">
+                Passive Threat
+              </h2>
+            </ScrollReveal>
+
+            <ScrollReveal direction="bottom" delay={700} distance={80} duration={900}>
+              <h2 className="font-editorial text-[3.2rem] sm:text-7xl md:text-[5.5rem] lg:text-[7.5rem] xl:text-[8.8rem] font-medium sm:font-semibold tracking-tight leading-[0.92] text-[#f5efff]">
+                Intelligence
+              </h2>
+            </ScrollReveal>
           </div>
 
           {/* Description — pushed a bit more up */}
