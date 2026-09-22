@@ -1,22 +1,50 @@
 'use client'
 import { useEffect, useRef, useState } from 'react'
 
+export type MirageFontTheme = 'bold-italic' | 'curved-handwriting' | 'royal-script' | 'editorial'
+
 interface LoadingScreenProps {
   projectName?: string
   durationMs?: number
   onEnter?: () => void
+  initialFont?: MirageFontTheme
 }
 
 export function LoadingScreen({
   projectName = "MIRAGE",
   durationMs = 5000,
   onEnter,
+  initialFont = "bold-italic",
 }: LoadingScreenProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const mousePos = useRef<{ x: number; y: number }>({ x: -1000, y: -1000 })
   const [progress, setProgress] = useState(0)
   const [loadingDone, setLoadingDone] = useState(false)
   const [exiting, setExiting] = useState(false)
+  const [fontTheme, setFontTheme] = useState<MirageFontTheme>(initialFont)
+
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem('mirage_font_theme') as MirageFontTheme | null
+      if (saved && ['bold-italic', 'curved-handwriting', 'royal-script', 'editorial'].includes(saved)) {
+        setFontTheme(saved)
+      }
+    } catch {}
+  }, [])
+
+  const changeFontTheme = (theme: MirageFontTheme) => {
+    setFontTheme(theme)
+    try {
+      localStorage.setItem('mirage_font_theme', theme)
+    } catch {}
+  }
+
+  const cycleFontTheme = () => {
+    const list: MirageFontTheme[] = ['bold-italic', 'curved-handwriting', 'royal-script', 'editorial']
+    const idx = list.indexOf(fontTheme)
+    const next = list[(idx + 1) % list.length]
+    changeFontTheme(next)
+  }
 
   // Full-Screen Highly Active Saturated Vector Lines & Dynamic Particles
   useEffect(() => {
@@ -233,14 +261,73 @@ export function LoadingScreen({
         exiting ? 'opacity-0 pointer-events-none' : 'opacity-100'
       }`}
     >
+      {/* ─── LIVE FONT PICKER PILL (TOP RIGHT) ─── */}
+      <div className="absolute top-5 right-5 sm:top-6 sm:right-6 z-30 flex items-center gap-1.5 p-1 rounded-full bg-white/[0.05] border border-white/10 backdrop-blur-md text-[11px] font-mono tracking-wider">
+        <span className="pl-2.5 pr-1 text-white/40 uppercase hidden sm:inline-block">Font:</span>
+        <button
+          onClick={() => changeFontTheme('bold-italic')}
+          className={`px-3 py-1 rounded-full transition-all duration-200 cursor-pointer ${
+            fontTheme === 'bold-italic'
+              ? 'bg-white text-black font-semibold shadow-[0_0_15px_rgba(255,255,255,0.6)]'
+              : 'text-white/60 hover:text-white hover:bg-white/10'
+          }`}
+        >
+          Bold Italic
+        </button>
+        <button
+          onClick={() => changeFontTheme('curved-handwriting')}
+          className={`px-3 py-1 rounded-full transition-all duration-200 cursor-pointer ${
+            fontTheme === 'curved-handwriting'
+              ? 'bg-white text-black font-semibold shadow-[0_0_15px_rgba(255,255,255,0.6)]'
+              : 'text-white/60 hover:text-white hover:bg-white/10'
+          }`}
+        >
+          Curved Handwriting
+        </button>
+        <button
+          onClick={() => changeFontTheme('royal-script')}
+          className={`px-3 py-1 rounded-full transition-all duration-200 cursor-pointer hidden md:inline-block ${
+            fontTheme === 'royal-script'
+              ? 'bg-white text-black font-semibold shadow-[0_0_15px_rgba(255,255,255,0.6)]'
+              : 'text-white/60 hover:text-white hover:bg-white/10'
+          }`}
+        >
+          Royal Script
+        </button>
+        <button
+          onClick={() => changeFontTheme('editorial')}
+          className={`px-3 py-1 rounded-full transition-all duration-200 cursor-pointer hidden md:inline-block ${
+            fontTheme === 'editorial'
+              ? 'bg-white text-black font-semibold shadow-[0_0_15px_rgba(255,255,255,0.6)]'
+              : 'text-white/60 hover:text-white hover:bg-white/10'
+          }`}
+        >
+          Editorial
+        </button>
+      </div>
+
       {/* ─── FULL-SCREEN HIGHLY ACTIVE VECTOR LINES CANVAS ─── */}
       <canvas ref={canvasRef} className="absolute inset-0 pointer-events-none" />
 
       {/* ─── CENTERPIECE: PURE FLOATING MIRAGE + LOADING BAR + SUMMONED BUTTON ─── */}
       <div className="relative z-10 flex flex-col items-center text-center px-6 max-w-3xl mx-auto pointer-events-auto">
         {/* Project Name emerging directly from the dynamic vector animation */}
-        <h1 className="font-mono text-5xl sm:text-7xl md:text-8xl font-light tracking-[0.28em] uppercase word-float text-white drop-shadow-[0_0_35px_rgba(255,255,255,0.7)] drop-shadow-[0_4px_16px_rgba(0,0,0,0.95)]">
-          {projectName}
+        <h1
+          onClick={cycleFontTheme}
+          title="Click to cycle font style"
+          className={`select-none cursor-pointer word-float text-white transition-all duration-300 ${
+            fontTheme === 'curved-handwriting'
+              ? 'font-curved-handwriting font-normal text-7xl sm:text-9xl md:text-[10.5rem] tracking-wide drop-shadow-[0_0_40px_rgba(255,255,255,0.85)] drop-shadow-[0_4px_24px_rgba(0,0,0,0.95)] leading-none py-2'
+              : fontTheme === 'royal-script'
+              ? 'font-pinyon font-normal text-7xl sm:text-9xl md:text-[10rem] tracking-normal drop-shadow-[0_0_40px_rgba(255,255,255,0.85)] drop-shadow-[0_4px_24px_rgba(0,0,0,0.95)] leading-none py-2'
+              : fontTheme === 'editorial'
+              ? 'font-editorial italic font-bold sm:font-extrabold text-6xl sm:text-8xl md:text-9xl tracking-[0.12em] sm:tracking-[0.18em] uppercase drop-shadow-[0_0_40px_rgba(255,255,255,0.85)] drop-shadow-[0_4px_24px_rgba(0,0,0,0.95)]'
+              : 'font-playfair italic font-extrabold sm:font-black text-6xl sm:text-8xl md:text-9xl tracking-[0.08em] sm:tracking-[0.14em] uppercase drop-shadow-[0_0_45px_rgba(255,255,255,0.9)] drop-shadow-[0_4px_24px_rgba(0,0,0,0.95)]'
+          }`}
+        >
+          {fontTheme === 'curved-handwriting' || fontTheme === 'royal-script'
+            ? (projectName.toUpperCase() === 'MIRAGE' ? 'Mirage' : projectName)
+            : projectName}
         </h1>
 
         {/* Loading Bar Beneath MIRAGE */}

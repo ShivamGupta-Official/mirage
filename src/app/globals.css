@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;0,700;1,300;1,400;1,600&family=IBM+Plex+Mono:ital,wght@0,400;0,500;0,600;0,700;1,400&family=Inter:wght@300;400;500;600;700;800&family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Alex+Brush&family=Cinzel+Decorative:wght@700&family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;0,700;1,300;1,400;1,600;1,700&family=Great+Vibes&family=IBM+Plex+Mono:ital,wght@0,400;0,500;0,600;0,700;1,400&family=Inter:wght@300;400;500;600;700;800&family=Pinyon+Script&family=Playfair+Display:ital,wght@0,600;0,700;0,800;0,900;1,600;1,700;1,800;1,900&family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap');
 @import "tailwindcss";
 
 /* ─────────────────────────────────────────────────────────────
@@ -54,6 +54,11 @@
   --font-sans: "Plus Jakarta Sans", system-ui, sans-serif;
   --font-mono: "IBM Plex Mono", monospace;
   --font-display: "Cormorant Garamond", Georgia, serif;
+  --font-playfair: "Playfair Display", Georgia, serif;
+  --font-curved: "Alex Brush", "Great Vibes", cursive;
+  --font-calligraphy: "Great Vibes", "Alex Brush", cursive;
+  --font-pinyon: "Pinyon Script", cursive;
+  --font-cinzel: "Cinzel Decorative", Georgia, serif;
 }
 
 /* ─── Typography Utility Classes ─── */
@@ -71,6 +76,26 @@
 
 .font-inter {
   font-family: 'Inter', system-ui, -apple-system, sans-serif;
+}
+
+.font-playfair {
+  font-family: 'Playfair Display', Georgia, serif;
+}
+
+.font-curved-handwriting {
+  font-family: 'Alex Brush', 'Great Vibes', cursive;
+}
+
+.font-calligraphy {
+  font-family: 'Great Vibes', 'Alex Brush', cursive;
+}
+
+.font-pinyon {
+  font-family: 'Pinyon Script', cursive;
+}
+
+.font-cinzel {
+  font-family: 'Cinzel Decorative', Georgia, serif;
 }
 
 /* ─── Base Styles ─── */
