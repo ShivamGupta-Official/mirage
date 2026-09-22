@@ -22,6 +22,7 @@ export interface TextParticleAnimationProps {
   lineHeightMultiplier?: number;
   fontSize?: number;
   fontFamily?: string;
+  fontWeight?: number | string;
   particleSize?: number;
   particleColor?: string;
   particleDensity?: number;
@@ -36,9 +37,10 @@ export function TextParticle({
   lineHeightMultiplier = 1.05,
   fontSize = 110,
   fontFamily = '"Cormorant Garamond", Georgia, serif',
-  particleSize = 2.4,
+  fontWeight = 600,
+  particleSize = 2.8,
   particleColor = "#f5efff",
-  particleDensity = 3,
+  particleDensity = 2,
   backgroundColor = "transparent",
   className = "",
 }: TextParticleAnimationProps) {
@@ -87,7 +89,7 @@ export function TextParticle({
       );
 
       // Verify font bounds with context measurement to ensure 0% overflow on phones
-      ctx.font = `300 ${autoFontSize}px ${fontFamily}`;
+      ctx.font = `${fontWeight} ${autoFontSize}px ${fontFamily}`;
       const widestLine = Math.max(...parsedLines.map((l) => ctx.measureText(l.text).width), 1);
       if (widestLine > availWidth) {
         autoFontSize = Math.floor(autoFontSize * (availWidth / widestLine));
@@ -103,7 +105,7 @@ export function TextParticle({
 
       parsedLines.forEach((lineItem, i) => {
         const isItalic = Boolean(lineItem.italic);
-        ctx.font = `${isItalic ? "italic " : ""}300 ${autoFontSize}px ${fontFamily}`;
+        ctx.font = `${isItalic ? "italic " : ""}${fontWeight} ${autoFontSize}px ${fontFamily}`;
         ctx.fillStyle = "black";
         ctx.fillText(lineItem.text, x, startY + i * lineHeight);
 
@@ -113,7 +115,7 @@ export function TextParticle({
           const lineY = startY + i * lineHeight + autoFontSize * 0.44;
           const startX = textAlign === "left" ? x : textAlign === "right" ? x - textW : x - textW / 2;
           ctx.beginPath();
-          ctx.lineWidth = Math.max(2.5, autoFontSize * 0.035);
+          ctx.lineWidth = Math.max(3, autoFontSize * 0.04);
           ctx.strokeStyle = "black";
           ctx.moveTo(startX, lineY);
           ctx.lineTo(startX + textW, lineY);
@@ -130,22 +132,22 @@ export function TextParticle({
       const newParticles: Particle[] = [];
 
       // Mobile adaptive density and size
-      const effDensity = isMobile ? Math.max(particleDensity, 3) : particleDensity;
-      const effSize = isMobile ? Math.min(particleSize, 1.9) : particleSize;
+      const effDensity = isMobile ? Math.max(particleDensity, 2.5) : particleDensity;
+      const effSize = isMobile ? Math.min(particleSize, 2.4) : particleSize;
 
       for (let py = 0; py < textCoordinates.height; py += effDensity) {
         for (let px = 0; px < textCoordinates.width; px += effDensity) {
           const index = (py * textCoordinates.width + px) * 4;
           const alpha = textCoordinates.data[index + 3];
 
-          if (alpha > 128) {
+          if (alpha > 55) {
             newParticles.push({
               x: px,
               y: py,
               size: effSize,
               baseX: px,
               baseY: py,
-              density: Math.random() * 30 + 1,
+              density: Math.random() * 25 + 1,
               color: particleColor,
             });
           }
@@ -158,6 +160,13 @@ export function TextParticle({
 
     window.addEventListener("resize", handleResize);
     handleResize();
+
+    // Ensure custom fonts are ready before rasterizing
+    if (typeof document !== "undefined" && document.fonts) {
+      document.fonts.ready.then(() => {
+        handleResize();
+      });
+    }
 
     return () => {
       window.removeEventListener("resize", handleResize);
@@ -172,6 +181,7 @@ export function TextParticle({
     lineHeightMultiplier,
     fontSize,
     fontFamily,
+    fontWeight,
     particleSize,
     particleColor,
     particleDensity,
