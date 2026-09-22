@@ -8,7 +8,7 @@
 
 [![Live Demo](https://img.shields.io/badge/Live%20Demo-mirage--sooty.vercel.app-000000?style=for-the-badge&logo=vercel)](https://mirage-sooty.vercel.app/)
 [![CodeRabbit AI Review](https://img.shields.io/badge/CodeRabbit-AI%20Reviewed-blueviolet?style=for-the-badge&logo=coderabbit)](https://coderabbit.ai)
-[![Build Status](https://img.shields.io/badge/Next.js%2016-Turbopack%20Passing-success?style=for-the-badge&logo=next.js)](https://mirage-sooty.vercel.app/)
+[![Build Status](https://img.shields.io/badge/Next.js%2016-Turbopack%20Passing-success?style=for-the-badge&logo=next.js)](https://miragenew.vercel.app/)
 [![Tests](https://img.shields.io/badge/Pytest-8%2F8%20Passed-emerald?style=for-the-badge&logo=pytest)](/)
 [![One-Way Diode](https://img.shields.io/badge/Hardware%20Diode-RX%20Enforced-cyan?style=for-the-badge)](/)
 [![Security Standard](https://img.shields.io/badge/NIST-SP%20800--82%20Compliant-blue?style=for-the-badge)](/)
