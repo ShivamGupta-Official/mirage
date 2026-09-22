@@ -31,13 +31,7 @@ export function CustomCursor() {
       mousePos.current.x = e.clientX;
       mousePos.current.y = e.clientY;
 
-      if (!isVisible) setIsVisible(true);
-
-      // Reset idle timer
-      if (idleTimer.current) clearTimeout(idleTimer.current);
-      idleTimer.current = setTimeout(() => {
-        setIsVisible(false);
-      }, 4000);
+      setIsVisible(true);
 
       // Check hovered elements for contextual data-cursor tags
       const target = e.target as HTMLElement | null;
@@ -76,6 +70,10 @@ export function CustomCursor() {
       setIsVisible(false);
     };
 
+    const handleMouseEnter = () => {
+      setIsVisible(true);
+    };
+
     const handleResetMagnetic = (e: MouseEvent) => {
       const target = e.target as HTMLElement | null;
       if (!target) return;
@@ -87,9 +85,9 @@ export function CustomCursor() {
 
     // 60fps lerp interpolation loop
     const render = () => {
-      // Easing speed: 0.18 for smooth, luxurious lag
-      ringPos.current.x += (mousePos.current.x - ringPos.current.x) * 0.18;
-      ringPos.current.y += (mousePos.current.y - ringPos.current.y) * 0.18;
+      // Easing speed: 0.20 for responsive, soft follow
+      ringPos.current.x += (mousePos.current.x - ringPos.current.x) * 0.20;
+      ringPos.current.y += (mousePos.current.y - ringPos.current.y) * 0.20;
 
       if (dotRef.current) {
         dotRef.current.style.transform = `translate3d(${mousePos.current.x}px, ${mousePos.current.y}px, 0) translate(-50%, -50%)`;
@@ -104,6 +102,7 @@ export function CustomCursor() {
 
     window.addEventListener('mousemove', handleMouseMove, { passive: true });
     window.addEventListener('mouseleave', handleMouseLeave);
+    window.addEventListener('mouseenter', handleMouseEnter);
     document.addEventListener('mouseout', handleResetMagnetic, { passive: true });
     animFrameId.current = requestAnimationFrame(render);
 
@@ -111,36 +110,36 @@ export function CustomCursor() {
       document.documentElement.classList.remove('has-custom-cursor');
       window.removeEventListener('mousemove', handleMouseMove);
       window.removeEventListener('mouseleave', handleMouseLeave);
+      window.removeEventListener('mouseenter', handleMouseEnter);
       document.removeEventListener('mouseout', handleResetMagnetic);
       if (animFrameId.current) cancelAnimationFrame(animFrameId.current);
-      if (idleTimer.current) clearTimeout(idleTimer.current);
     };
-  }, [isVisible]);
+  }, []);
 
   return (
     <>
-      {/* Small precise center dot */}
+      {/* Small precise center dot with bright visibility */}
       <div
         ref={dotRef}
-        className={`pointer-events-none fixed top-0 left-0 z-[9999] rounded-full bg-[#f5efff] transition-opacity duration-300 ${
-          isVisible && !cursorText ? 'h-1.5 w-1.5 opacity-90' : 'h-1.5 w-1.5 opacity-0'
+        className={`pointer-events-none fixed top-0 left-0 rounded-full bg-[#f5efff] shadow-[0_0_8px_rgba(245,239,255,0.9)] transition-opacity duration-200 ${
+          isVisible && !cursorText ? 'h-2 w-2 opacity-100' : 'h-2 w-2 opacity-0'
         }`}
-        style={{ willChange: 'transform' }}
+        style={{ willChange: 'transform', zIndex: 99999999 }}
       />
 
       {/* Outer lagged ring with contextual morphing */}
       <div
         ref={ringRef}
-        className={`pointer-events-none fixed top-0 left-0 z-[9998] flex items-center justify-center rounded-full transition-all duration-300 ${
+        className={`pointer-events-none fixed top-0 left-0 flex items-center justify-center rounded-full transition-all duration-300 ${
           !isVisible
             ? 'opacity-0 scale-50'
             : cursorText
-            ? 'h-20 w-20 bg-[#f5efff] text-[#08080c] shadow-[0_0_30px_rgba(245,239,255,0.4)] opacity-100 scale-100'
+            ? 'h-20 w-20 bg-[#f5efff] text-[#08080c] shadow-[0_0_35px_rgba(245,239,255,0.6)] opacity-100 scale-100'
             : isHovered
-            ? 'h-12 w-12 border border-[#f5efff]/80 bg-[#f5efff]/15 backdrop-blur-[2px] opacity-100 scale-100'
-            : 'h-8 w-8 border border-[#f5efff]/35 bg-transparent opacity-80 scale-100'
+            ? 'h-12 w-12 border border-[#f5efff] bg-[#f5efff]/20 backdrop-blur-[2px] shadow-[0_0_20px_rgba(245,239,255,0.4)] opacity-100 scale-100'
+            : 'h-8 w-8 border border-[#f5efff]/60 bg-[#f5efff]/5 shadow-[0_0_12px_rgba(245,239,255,0.25)] opacity-90 scale-100'
         }`}
-        style={{ willChange: 'transform' }}
+        style={{ willChange: 'transform', zIndex: 99999998 }}
       >
         {cursorText && (
           <span

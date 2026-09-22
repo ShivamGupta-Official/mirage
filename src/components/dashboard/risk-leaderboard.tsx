@@ -15,7 +15,7 @@ export function RiskLeaderboard({ hosts, onSelectHost, className }: RiskLeaderbo
   const sortedHosts = [...hosts].sort((a, b) => b.riskScore - a.riskScore).slice(0, 5);
 
   return (
-    <div className={cn('p-6 rounded-2xl bg-[#0f0e17]/80 border border-[#f5efff]/[0.08] backdrop-blur-xl shadow-xl space-y-4', className)}>
+    <div className={cn('p-6 rounded-2xl bg-[#0f0e17]/80 border border-[#f5efff]/[0.08] backdrop-blur-xl shadow-xl flex flex-col justify-between space-y-4', className)}>
       <div className="flex items-center justify-between pb-3 border-b border-[#f5efff]/[0.08]">
         <div className="flex items-center gap-2.5">
           <Server size={15} className="text-[#f5efff]/70" />
@@ -36,7 +36,7 @@ export function RiskLeaderboard({ hosts, onSelectHost, className }: RiskLeaderbo
           sortedHosts.map((h) => {
             const risk = h.riskScore;
             const barColor =
-              risk >= 85 ? '#f43f5e' : risk >= 70 ? '#fb923c' : risk >= 40 ? '#facc15' : '#34d399';
+              risk >= 85 ? '#ef4444' : risk >= 70 ? '#f97316' : risk >= 40 ? '#eab308' : '#10b981';
 
             return (
               <div

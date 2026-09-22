@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;0,700;1,300;1,400;1,600&family=IBM+Plex+Mono:ital,wght@0,400;0,500;0,600;0,700;1,400&family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;0,700;1,300;1,400;1,600&family=IBM+Plex+Mono:ital,wght@0,400;0,500;0,600;0,700;1,400&family=Inter:wght@300;400;500;600;700;800&family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap');
 @import "tailwindcss";
 
 /* ─────────────────────────────────────────────────────────────
@@ -67,6 +67,10 @@
 
 .font-sans-studio {
   font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
+}
+
+.font-inter {
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
 }
 
 /* ─── Base Styles ─── */
@@ -337,4 +341,121 @@ body {
     box-shadow: 0 0 0 6px rgba(239, 68, 68, 0.18);
   }
 }
+
+:root {
+  --text-primary: #ffffff;
+  --text-secondary: #888888;
+  --elegant-font: 'Great Vibes';
+  --vh: 1vh;
+  --app-height: 100%;
+}
+
+:root[data-theme="dark"] {
+  --background: #000000;
+  --foreground: #ffffff;
+  --text-primary: #ffffff;
+  --text-secondary: #888888;
+}
+
+:root[data-theme="light"] {
+  --background: #ffffff;
+  --foreground: #000000;
+  --text-primary: #000000;
+  --text-secondary: #666666;
+}
+
+@keyframes bounce-x {
+  0%, 100% {
+    transform: translateX(-4px);
+  }
+  50% {
+    transform: translateX(0px);
+  }
+}
+
+@keyframes glow {
+  0%, 100% {
+    opacity: 0.6;
+    filter: drop-shadow(0 0 2px rgba(255, 255, 255, 0.3));
+  }
+  50% {
+    opacity: 1;
+    filter: drop-shadow(0 0 10px rgba(255, 255, 255, 0.6));
+  }
+}
+
+@keyframes float-up {
+  0% {
+    opacity: 0;
+    transform: translateY(6px);
+    filter: blur(2px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+    filter: blur(0);
+  }
+}
+
+.lighting-button {
+  animation: bounce-x 1.5s ease-in-out infinite;
+}
+
+.lighting-button:hover {
+  animation: none;
+  transform: translateX(0);
+}
+
+.light-glow {
+  animation: glow 2s ease-in-out infinite;
+}
+
+.word-float {
+  animation: float-up 0.8s cubic-bezier(0.23, 1, 0.32, 1) forwards;
+  will-change: transform, opacity, filter;
+  transform-style: preserve-3d;
+  backface-visibility: hidden;
+}
+
+.text-secondary {
+  color: var(--text-secondary, #888888);
+}
+
+.duration-600 {
+  transition-duration: 600ms;
+}
+
+.footer-link {
+  color: inherit;
+  transition: color 0.2s ease;
+}
+.footer-link:hover {
+  color: var(--text-primary, #ffffff);
+}
+
+.footer-dot {
+  margin-left: 0.5rem;
+  margin-right: 0.5rem;
+  color: #A3A3A3;
+}
+
+/* ─── Cursor & Mouse Visibility on Loading Screen & Intros ─── */
+.loading-screen,
+.loading-screen *,
+[data-loading-screen],
+[data-loading-screen] * {
+  cursor: default !important;
+}
+
+.loading-screen button,
+.loading-screen a,
+.loading-screen [role="button"],
+.loading-screen [data-cursor],
+[data-loading-screen] button,
+[data-loading-screen] a,
+[data-loading-screen] [role="button"],
+[data-loading-screen] [data-cursor] {
+  cursor: pointer !important;
+}
+
 

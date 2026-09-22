@@ -24,8 +24,6 @@ import { ThreatStream } from '@/components/dashboard/threat-stream';
 import { RiskLeaderboard } from '@/components/dashboard/risk-leaderboard';
 import { MetricCard } from '@/components/dashboard/metric-card';
 import { SystemHealthPanel } from '@/components/dashboard/system-health';
-import { ThreatRadarCard } from '@/components/dashboard/threat-radar-card';
-import { AttackVolumeCard } from '@/components/dashboard/attack-volume-card';
 import { AiDetectionCard } from '@/components/dashboard/ai-detection-card';
 import { PipelineView } from '@/components/pipeline/pipeline-view';
 import { GeneralizationGapView } from '@/components/pipeline/generalization-gap-view';
@@ -154,17 +152,28 @@ export default function DashboardPage() {
             <MetricCard label="ML Status" value="DUAL-MODEL" icon={<Cpu size={13} />} sublabel="RF(100) + XGBoost" className="!p-4 hidden sm:flex" />
           </div>
 
-          {/* ── Two-Column Content Grid ── */}
-          <div className="grid grid-cols-1 xl:grid-cols-12 gap-5">
+          {/* ── Live Threat Stream (Full Width Command Feed) ── */}
+          <ThreatStream events={threatStream} />
 
-            {/* Left Column — 8 cols */}
-            <div className="xl:col-span-8 min-w-0 space-y-5">
-              <ThreatStream events={threatStream} />
-              <SystemHealthPanel health={health} connection={connection} />
+          {/* ── Balanced 2-Column Analytics & Telemetry Grid ── */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-5 items-stretch">
+            {/* Top-Left: Enclave System Health */}
+            <SystemHealthPanel health={health} connection={connection} className="h-full" />
 
-              {/* Detection Engines */}
-              <div className="p-5 rounded-2xl bg-[#0f0e17]/80 border border-[#f5efff]/[0.06] backdrop-blur-xl">
-                <div className="flex items-center justify-between pb-3 border-b border-[#f5efff]/[0.06] mb-3">
+            {/* Top-Right: AI Threat Detection */}
+            <AiDetectionCard
+              highRisk={activeAlerts.filter(a => a.severity === 'CRITICAL').length || 12}
+              mediumRisk={activeAlerts.filter(a => a.severity === 'HIGH').length || 47}
+              lowRisk={activeAlerts.filter(a => a.severity === 'MEDIUM').length || 156}
+              monitoring={768}
+              confidence={96.8}
+              className="h-full"
+            />
+
+            {/* Bottom-Left: Detection Engines & Latency */}
+            <div className="p-6 rounded-2xl bg-[#0f0e17]/80 border border-[#f5efff]/[0.08] backdrop-blur-xl shadow-xl flex flex-col justify-between space-y-4 h-full">
+              <div>
+                <div className="flex items-center justify-between pb-3 border-b border-[#f5efff]/[0.08] mb-3">
                   <div className="flex items-center gap-2">
                     <Radar size={14} className="text-[#f5efff]/60" />
                     <span className="font-mono text-[10px] uppercase tracking-[0.18em] text-[#f5efff]/50 font-medium">Detection Engines & Latency</span>
@@ -173,41 +182,30 @@ export default function DashboardPage() {
                 </div>
                 <div className="space-y-2 font-mono text-xs">
                   {[
-                    { name: 'Packet Engine (SYN/UDP Flood)', latency: '2.1ms', status: 'ACTIVE', color: '#34d399' },
-                    { name: 'Connection Engine (Slowloris)', latency: '3.4ms', status: 'ACTIVE', color: '#34d399' },
-                    { name: 'Session Engine (C2/DGA/DNS)', latency: '8.7ms', status: 'ACTIVE', color: '#34d399' },
-                    { name: 'RandomForest NIDS (100 Trees)', latency: '3.1ms', status: 'DEPLOYED', color: '#38bdf8' },
-                    { name: 'XGBoost NIDS (Booster)', latency: '2.8ms', status: 'DEPLOYED', color: '#38bdf8' },
+                    { name: 'Packet Engine (SYN/UDP Flood)', latency: '2.1ms', status: 'ACTIVE' },
+                    { name: 'Connection Engine (Slowloris)', latency: '3.4ms', status: 'ACTIVE' },
+                    { name: 'Session Engine (C2/DGA/DNS)', latency: '8.7ms', status: 'ACTIVE' },
+                    { name: 'RandomForest NIDS (100 Trees)', latency: '3.1ms', status: 'DEPLOYED' },
+                    { name: 'XGBoost NIDS (Booster)', latency: '2.8ms', status: 'DEPLOYED' },
                   ].map((e) => (
                     <div key={e.name} className="flex items-center justify-between p-3 rounded-xl bg-[#f5efff]/[0.02] border border-[#f5efff]/[0.04] hover:border-[#f5efff]/[0.12] transition-colors">
-                      <span className="text-[#f5efff]/70 text-[10px] truncate mr-2">{e.name}</span>
+                      <span className="text-[#f5efff]/70 text-[11px] truncate mr-2">{e.name}</span>
                       <div className="flex items-center gap-2 flex-shrink-0">
                         <span className="text-[#f5efff]/35 text-[10px]">{e.latency}</span>
-                        <span className="text-[8px] px-1.5 py-0.5 rounded-full font-bold uppercase tracking-wider" style={{ color: e.color, background: `${e.color}12`, border: `1px solid ${e.color}25` }}>{e.status}</span>
+                        <span className="text-[8px] px-2 py-0.5 rounded font-mono uppercase tracking-wider text-zinc-300 bg-white/5 border border-white/10">{e.status}</span>
                       </div>
                     </div>
                   ))}
                 </div>
-                <div className="pt-3 border-t border-[#f5efff]/[0.04] flex items-center justify-between text-[10px] font-mono text-[#f5efff]/35 mt-3">
-                  <span>AVG INFERENCE LATENCY: 3.42ms</span>
-                  <span className="text-emerald-400 font-semibold">ALL 5 ENGINES NOMINAL</span>
-                </div>
+              </div>
+              <div className="pt-3 border-t border-[#f5efff]/[0.04] flex items-center justify-between text-[10px] font-mono text-[#f5efff]/35 mt-3">
+                <span>AVG INFERENCE LATENCY: 3.42ms</span>
+                <span className="text-zinc-300 font-medium">ALL 5 ENGINES NOMINAL</span>
               </div>
             </div>
 
-            {/* Right Column — 4 cols */}
-            <div className="xl:col-span-4 min-w-0 space-y-5">
-              <ThreatRadarCard activeSources={activeAlerts.length > 0 ? activeAlerts.length * 123 : 983} />
-              <AttackVolumeCard totalEvents={983421} />
-              <AiDetectionCard
-                highRisk={activeAlerts.filter(a => a.severity === 'CRITICAL').length || 12}
-                mediumRisk={activeAlerts.filter(a => a.severity === 'HIGH').length || 47}
-                lowRisk={activeAlerts.filter(a => a.severity === 'MEDIUM').length || 156}
-                monitoring={768}
-                confidence={96.8}
-              />
-              <RiskLeaderboard hosts={hosts} className="flex-1" />
-            </div>
+            {/* Bottom-Right: Host Risk Leaderboard (Perfect symmetrical alignment with Detection Engines) */}
+            <RiskLeaderboard hosts={hosts} className="h-full" />
           </div>
         </div>
       )}

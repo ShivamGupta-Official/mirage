@@ -56,7 +56,7 @@ export function ThreatStream({ events }: ThreatStreamProps) {
           </span>
         </div>
         <div className="flex items-center gap-2 px-2.5 py-0.5 rounded-full border border-[#f5efff]/10 bg-[#f5efff]/[0.03]">
-          <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 shadow-[0_0_6px_#34d399] animate-pulse" />
+          <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
           <span className="font-mono text-[10px] text-[#f5efff]/50 font-medium">{events.length} events</span>
         </div>
       </div>

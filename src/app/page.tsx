@@ -1,10 +1,11 @@
 'use client';
 
+import { useState } from 'react';
 import Link from 'next/link';
 import { ArrowRight, ArrowUpRight, Shield, Activity, Lock } from 'lucide-react';
 import { StudioNav } from '@/components/studio/studio-nav';
 import { StudioFooter } from '@/components/studio/studio-footer';
-import { Preloader } from '@/components/studio/preloader';
+import { LoadingScreen } from '@/components/ui/loading-screen';
 import { Eyebrow } from '@/components/studio/eyebrow';
 import { Magnetic } from '@/components/studio/magnetic-button';
 import { CountUp } from '@/components/studio/count-up';
@@ -14,12 +15,21 @@ import { STUDIO_PROJECTS, STUDIO_SERVICES, STUDIO_AWARDS } from '@/lib/studio-da
 import { DefenseModulesGrid } from '@/components/studio/defense-modules-grid';
 import { AmbientParticlesCanvas } from '@/components/studio/ambient-particles';
 import { TextParticle } from '@/components/ui/text-particle';
+import { ThreeDCardDeck, ThreeDCardItem } from '@/components/studio/three-d-cards';
 
 export default function HomePage() {
+  const [hasEntered, setHasEntered] = useState(false);
+
   return (
     <div className="relative min-h-screen bg-[#08080c] text-[#f5efff] selection:bg-[#f5efff] selection:text-[#08080c]">
-      {/* ═══ PRELOADER (3 seconds) ═══ */}
-      <Preloader />
+      {/* ═══ INTERACTIVE INTRO LOADING SCREEN ═══ */}
+      {!hasEntered && (
+        <LoadingScreen
+          projectName="MIRAGE"
+          durationMs={5000}
+          onEnter={() => setHasEntered(true)}
+        />
+      )}
 
       {/* ═══ PERSISTENT AMBIENT PARTICLES CANVAS ═══ */}
       <div className="fixed inset-0 z-0 pointer-events-none opacity-45">
@@ -95,33 +105,7 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* ═════════════════════════════════════════════════════
-          2. LIVE METRICS — Sub-millisecond stats
-      ═════════════════════════════════════════════════════ */}
-      <section className="px-4 sm:px-10 md:px-16 lg:px-24 pb-16 sm:pb-24 md:pb-32 relative z-10">
-        <div className="max-w-[1400px] mx-auto grid grid-cols-1 sm:grid-cols-3 gap-3.5 sm:gap-7">
-          {[
-            { label: 'EVALUATION LATENCY', value: '1.45 ms', note: 'Sub-millisecond Streaming', accent: 'emerald' },
-            { label: 'PHYSICAL RETURN PATH', value: '0.00 ns', note: 'Absolute Zero Backchannel', accent: 'cyan' },
-            { label: 'DETECTION ACCURACY', value: '99.94%', note: 'Welford EWMA Validated', accent: 'emerald' },
-          ].map((stat, i) => (
-            <ScrollReveal key={stat.label} direction="bottom" delay={i * 150}>
-              <div className="rounded-2xl border border-[#f5efff]/[0.08] bg-[#0c0b14]/80 backdrop-blur-md p-5 sm:p-7 md:p-9 shadow-[0_4px_20px_rgba(0,0,0,0.4)]">
-                <span className="font-mono text-[10px] sm:text-xs uppercase tracking-[0.2em] text-[#f5efff]/45 block">
-                  {stat.label}
-                </span>
-                <span className="font-mono text-2xl sm:text-4xl md:text-5xl font-bold text-[#f5efff] mt-2 sm:mt-3 block">
-                  {stat.value}
-                </span>
-                <span className={`text-xs flex items-center gap-2 mt-2 sm:mt-3 ${stat.accent === 'emerald' ? 'text-emerald-400/90' : 'text-cyan-400/90'}`}>
-                  <span className={`h-1.5 w-1.5 rounded-full ${stat.accent === 'emerald' ? 'bg-emerald-400' : 'bg-cyan-400'} animate-pulse`} />
-                  {stat.note}
-                </span>
-              </div>
-            </ScrollReveal>
-          ))}
-        </div>
-      </section>
+
 
       {/* ═════════════════════════════════════════════════════
           3. SECOND PAGE ONWARD: 5-SCREEN 3D EARTH SCROLL ANIMATION
@@ -155,73 +139,82 @@ export default function HomePage() {
       {/* ═════════════════════════════════════════════════════
           4. CORE PILLARS — Three spacious cards
       ═════════════════════════════════════════════════════ */}
-      <section className="px-4 sm:px-10 md:px-16 lg:px-24 py-16 sm:py-28 md:py-44">
+      <section className="px-4 sm:px-10 md:px-16 lg:px-24 pt-12 sm:pt-20 md:pt-28 pb-8 sm:pb-12 md:pb-14">
         <div className="max-w-[1400px] mx-auto">
           <ScrollReveal direction="fade">
             <Eyebrow label="// CORE ARCHITECTURAL PILLARS" tag="active" />
           </ScrollReveal>
 
           <ScrollReveal direction="right" delay={200}>
-            <h2 className="font-editorial text-3xl sm:text-5xl md:text-6xl lg:text-7xl font-light tracking-tight text-[#f5efff] mt-4 sm:mt-5 mb-10 sm:mb-24 leading-[1.05]">
+            <h2 className="font-editorial text-3xl sm:text-5xl md:text-6xl lg:text-7xl font-light tracking-tight text-[#f5efff] mt-4 sm:mt-5 mb-10 sm:mb-16 leading-[1.05]">
               Built for physical <span className="italic">asymmetry</span>.
             </h2>
           </ScrollReveal>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-5 sm:gap-8">
-            {[
-              {
-                num: '001',
-                label: 'PHYSICAL LAYER',
-                title: 'Zero-Return Optical TAP',
-                desc: 'Single-strand 9/125 SMF-28 optical fiber with physical transmit laser severed. Packets flow strictly inbound with absolute physical air-gap protection.',
-                Icon: Shield,
-              },
-              {
-                num: '002',
-                label: 'STATISTICAL AI',
-                title: 'Welford EWMA Profiling',
-                desc: 'Online statistical moments adaptively learn legitimate host diurnal behavior without catastrophic forgetting. 4.5σ threshold eliminates false positives.',
-                Icon: Activity,
-              },
-              {
-                num: '003',
-                label: 'IMMUTABLE AUDIT',
-                title: 'SHA-256 Blockchain Ledger',
-                desc: 'Every detection and cyber range run is sealed into an immutable parent-chained block, providing verifiable legal-grade proof of non-repudiation.',
-                Icon: Lock,
-              },
-            ].map((pillar, i) => (
-              <ScrollReveal
-                key={pillar.num}
-                direction={i === 0 ? 'left' : i === 1 ? 'bottom' : 'right'}
-                delay={i * 180}
-              >
-                <div className="group rounded-2xl border border-[#f5efff]/[0.08] bg-[#0b0a13] p-6 sm:p-10 md:p-12 transition-all duration-500 hover:border-[#f5efff]/[0.2] hover:bg-[#0f0e1a] h-full shadow-[0_4px_25px_rgba(0,0,0,0.5)]">
-                  <div className="flex items-center justify-between mb-8 sm:mb-12">
-                    <span className="font-mono text-[11px] sm:text-xs text-[#f5efff]/35 uppercase tracking-[0.2em]">
-                      ({pillar.num}) {pillar.label}
-                    </span>
-                    <pillar.Icon className="h-5 w-5 text-[#f5efff]/30 group-hover:text-[#f5efff]/60 transition-colors duration-500" />
-                  </div>
+          <ScrollReveal direction="bottom" delay={300}>
+            <ThreeDCardDeck>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-8 sm:gap-10 lg:gap-12 pt-4 pb-6">
+                {[
+                  {
+                    num: '001',
+                    label: 'PHYSICAL LAYER',
+                    title: 'Zero-Return Optical TAP',
+                    desc: 'Single-strand 9/125 SMF-28 optical fiber with physical transmit laser severed. Packets flow strictly inbound with absolute physical air-gap protection.',
+                    Icon: Shield,
+                  },
+                  {
+                    num: '002',
+                    label: 'STATISTICAL AI',
+                    title: 'Welford EWMA Profiling',
+                    desc: 'Online statistical moments adaptively learn legitimate host diurnal behavior without catastrophic forgetting. 4.5σ threshold eliminates false positives.',
+                    Icon: Activity,
+                  },
+                  {
+                    num: '003',
+                    label: 'IMMUTABLE AUDIT',
+                    title: 'SHA-256 Blockchain Ledger',
+                    desc: 'Every detection and cyber range run is sealed into an immutable parent-chained block, providing verifiable legal-grade proof of non-repudiation.',
+                    Icon: Lock,
+                  },
+                ].map((pillar, i) => (
+                  <ThreeDCardItem
+                    key={pillar.num}
+                    index={i}
+                    initialRotateX={-12}
+                    initialRotateY={-20}
+                    hoverScale={1.06}
+                    className="h-full"
+                  >
+                    <div className="group rounded-2xl border border-[#f5efff]/[0.08] bg-[#0b0a13] p-7 sm:p-10 md:p-12 transition-all duration-500 hover:border-[#f5efff]/[0.25] hover:bg-[#0f0e1a] h-full min-h-[500px] sm:min-h-[530px] shadow-[0_12px_35px_rgba(0,0,0,0.6)] flex flex-col justify-between">
+                      <div>
+                        <div className="flex items-center justify-between mb-8 sm:mb-12">
+                          <span className="font-mono text-[11px] sm:text-xs text-[#f5efff]/35 uppercase tracking-[0.2em]">
+                            ({pillar.num}) {pillar.label}
+                          </span>
+                          <pillar.Icon className="h-5 w-5 text-[#f5efff]/30 group-hover:text-[#f5efff]/75 transition-colors duration-500" />
+                        </div>
 
-                  <h3 className="font-editorial text-xl sm:text-3xl md:text-4xl font-light text-[#f5efff] mb-3 sm:mb-5 leading-tight">
-                    {pillar.title}
-                  </h3>
+                        <h3 className="font-editorial text-xl sm:text-3xl md:text-4xl font-light text-[#f5efff] mb-3 sm:mb-5 leading-tight">
+                          {pillar.title}
+                        </h3>
 
-                  <p className="font-sans text-xs sm:text-base text-[#f5efff]/50 leading-[1.65]">
-                    {pillar.desc}
-                  </p>
-                </div>
-              </ScrollReveal>
-            ))}
-          </div>
+                        <p className="font-sans text-xs sm:text-base text-[#f5efff]/50 leading-[1.65]">
+                          {pillar.desc}
+                        </p>
+                      </div>
+                    </div>
+                  </ThreeDCardItem>
+                ))}
+              </div>
+            </ThreeDCardDeck>
+          </ScrollReveal>
         </div>
       </section>
 
       {/* ═════════════════════════════════════════════════════
           5. MISSION STATEMENT — Big centered text
       ═════════════════════════════════════════════════════ */}
-      <section className="px-4 sm:px-10 md:px-16 lg:px-24 py-20 sm:py-32 md:py-48 border-t border-[#f5efff]/[0.05] relative overflow-hidden">
+      <section className="px-4 sm:px-10 md:px-16 lg:px-24 pt-8 sm:pt-12 md:pt-14 pb-16 sm:pb-24 md:pb-32 border-t border-[#f5efff]/[0.05] relative overflow-hidden">
         <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(245,239,255,0.025),transparent_55%)]" />
 
         <div className="max-w-5xl mx-auto text-center relative z-10">
@@ -280,9 +273,9 @@ export default function HomePage() {
       {/* ═════════════════════════════════════════════════════
           7. PROJECTS — Horizontal scroll with snap
       ═════════════════════════════════════════════════════ */}
-      <section className="px-6 sm:px-10 md:px-16 lg:px-24 py-28 md:py-44 border-t border-[#f5efff]/[0.05] overflow-hidden">
-        <div className="max-w-[1400px] mx-auto">
-          <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-6 mb-14 sm:mb-20">
+      <section className="px-4 sm:px-8 md:px-12 lg:px-16 py-24 md:py-36 border-t border-[#f5efff]/[0.05] overflow-hidden">
+        <div className="max-w-[1560px] mx-auto">
+          <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-6 mb-12 sm:mb-16">
             <div>
               <ScrollReveal direction="fade">
                 <Eyebrow label="// ENGINEERED SYSTEMS" tag="active" />
@@ -305,63 +298,70 @@ export default function HomePage() {
             </ScrollReveal>
           </div>
 
-          {/* Horizontal scroll container */}
-          <div className="flex gap-6 overflow-x-auto pb-8 no-scrollbar snap-x snap-mandatory -mx-6 px-6 sm:-mx-10 sm:px-10 md:-mx-16 md:px-16 lg:-mx-24 lg:px-24">
-            {STUDIO_PROJECTS.map((proj, i) => (
-              <ScrollReveal
-                key={proj.slug}
-                direction="bottom"
-                delay={Math.min(i * 100, 500)}
-                distance={40}
-                className="flex-shrink-0 w-[85vw] sm:w-[460px] md:w-[520px] snap-start"
-              >
-                <div className="group h-full rounded-3xl border border-[#f5efff]/[0.06] bg-[#0b0a13] p-8 sm:p-10 flex flex-col justify-between transition-all duration-500 hover:border-[#f5efff]/[0.15]">
-                  <div>
-                    <div className="flex items-center justify-between border-b border-[#f5efff]/[0.06] pb-4 mb-8">
-                      <span className="font-mono text-xs text-[#f5efff]/35 tracking-widest uppercase">
-                        {proj.code} // {proj.date}
-                      </span>
-                      <span className="font-mono text-[10px] text-emerald-400/80 bg-emerald-950/40 border border-emerald-800/25 px-2.5 py-0.5 rounded-full uppercase">
-                        {proj.classification}
-                      </span>
-                    </div>
-
-                    <h3 className="font-editorial text-2xl sm:text-3xl md:text-4xl font-light text-[#f5efff] group-hover:text-white transition-colors leading-tight">
-                      {proj.title}
-                    </h3>
-                    <p className="font-mono text-[10px] sm:text-xs text-[#f5efff]/35 mt-2 uppercase tracking-wider">
-                      {proj.subtitle}
-                    </p>
-                    <p className="font-sans text-sm text-[#f5efff]/45 mt-5 line-clamp-3 leading-[1.7]">
-                      {proj.summary}
-                    </p>
-                  </div>
-
-                  <div className="mt-10 pt-6 border-t border-[#f5efff]/[0.06]">
-                    <div className="flex flex-wrap gap-2 mb-6">
-                      {proj.techTags.slice(0, 3).map((tag) => (
-                        <span
-                          key={tag}
-                          className="rounded-md border border-[#f5efff]/[0.06] bg-[#f5efff]/[0.03] px-2.5 py-1 font-mono text-[10px] text-[#f5efff]/45"
-                        >
-                          {tag}
+          {/* Compressed 6-Card 3D Deck — Strictly ONE SINGLE ROW */}
+          <ThreeDCardDeck perspective={1500}>
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2.5 sm:gap-3 lg:gap-3 xl:gap-3.5 pt-4 pb-8 w-full">
+              {STUDIO_PROJECTS.map((proj, i) => (
+                <ThreeDCardItem
+                  key={proj.slug}
+                  index={i}
+                  initialRotateX={-12}
+                  initialRotateY={-18}
+                  hoverScale={1.10}
+                  className="w-full h-full"
+                >
+                  <div className="group h-full min-h-[480px] sm:min-h-[500px] md:min-h-[520px] rounded-2xl border border-[#f5efff]/[0.08] bg-[#0b0a13] p-4 sm:p-5 flex flex-col justify-between transition-all duration-500 hover:border-[#f5efff]/[0.28] hover:bg-[#0f0e1a] shadow-[0_12px_35px_rgba(0,0,0,0.6)]">
+                    <div>
+                      {/* Top metadata header */}
+                      <div className="flex items-center justify-between border-b border-[#f5efff]/[0.07] pb-2.5 mb-3.5">
+                        <span className="font-mono text-[10px] text-[#f5efff]/40 tracking-wider uppercase">
+                          {proj.code}
                         </span>
-                      ))}
+                        <span className="font-mono text-[8px] uppercase tracking-widest text-[#f5efff]/50 px-1.5 py-0.5 rounded border border-white/[0.08] bg-white/[0.02] truncate max-w-[95px]">
+                          {proj.classification.split('//')[0].trim()}
+                        </span>
+                      </div>
+
+                      {/* Project title */}
+                      <h3 className="font-editorial text-base sm:text-[18px] md:text-[19px] font-light text-[#f5efff] group-hover:text-white transition-colors leading-[1.25] line-clamp-2">
+                        {proj.title}
+                      </h3>
+
+                      {/* Subtitle */}
+                      <p className="font-mono text-[9px] text-[#f5efff]/35 mt-1 uppercase tracking-wider line-clamp-1">
+                        {proj.subtitle}
+                      </p>
+
+                      {/* Compressed summary */}
+                      <p className="font-sans text-[11.5px] text-[#f5efff]/45 mt-3 line-clamp-4 leading-[1.6]">
+                        {proj.summary}
+                      </p>
                     </div>
 
-                    <Link
-                      href={`/work/${proj.slug}`}
-                      data-cursor="View"
-                      className="inline-flex items-center justify-between w-full font-mono text-xs uppercase tracking-wider text-[#f5efff]/50 group-hover:text-white transition-colors"
-                    >
-                      <span>View Blueprint</span>
-                      <ArrowRight className="h-4 w-4 transition-transform duration-300 group-hover:translate-x-1.5" />
-                    </Link>
+                    {/* Bottom section */}
+                    <div className="mt-4 pt-3 border-t border-[#f5efff]/[0.07] space-y-2.5">
+                      {/* 1 clean tech tag */}
+                      <div className="flex items-center">
+                        <span className="rounded border border-[#f5efff]/[0.08] bg-[#f5efff]/[0.02] px-2 py-0.5 font-mono text-[9px] text-[#f5efff]/45 truncate max-w-full">
+                          {proj.techTags[0]}
+                        </span>
+                      </div>
+
+                      {/* View Blueprint link */}
+                      <Link
+                        href={`/work/${proj.slug}`}
+                        data-cursor="View"
+                        className="inline-flex items-center justify-between w-full font-mono text-[10px] uppercase tracking-wider text-[#f5efff]/50 group-hover:text-white transition-colors pt-0.5"
+                      >
+                        <span>View Blueprint</span>
+                        <ArrowRight className="h-3 w-3 transition-transform duration-300 group-hover:translate-x-1" />
+                      </Link>
+                    </div>
                   </div>
-                </div>
-              </ScrollReveal>
-            ))}
-          </div>
+                </ThreeDCardItem>
+              ))}
+            </div>
+          </ThreeDCardDeck>
         </div>
       </section>
 
