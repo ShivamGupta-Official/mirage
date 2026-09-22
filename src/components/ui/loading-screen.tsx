@@ -243,11 +243,6 @@ export function LoadingScreen({
           {projectName}
         </h1>
 
-        {/* Poetic Subtitle */}
-        <p className="mt-4 font-mono text-xs sm:text-sm tracking-[0.25em] text-white/70 italic word-float drop-shadow-[0_2px_8px_rgba(0,0,0,0.9)]">
-          &ldquo;Order and chaos dance &mdash; digital poetry in motion.&rdquo;
-        </p>
-
         {/* Loading Bar Beneath MIRAGE */}
         {!loadingDone ? (
           <div className="w-72 sm:w-88 md:w-96 flex flex-col items-center gap-3 mt-10 transition-all duration-300">
