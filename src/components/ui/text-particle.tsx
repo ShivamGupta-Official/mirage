@@ -22,6 +22,9 @@ export interface TextParticleAnimationProps {
   lineHeightMultiplier?: number;
   fontSize?: number;
   fontFamily?: string;
+  fontWeight?: number | string;
+  strokeWidth?: number;
+  letterSpacing?: string;
   particleSize?: number;
   particleColor?: string;
   particleDensity?: number;
@@ -36,9 +39,12 @@ export function TextParticle({
   lineHeightMultiplier = 1.05,
   fontSize = 110,
   fontFamily = '"Cormorant Garamond", Georgia, serif',
-  particleSize = 2.4,
+  fontWeight = "bold",
+  strokeWidth = 2.5,
+  letterSpacing = "1.5px",
+  particleSize = 2.8,
   particleColor = "#f5efff",
-  particleDensity = 3,
+  particleDensity = 2.4,
   backgroundColor = "transparent",
   className = "",
 }: TextParticleAnimationProps) {
@@ -79,15 +85,29 @@ export function TextParticle({
 
       const isMobile = canvas.width < 640;
       const maxLineLen = Math.max(...parsedLines.map((l) => l.text.length), 1);
-      const availWidth = textAlign === "left" ? canvas.width * (isMobile ? 0.95 : 0.98) : canvas.width * 0.92;
+      const availWidth = textAlign === "left" ? canvas.width * (isMobile ? 0.96 : 0.99) : canvas.width * 0.94;
       
       let autoFontSize = Math.min(
         fontSize,
-        Math.max(20, availWidth / (maxLineLen * 0.58))
+        Math.max(24, availWidth / (maxLineLen * 0.52))
       );
 
-      // Verify font bounds with context measurement to ensure 0% overflow on phones
-      ctx.font = `300 ${autoFontSize}px ${fontFamily}`;
+      // Clean font family string (strip extra quotes if passed)
+      const cleanFontFamily = fontFamily.replace(/["']/g, "").trim();
+      const weightStr = fontWeight ? `${fontWeight}` : "bold";
+
+      const getFont = (italic: boolean, size: number) => {
+        return `${italic ? "italic " : "normal "} ${weightStr} ${Math.round(size)}px "${cleanFontFamily}", Georgia, serif`;
+      };
+
+      // Set letter spacing if supported
+      try {
+        if (letterSpacing && 'letterSpacing' in ctx) {
+          (ctx as any).letterSpacing = letterSpacing;
+        }
+      } catch {}
+
+      ctx.font = getFont(false, autoFontSize);
       const widestLine = Math.max(...parsedLines.map((l) => ctx.measureText(l.text).width), 1);
       if (widestLine > availWidth) {
         autoFontSize = Math.floor(autoFontSize * (availWidth / widestLine));
@@ -96,27 +116,37 @@ export function TextParticle({
       ctx.textBaseline = "middle";
       ctx.textAlign = textAlign;
 
-      const lineHeight = autoFontSize * (isMobile ? 1.06 : lineHeightMultiplier);
+      const lineHeight = autoFontSize * (isMobile ? 1.08 : lineHeightMultiplier);
       const totalTextH = (parsedLines.length - 1) * lineHeight;
       const startY = (canvas.height - totalTextH) / 2;
       const x = textAlign === "left" ? 4 : textAlign === "right" ? canvas.width - 4 : canvas.width / 2;
 
       parsedLines.forEach((lineItem, i) => {
         const isItalic = Boolean(lineItem.italic);
-        ctx.font = `${isItalic ? "italic " : ""}300 ${autoFontSize}px ${fontFamily}`;
+        ctx.font = getFont(isItalic, autoFontSize);
         ctx.fillStyle = "black";
-        ctx.fillText(lineItem.text, x, startY + i * lineHeight);
+        const lineY = startY + i * lineHeight;
+        
+        ctx.fillText(lineItem.text, x, lineY);
+
+        // Bold stroke enhancement to expand letter width & thickness
+        const strokeW = strokeWidth ?? (isMobile ? 1.5 : 2.5);
+        if (strokeW > 0) {
+          ctx.lineWidth = strokeW;
+          ctx.strokeStyle = "black";
+          ctx.strokeText(lineItem.text, x, lineY);
+        }
 
         if (lineItem.underline) {
           const metrics = ctx.measureText(lineItem.text);
           const textW = metrics.width;
-          const lineY = startY + i * lineHeight + autoFontSize * 0.44;
+          const uY = lineY + autoFontSize * 0.44;
           const startX = textAlign === "left" ? x : textAlign === "right" ? x - textW : x - textW / 2;
           ctx.beginPath();
-          ctx.lineWidth = Math.max(2.5, autoFontSize * 0.035);
+          ctx.lineWidth = Math.max(3, autoFontSize * 0.04);
           ctx.strokeStyle = "black";
-          ctx.moveTo(startX, lineY);
-          ctx.lineTo(startX + textW, lineY);
+          ctx.moveTo(startX, uY);
+          ctx.lineTo(startX + textW, uY);
           ctx.stroke();
         }
       });
@@ -130,15 +160,15 @@ export function TextParticle({
       const newParticles: Particle[] = [];
 
       // Mobile adaptive density and size
-      const effDensity = isMobile ? Math.max(particleDensity, 3) : particleDensity;
-      const effSize = isMobile ? Math.min(particleSize, 1.9) : particleSize;
+      const effDensity = isMobile ? Math.max(particleDensity, 2.6) : particleDensity;
+      const effSize = isMobile ? Math.min(particleSize, 2.2) : particleSize;
 
       for (let py = 0; py < textCoordinates.height; py += effDensity) {
         for (let px = 0; px < textCoordinates.width; px += effDensity) {
           const index = (py * textCoordinates.width + px) * 4;
           const alpha = textCoordinates.data[index + 3];
 
-          if (alpha > 128) {
+          if (alpha > 70) {
             newParticles.push({
               x: px,
               y: py,
@@ -159,6 +189,13 @@ export function TextParticle({
     window.addEventListener("resize", handleResize);
     handleResize();
 
+    // Ensure custom web fonts are ready before rasterizing
+    if (typeof document !== "undefined" && document.fonts) {
+      document.fonts.ready.then(() => {
+        handleResize();
+      });
+    }
+
     return () => {
       window.removeEventListener("resize", handleResize);
       if (animationRef.current) {
@@ -172,6 +209,9 @@ export function TextParticle({
     lineHeightMultiplier,
     fontSize,
     fontFamily,
+    fontWeight,
+    strokeWidth,
+    letterSpacing,
     particleSize,
     particleColor,
     particleDensity,
