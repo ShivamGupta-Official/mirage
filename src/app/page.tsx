@@ -52,8 +52,8 @@ export default function HomePage() {
             <Eyebrow label="// NTRO · PROBLEM STATEMENT 26145 · SIH 2026" tag="active" />
           </ScrollReveal>
 
-          {/* Main title — interactive physics particle text with bold stroke and expanded width */}
-          <div className="mt-4 sm:mt-5 w-full max-w-[1400px] h-[210px] sm:h-[320px] md:h-[400px] lg:h-[460px] relative pointer-events-auto">
+          {/* Main title — interactive physics particle text */}
+          <div className="mt-4 sm:mt-5 w-full max-w-[1280px] h-[190px] sm:h-[300px] md:h-[370px] lg:h-[420px] relative pointer-events-auto">
             <h1 className="sr-only">Multi-Resolution Passive Threat Intelligence</h1>
             <TextParticle
               lines={[
@@ -62,14 +62,11 @@ export default function HomePage() {
                 { text: 'Intelligence' },
               ]}
               textAlign="left"
-              fontSize={165}
+              fontSize={140}
               fontFamily='"Cormorant Garamond", Georgia, serif'
-              fontWeight="bold"
-              strokeWidth={2.5}
-              letterSpacing="1.5px"
-              particleSize={2.8}
+              particleSize={2.4}
               particleColor="#f5efff"
-              particleDensity={2.4}
+              particleDensity={3}
               lineHeightMultiplier={1.04}
               className="w-full h-full"
             />
